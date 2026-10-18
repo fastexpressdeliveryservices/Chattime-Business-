@@ -1,0 +1,94 @@
+{
+  "id": "/",
+  "name": "Chat Time App",
+  "short_name": "Chat Time",
+  "description": "A secure, all-in-one messaging platform featuring private chats, view-once media, HD voice & video calls, 24-hour status stories, and discoverable communities.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "theme_color": "#ef4444",
+  "background_color": "#020617",
+  "dir": "ltr",
+  "lang": "en-US",
+  "prefer_related_applications": false,
+  "categories": ["social", "communication", "productivity"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "ChatTime Mobile Encrypted Messaging & HD Calls"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "ChatTime Desktop & Tablet Communications Hub"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Messages & Chats",
+      "short_name": "Chats",
+      "description": "Open your encrypted conversations",
+      "url": "/?tab=chats",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Voice & Video Calls",
+      "short_name": "Calls",
+      "description": "Start an HD voice or video call",
+      "url": "/?tab=calls",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "24h Status Stories",
+      "short_name": "Status",
+      "description": "View and share 24-hour status updates",
+      "url": "/?tab=status",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

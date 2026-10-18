@@ -1,0 +1,1810 @@
+{
+  "users": [
+    {
+      "id": "user_admin_prosper",
+      "name": "Prosper Ikeokwu",
+      "username": "prosperikeokwu",
+      "email": "prosperikeokwu@gmail.com",
+      "phoneNumber": "+15550199000",
+      "chatTimeNumber": "+1 (555) 019-9000",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=prosperikeokwu&backgroundColor=b91c1c",
+      "bio": "Chat Time Official Administrator",
+      "statusFeeling": "🛡️ Platform Admin",
+      "phonePrivate": false,
+      "isOnline": true,
+      "lastSeen": 1792161052485,
+      "createdAt": 1792042436110,
+      "role": "admin",
+      "isVerified": true,
+      "contacts": [],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": true,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": []
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 90,
+        "communityAlerts": true
+      },
+      "isRedVerified": true,
+      "verificationBadge": "red",
+      "verificationBadgeType": "red"
+    },
+    {
+      "id": "user_chattime_support",
+      "name": "ChatTime Support",
+      "username": "support",
+      "email": "support@chattime.app",
+      "phoneNumber": "+18002428846",
+      "chatTimeNumber": "+1 (800) 242-8846",
+      "avatar": "/icon.svg",
+      "bio": "Official ChatTime Support & Help Desk. Here to assist you 24/7.",
+      "statusFeeling": "🔴 Official Support • Red Tick Verified",
+      "phonePrivate": false,
+      "isOnline": true,
+      "lastSeen": 1792050558322,
+      "createdAt": 1792050558322,
+      "role": "user",
+      "isVerified": true,
+      "isRedVerified": true,
+      "verificationBadge": "red",
+      "verificationBadgeType": "red",
+      "contacts": [],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": true,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": []
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 90,
+        "communityAlerts": true
+      }
+    },
+    {
+      "id": "user_1792051460792_qaqf",
+      "name": "Alice Saved",
+      "username": "alice_walker_test",
+      "chatTimeNumber": "+14155550111",
+      "phoneNumber": "+14155550111",
+      "phoneVerified": true,
+      "countryCode": "+1",
+      "countryName": "United States",
+      "isBusiness": false,
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice_walker_test&backgroundColor=0d9488",
+      "bio": "Profile survives the next login",
+      "statusFeeling": "Connected on ChatTime",
+      "phonePrivate": false,
+      "isOnline": true,
+      "lastSeen": 1792051460828,
+      "createdAt": 1792051460792,
+      "role": "user",
+      "isVerified": false,
+      "contacts": [],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": false,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": [
+          {
+            "id": "sess_1792051460792",
+            "device": "ChatTime Web / PWA (Active)",
+            "location": "United States",
+            "lastActive": "Active now",
+            "isCurrent": true
+          }
+        ]
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 80,
+        "communityAlerts": true
+      },
+      "isRedVerified": false,
+      "verificationBadge": "none",
+      "verificationBadgeType": "none"
+    },
+    {
+      "id": "user_1792051460809_3sjb",
+      "name": "Bob Martin",
+      "username": "bob_martin_test",
+      "chatTimeNumber": "+14155550222",
+      "phoneNumber": "+14155550222",
+      "phoneVerified": true,
+      "countryCode": "+1",
+      "countryName": "United States",
+      "isBusiness": false,
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_test&backgroundColor=0d9488",
+      "bio": "Verified Bob",
+      "statusFeeling": "Connected on ChatTime",
+      "phonePrivate": false,
+      "isOnline": true,
+      "lastSeen": 1792051460809,
+      "createdAt": 1792051460809,
+      "role": "user",
+      "isVerified": false,
+      "contacts": [],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": true,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": [
+          {
+            "id": "sess_1792051460809",
+            "device": "ChatTime Web / PWA (Active)",
+            "location": "United States",
+            "lastActive": "Active now",
+            "isCurrent": true
+          }
+        ]
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 80,
+        "communityAlerts": true
+      },
+      "isRedVerified": false,
+      "verificationBadge": "none",
+      "verificationBadgeType": "none"
+    },
+    {
+      "id": "user_1792051505509_319i",
+      "name": "Alice Saved",
+      "username": "alice_walker_505414",
+      "chatTimeNumber": "+141555505414",
+      "phoneNumber": "+141555505414",
+      "phoneVerified": true,
+      "countryCode": "+1",
+      "countryName": "United States",
+      "email": "prosperikeokwu@gmail.com",
+      "isBusiness": false,
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice_walker_505414&backgroundColor=0d9488",
+      "bio": "Profile survives the next login",
+      "statusFeeling": "Connected on ChatTime",
+      "phonePrivate": false,
+      "isOnline": true,
+      "lastSeen": 1792051505549,
+      "createdAt": 1792051505509,
+      "role": "admin",
+      "isVerified": true,
+      "contacts": [],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": false,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": [
+          {
+            "id": "sess_1792051505509",
+            "device": "ChatTime Web / PWA (Active)",
+            "location": "United States",
+            "lastActive": "Active now",
+            "isCurrent": true
+          }
+        ]
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 80,
+        "communityAlerts": true
+      },
+      "isRedVerified": true,
+      "verificationBadge": "red",
+      "verificationBadgeType": "red"
+    },
+    {
+      "id": "user_1792051505528_b8ce",
+      "name": "Bob Martin",
+      "username": "bob_martin_505414",
+      "chatTimeNumber": "+141566505414",
+      "phoneNumber": "+141566505414",
+      "phoneVerified": true,
+      "countryCode": "+1",
+      "countryName": "United States",
+      "isBusiness": false,
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_505414&backgroundColor=0d9488",
+      "bio": "Verified Bob",
+      "statusFeeling": "Connected on ChatTime",
+      "phonePrivate": false,
+      "isOnline": true,
+      "lastSeen": 1792051505555,
+      "createdAt": 1792051505528,
+      "role": "user",
+      "isVerified": false,
+      "contacts": [],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": true,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": [
+          {
+            "id": "sess_1792051505528",
+            "device": "ChatTime Web / PWA (Active)",
+            "location": "United States",
+            "lastActive": "Active now",
+            "isCurrent": true
+          }
+        ]
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 80,
+        "communityAlerts": true
+      },
+      "isRedVerified": false,
+      "verificationBadge": "none",
+      "verificationBadgeType": "none"
+    },
+    {
+      "id": "user_1792051556914_hmgq",
+      "name": "Alice Saved",
+      "username": "alice_walker_556810",
+      "chatTimeNumber": "+141555556810",
+      "phoneNumber": "+141555556810",
+      "phoneVerified": true,
+      "countryCode": "+1",
+      "countryName": "United States",
+      "email": "prosperikeokwu@gmail.com",
+      "isBusiness": false,
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice_walker_556810&backgroundColor=0d9488",
+      "bio": "Profile survives the next login",
+      "statusFeeling": "Connected on ChatTime",
+      "phonePrivate": false,
+      "isOnline": false,
+      "lastSeen": 1792051557115,
+      "createdAt": 1792051556914,
+      "role": "admin",
+      "isVerified": true,
+      "contacts": [
+        "user_1792051556935_gzs8"
+      ],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": false,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": [
+          {
+            "id": "sess_1792051556914",
+            "device": "ChatTime Web / PWA (Active)",
+            "location": "United States",
+            "lastActive": "Active now",
+            "isCurrent": true
+          }
+        ]
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 80,
+        "communityAlerts": true
+      },
+      "isRedVerified": true,
+      "verificationBadge": "red",
+      "verificationBadgeType": "red"
+    },
+    {
+      "id": "user_1792051556935_gzs8",
+      "name": "Bob Martin",
+      "username": "bob_martin_556810",
+      "chatTimeNumber": "+141566556810",
+      "phoneNumber": "+141566556810",
+      "phoneVerified": true,
+      "countryCode": "+1",
+      "countryName": "United States",
+      "isBusiness": false,
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_556810&backgroundColor=0d9488",
+      "bio": "Verified Bob",
+      "statusFeeling": "Connected on ChatTime",
+      "phonePrivate": false,
+      "isOnline": false,
+      "lastSeen": 1792051557114,
+      "createdAt": 1792051556935,
+      "role": "user",
+      "isVerified": false,
+      "contacts": [
+        "user_1792051556914_hmgq"
+      ],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": true,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": [
+          {
+            "id": "sess_1792051556935",
+            "device": "ChatTime Web / PWA (Active)",
+            "location": "United States",
+            "lastActive": "Active now",
+            "isCurrent": true
+          }
+        ]
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 80,
+        "communityAlerts": true
+      },
+      "isRedVerified": false,
+      "verificationBadge": "none",
+      "verificationBadgeType": "none"
+    },
+    {
+      "id": "user_1792051600303_2ya6",
+      "name": "Alice Saved",
+      "username": "alice_walker_600197",
+      "chatTimeNumber": "+141555600197",
+      "phoneNumber": "+141555600197",
+      "phoneVerified": true,
+      "countryCode": "+1",
+      "countryName": "United States",
+      "email": "prosperikeokwu@gmail.com",
+      "isBusiness": false,
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice_walker_600197&backgroundColor=0d9488",
+      "bio": "Profile survives the next login",
+      "statusFeeling": "Connected on ChatTime",
+      "phonePrivate": false,
+      "isOnline": false,
+      "lastSeen": 1792051600497,
+      "createdAt": 1792051600303,
+      "role": "admin",
+      "isVerified": true,
+      "contacts": [
+        "user_1792051600327_8wcj"
+      ],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": false,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": [
+          {
+            "id": "sess_1792051600303",
+            "device": "ChatTime Web / PWA (Active)",
+            "location": "United States",
+            "lastActive": "Active now",
+            "isCurrent": true
+          }
+        ]
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 80,
+        "communityAlerts": true
+      },
+      "isRedVerified": true,
+      "verificationBadge": "red",
+      "verificationBadgeType": "red"
+    },
+    {
+      "id": "user_1792051600327_8wcj",
+      "name": "Bob Martin",
+      "username": "bob_martin_600197",
+      "chatTimeNumber": "+141566600197",
+      "phoneNumber": "+141566600197",
+      "phoneVerified": true,
+      "countryCode": "+1",
+      "countryName": "United States",
+      "isBusiness": false,
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_600197&backgroundColor=0d9488",
+      "bio": "Verified Bob",
+      "statusFeeling": "Connected on ChatTime",
+      "phonePrivate": false,
+      "isOnline": false,
+      "lastSeen": 1792051600499,
+      "createdAt": 1792051600327,
+      "role": "user",
+      "isVerified": false,
+      "contacts": [
+        "user_1792051600303_2ya6"
+      ],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": true,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": [
+          {
+            "id": "sess_1792051600327",
+            "device": "ChatTime Web / PWA (Active)",
+            "location": "United States",
+            "lastActive": "Active now",
+            "isCurrent": true
+          }
+        ]
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 80,
+        "communityAlerts": true
+      },
+      "isRedVerified": false,
+      "verificationBadge": "none",
+      "verificationBadgeType": "none"
+    },
+    {
+      "id": "user_1792051656247_axxy",
+      "name": "Alice Saved",
+      "username": "alice_walker_656135",
+      "chatTimeNumber": "+141555656135",
+      "phoneNumber": "+141555656135",
+      "phoneVerified": true,
+      "countryCode": "+1",
+      "countryName": "United States",
+      "email": "prosperikeokwu@gmail.com",
+      "isBusiness": false,
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice_walker_656135&backgroundColor=0d9488",
+      "bio": "Profile survives the next login",
+      "statusFeeling": "Connected on ChatTime",
+      "phonePrivate": false,
+      "isOnline": true,
+      "lastSeen": 1792051656440,
+      "createdAt": 1792051656247,
+      "role": "admin",
+      "isVerified": true,
+      "contacts": [
+        "user_1792051656290_zsyz"
+      ],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": false,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": [
+          {
+            "id": "sess_1792051656247",
+            "device": "ChatTime Web / PWA (Active)",
+            "location": "United States",
+            "lastActive": "Active now",
+            "isCurrent": true
+          }
+        ]
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 80,
+        "communityAlerts": true
+      },
+      "isRedVerified": true,
+      "verificationBadge": "red",
+      "verificationBadgeType": "red"
+    },
+    {
+      "id": "user_1792051656290_zsyz",
+      "name": "Bob Martin",
+      "username": "bob_martin_656135",
+      "chatTimeNumber": "+141566656135",
+      "phoneNumber": "+141566656135",
+      "phoneVerified": true,
+      "countryCode": "+1",
+      "countryName": "United States",
+      "isBusiness": false,
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_656135&backgroundColor=0d9488",
+      "bio": "Verified Bob",
+      "statusFeeling": "Connected on ChatTime",
+      "phonePrivate": false,
+      "isOnline": true,
+      "lastSeen": 1792051656510,
+      "createdAt": 1792051656290,
+      "role": "user",
+      "isVerified": false,
+      "contacts": [
+        "user_1792051656247_axxy"
+      ],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": true,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": [
+          {
+            "id": "sess_1792051656290",
+            "device": "ChatTime Web / PWA (Active)",
+            "location": "United States",
+            "lastActive": "Active now",
+            "isCurrent": true
+          }
+        ]
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 80,
+        "communityAlerts": true
+      },
+      "isRedVerified": false,
+      "verificationBadge": "none",
+      "verificationBadgeType": "none"
+    },
+    {
+      "id": "user_1792055232458_1p90",
+      "name": "Alice Saved",
+      "username": "alice_walker_232365",
+      "chatTimeNumber": "+141555232365",
+      "phoneNumber": "+141555232365",
+      "phoneVerified": true,
+      "countryCode": "+1",
+      "countryName": "United States",
+      "email": "prosperikeokwu@gmail.com",
+      "isBusiness": false,
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice_walker_232365&backgroundColor=0d9488",
+      "bio": "Profile survives the next login",
+      "statusFeeling": "Connected on ChatTime",
+      "phonePrivate": false,
+      "isOnline": true,
+      "lastSeen": 1792055232591,
+      "createdAt": 1792055232458,
+      "role": "admin",
+      "isVerified": true,
+      "contacts": [
+        "user_1792055232478_nmve"
+      ],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": false,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": [
+          {
+            "id": "sess_1792055232458",
+            "device": "ChatTime Web / PWA (Active)",
+            "location": "United States",
+            "lastActive": "Active now",
+            "isCurrent": true
+          }
+        ]
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 80,
+        "communityAlerts": true
+      },
+      "isRedVerified": true,
+      "verificationBadge": "red",
+      "verificationBadgeType": "red"
+    },
+    {
+      "id": "user_1792055232478_nmve",
+      "name": "Bob Martin",
+      "username": "bob_martin_232365",
+      "chatTimeNumber": "+141566232365",
+      "phoneNumber": "+141566232365",
+      "phoneVerified": true,
+      "countryCode": "+1",
+      "countryName": "United States",
+      "isBusiness": false,
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_232365&backgroundColor=0d9488",
+      "bio": "Verified Bob",
+      "statusFeeling": "Connected on ChatTime",
+      "phonePrivate": false,
+      "isOnline": true,
+      "lastSeen": 1792055232651,
+      "createdAt": 1792055232478,
+      "role": "user",
+      "isVerified": false,
+      "contacts": [
+        "user_1792055232458_1p90"
+      ],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": true,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": [
+          {
+            "id": "sess_1792055232478",
+            "device": "ChatTime Web / PWA (Active)",
+            "location": "United States",
+            "lastActive": "Active now",
+            "isCurrent": true
+          }
+        ]
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 80,
+        "communityAlerts": true
+      },
+      "isRedVerified": false,
+      "verificationBadge": "none",
+      "verificationBadgeType": "none"
+    },
+    {
+      "id": "user_admin_fastexpress",
+      "name": "Fast Express Admin",
+      "username": "fastexpress_admin",
+      "email": "fastexpressdeliveryservices00@gmail.com",
+      "phoneNumber": "+15550199001",
+      "chatTimeNumber": "+1 (555) 019-9001",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=fastexpress_admin&backgroundColor=b91c1c",
+      "bio": "Chat Time Official Administrator",
+      "statusFeeling": "🛡️ Platform Admin",
+      "phonePrivate": false,
+      "isOnline": true,
+      "lastSeen": 1792161052464,
+      "createdAt": 1792161052464,
+      "role": "admin",
+      "isVerified": true,
+      "isRedVerified": true,
+      "verificationBadge": "red",
+      "verificationBadgeType": "red",
+      "contacts": [],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": true,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": []
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 90,
+        "communityAlerts": true
+      }
+    }
+  ],
+  "chats": [
+    {
+      "id": "c_direct_user_1792055232458_1p90_user_1792055232478_nmve",
+      "type": "direct",
+      "name": "Bob Martin",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_232365&backgroundColor=0d9488",
+      "participants": [
+        "user_1792055232458_1p90",
+        "user_1792055232478_nmve"
+      ],
+      "unreadCount": 1,
+      "folder": "direct",
+      "lastMessage": {
+        "chatId": "c_direct_user_1792055232458_1p90_user_1792055232478_nmve",
+        "senderId": "user_1792055232478_nmve",
+        "senderName": "Bob Martin",
+        "senderAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_232365&backgroundColor=0d9488",
+        "type": "text",
+        "content": "Real-time reply: Bob to Alice",
+        "participants": [
+          "user_1792055232458_1p90",
+          "user_1792055232478_nmve"
+        ],
+        "timestamp": 1792055232608,
+        "id": "msg_1792055232608_rpjn",
+        "status": "delivered",
+        "reactions": {}
+      }
+    },
+    {
+      "id": "c_direct_user_1792053929839_7s06_user_1792053929861_t5sv",
+      "type": "direct",
+      "name": "Bob Martin",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_929751&backgroundColor=0d9488",
+      "participants": [],
+      "unreadCount": 1,
+      "folder": "direct",
+      "lastMessage": {
+        "chatId": "c_direct_user_1792053929839_7s06_user_1792053929861_t5sv",
+        "senderId": "user_1792053929861_t5sv",
+        "senderName": "Bob Martin",
+        "senderAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_929751&backgroundColor=0d9488",
+        "type": "text",
+        "content": "Real-time reply: Bob to Alice",
+        "participants": [
+          "user_1792053929839_7s06",
+          "user_1792053929861_t5sv"
+        ],
+        "timestamp": 1792053930011,
+        "id": "msg_1792053930011_mycs",
+        "status": "delivered",
+        "reactions": {}
+      }
+    },
+    {
+      "id": "c_direct_user_1792053745150_wea3_user_1792053745166_asva",
+      "type": "direct",
+      "name": "Bob Martin",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_745066&backgroundColor=0d9488",
+      "participants": [],
+      "unreadCount": 1,
+      "folder": "direct",
+      "lastMessage": {
+        "chatId": "c_direct_user_1792053745150_wea3_user_1792053745166_asva",
+        "senderId": "user_1792053745166_asva",
+        "senderName": "Bob Martin",
+        "senderAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_745066&backgroundColor=0d9488",
+        "type": "text",
+        "content": "Real-time reply: Bob to Alice",
+        "participants": [
+          "user_1792053745150_wea3",
+          "user_1792053745166_asva"
+        ],
+        "timestamp": 1792053745297,
+        "id": "msg_1792053745297_1720",
+        "status": "delivered",
+        "reactions": {}
+      }
+    },
+    {
+      "id": "c_direct_user_1792051656247_axxy_user_1792051656290_zsyz",
+      "type": "direct",
+      "name": "Bob Martin",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_656135&backgroundColor=0d9488",
+      "participants": [
+        "user_1792051656247_axxy",
+        "user_1792051656290_zsyz"
+      ],
+      "unreadCount": 1,
+      "folder": "direct",
+      "lastMessage": {
+        "chatId": "c_direct_user_1792051656247_axxy_user_1792051656290_zsyz",
+        "senderId": "user_1792051656290_zsyz",
+        "senderName": "Bob Martin",
+        "senderAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_656135&backgroundColor=0d9488",
+        "type": "text",
+        "content": "Real-time reply: Bob to Alice",
+        "participants": [
+          "user_1792051656247_axxy",
+          "user_1792051656290_zsyz"
+        ],
+        "timestamp": 1792051656462,
+        "id": "msg_1792051656462_xds9",
+        "status": "delivered",
+        "reactions": {}
+      }
+    },
+    {
+      "id": "chat_chattime_support",
+      "type": "direct",
+      "name": "ChatTime Support",
+      "avatar": "/icon.svg",
+      "folder": "direct",
+      "participants": [
+        "user_chattime_support"
+      ],
+      "isPinned": true,
+      "isVerified": true,
+      "unreadCount": 0,
+      "createdAt": 1792050558322,
+      "lastMessage": {
+        "id": "msg_support_welcome",
+        "chatId": "chat_chattime_support",
+        "senderId": "user_chattime_support",
+        "senderName": "ChatTime Support",
+        "senderAvatar": "/icon.svg",
+        "type": "text",
+        "content": "Hello! Welcome to ChatTime Support. How can we help you today? Send a message here anytime.",
+        "timestamp": 1792050558322,
+        "reactions": {},
+        "status": "delivered"
+      }
+    }
+  ],
+  "messages": {
+    "chat_chattime_support": [
+      {
+        "id": "msg_support_welcome",
+        "chatId": "chat_chattime_support",
+        "senderId": "user_chattime_support",
+        "senderName": "ChatTime Support",
+        "senderAvatar": "/icon.svg",
+        "type": "text",
+        "content": "Hello! Welcome to ChatTime Support. How can we help you today? Send a message here anytime.",
+        "timestamp": 1792050558322,
+        "reactions": {},
+        "status": "delivered"
+      }
+    ],
+    "c_direct_user_1792051656247_axxy_user_1792051656290_zsyz": [
+      {
+        "chatId": "c_direct_user_1792051656247_axxy_user_1792051656290_zsyz",
+        "senderId": "user_1792051656247_axxy",
+        "senderName": "Alice Saved",
+        "senderAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice_walker_656135&backgroundColor=0d9488",
+        "type": "text",
+        "content": "Real-time test message: Alice to Bob",
+        "participants": [
+          "user_1792051656247_axxy",
+          "user_1792051656290_zsyz"
+        ],
+        "timestamp": 1792051656456,
+        "id": "msg_1792051656456_ml4j",
+        "status": "read",
+        "reactions": {},
+        "readAt": 1792051656459
+      },
+      {
+        "chatId": "c_direct_user_1792051656247_axxy_user_1792051656290_zsyz",
+        "senderId": "user_1792051656290_zsyz",
+        "senderName": "Bob Martin",
+        "senderAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_656135&backgroundColor=0d9488",
+        "type": "text",
+        "content": "Real-time reply: Bob to Alice",
+        "participants": [
+          "user_1792051656247_axxy",
+          "user_1792051656290_zsyz"
+        ],
+        "timestamp": 1792051656462,
+        "id": "msg_1792051656462_xds9",
+        "status": "delivered",
+        "reactions": {}
+      }
+    ],
+    "c_direct_user_1792053745150_wea3_user_1792053745166_asva": [
+      {
+        "chatId": "c_direct_user_1792053745150_wea3_user_1792053745166_asva",
+        "senderId": "user_1792053745150_wea3",
+        "senderName": "Alice Saved",
+        "senderAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice_walker_745066&backgroundColor=0d9488",
+        "type": "text",
+        "content": "Real-time test message: Alice to Bob",
+        "participants": [
+          "user_1792053745150_wea3",
+          "user_1792053745166_asva"
+        ],
+        "timestamp": 1792053745290,
+        "id": "msg_1792053745290_pnai",
+        "status": "read",
+        "reactions": {},
+        "readAt": 1792053745294
+      },
+      {
+        "chatId": "c_direct_user_1792053745150_wea3_user_1792053745166_asva",
+        "senderId": "user_1792053745166_asva",
+        "senderName": "Bob Martin",
+        "senderAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_745066&backgroundColor=0d9488",
+        "type": "text",
+        "content": "Real-time reply: Bob to Alice",
+        "participants": [
+          "user_1792053745150_wea3",
+          "user_1792053745166_asva"
+        ],
+        "timestamp": 1792053745297,
+        "id": "msg_1792053745297_1720",
+        "status": "delivered",
+        "reactions": {}
+      }
+    ],
+    "c_direct_user_1792053929839_7s06_user_1792053929861_t5sv": [
+      {
+        "chatId": "c_direct_user_1792053929839_7s06_user_1792053929861_t5sv",
+        "senderId": "user_1792053929839_7s06",
+        "senderName": "Alice Saved",
+        "senderAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice_walker_929751&backgroundColor=0d9488",
+        "type": "text",
+        "content": "Real-time test message: Alice to Bob",
+        "participants": [
+          "user_1792053929839_7s06",
+          "user_1792053929861_t5sv"
+        ],
+        "timestamp": 1792053930005,
+        "id": "msg_1792053930005_iyym",
+        "status": "read",
+        "reactions": {},
+        "readAt": 1792053930009
+      },
+      {
+        "chatId": "c_direct_user_1792053929839_7s06_user_1792053929861_t5sv",
+        "senderId": "user_1792053929861_t5sv",
+        "senderName": "Bob Martin",
+        "senderAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_929751&backgroundColor=0d9488",
+        "type": "text",
+        "content": "Real-time reply: Bob to Alice",
+        "participants": [
+          "user_1792053929839_7s06",
+          "user_1792053929861_t5sv"
+        ],
+        "timestamp": 1792053930011,
+        "id": "msg_1792053930011_mycs",
+        "status": "delivered",
+        "reactions": {}
+      }
+    ],
+    "c_direct_user_1792055232458_1p90_user_1792055232478_nmve": [
+      {
+        "chatId": "c_direct_user_1792055232458_1p90_user_1792055232478_nmve",
+        "senderId": "user_1792055232458_1p90",
+        "senderName": "Alice Saved",
+        "senderAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice_walker_232365&backgroundColor=0d9488",
+        "type": "text",
+        "content": "Real-time test message: Alice to Bob",
+        "participants": [
+          "user_1792055232458_1p90",
+          "user_1792055232478_nmve"
+        ],
+        "timestamp": 1792055232601,
+        "id": "msg_1792055232601_kdud",
+        "status": "read",
+        "reactions": {},
+        "readAt": 1792055232605
+      },
+      {
+        "chatId": "c_direct_user_1792055232458_1p90_user_1792055232478_nmve",
+        "senderId": "user_1792055232478_nmve",
+        "senderName": "Bob Martin",
+        "senderAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=bob_martin_232365&backgroundColor=0d9488",
+        "type": "text",
+        "content": "Real-time reply: Bob to Alice",
+        "participants": [
+          "user_1792055232458_1p90",
+          "user_1792055232478_nmve"
+        ],
+        "timestamp": 1792055232608,
+        "id": "msg_1792055232608_rpjn",
+        "status": "delivered",
+        "reactions": {}
+      }
+    ]
+  },
+  "calls": [],
+  "stories": [],
+  "statusHistory": [],
+  "channels": [
+    {
+      "id": "chan_global",
+      "name": "ChatTime Global Community",
+      "handle": "global",
+      "description": "The official international hub for ChatTime users. News, product updates, and discussions.",
+      "category": "Community",
+      "avatar": "/src/assets/images/chattime_brand_logo_1790475904458.jpg",
+      "bannerUrl": "/src/assets/images/chattime_community_banner_1790475940372.jpg",
+      "creatorId": "system",
+      "subscriberCount": 1,
+      "isSubscribed": false,
+      "isVerified": true,
+      "chatId": "chat_global_community",
+      "members": [],
+      "memberRoles": {},
+      "announcements": [
+        {
+          "id": "cann_welcome",
+          "communityId": "chan_global",
+          "title": "Welcome to ChatTime",
+          "content": "End-to-end encrypted messaging, peer-to-peer WebRTC calling, and PWA offline support are now live.",
+          "authorId": "system",
+          "authorName": "ChatTime",
+          "authorAvatar": "/src/assets/images/chattime_brand_logo_1790475904458.jpg",
+          "priority": "important",
+          "timestamp": 1790637000000
+        }
+      ],
+      "posts": []
+    }
+  ],
+  "reports": [],
+  "announcements": [],
+  "otpCodes": {
+    "+15550199001": {
+      "code": "149902",
+      "phone": "+15550199001",
+      "expiresAt": 1792246916761
+    }
+  },
+  "auditLogs": [
+    {
+      "id": "log_1792244099446_lmq6",
+      "timestamp": 1792244099446,
+      "adminId": "user_admin_prosper",
+      "adminName": "Prosper Ikeokwu",
+      "action": "ADMIN_LOGIN_SUCCESS",
+      "details": "Administrator logged into management portal as SUPER_ADMIN.",
+      "status": "success",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "log_1792244095885_a15e",
+      "timestamp": 1792244095885,
+      "adminId": "user_admin_fastexpress",
+      "adminName": "Fast Express Admin",
+      "action": "ADMIN_LOGIN_SUCCESS",
+      "details": "Administrator logged into management portal as SUPER_ADMIN.",
+      "status": "success",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "log_1792159746470_4p0n",
+      "timestamp": 1792159746470,
+      "adminId": "user_admin_prosper",
+      "adminName": "Prosper Ikeokwu",
+      "action": "USER_VERIFIED_BLUE_TICK",
+      "targetId": "user_1792159729390_y5u5",
+      "targetName": "Test Regular User",
+      "details": "Verification blue tick granted."
+    },
+    {
+      "id": "log_1792055232597_tihw",
+      "timestamp": 1792055232597,
+      "adminId": "user_1792055232458_1p90",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowCalls=enabled"
+    },
+    {
+      "id": "log_1792055232594_zeki",
+      "timestamp": 1792055232594,
+      "adminId": "user_1792055232458_1p90",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowCalls=disabled"
+    },
+    {
+      "id": "log_1792055232559_kwqw",
+      "timestamp": 1792055232559,
+      "adminId": "user_1792055232458_1p90",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowRegistration=enabled, allowMessaging=enabled, allowCalls=enabled, allowGroups=enabled, allowCommunities=enabled, voiceEffectsEnabled=enabled, voiceModifiers=enabled"
+    },
+    {
+      "id": "log_1792055232542_gds2",
+      "timestamp": 1792055232542,
+      "adminId": "user_1792055232458_1p90",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowRegistration=disabled, allowMessaging=disabled, allowCalls=disabled, allowGroups=disabled, allowCommunities=disabled, voiceEffectsEnabled=disabled"
+    },
+    {
+      "id": "log_1792055232531_2o7o",
+      "timestamp": 1792055232531,
+      "adminId": "user_1792055232458_1p90",
+      "adminName": "Alice Saved",
+      "action": "USER_ROLE_UPDATED",
+      "targetId": "user_1792055232478_nmve",
+      "targetName": "Bob Martin",
+      "details": "Role changed to user."
+    },
+    {
+      "id": "log_1792055232526_xh0m",
+      "timestamp": 1792055232526,
+      "adminId": "user_1792055232458_1p90",
+      "adminName": "Alice Saved",
+      "action": "USER_VERIFIED_BLUE_TICK",
+      "targetId": "user_1792055232478_nmve",
+      "targetName": "Bob Martin",
+      "details": "Verification blue tick granted."
+    },
+    {
+      "id": "log_1792055232519_5axc",
+      "timestamp": 1792055232519,
+      "adminId": "user_1792055232458_1p90",
+      "adminName": "Alice Saved",
+      "action": "USER_ROLE_UPDATED",
+      "targetId": "user_1792055232478_nmve",
+      "targetName": "Bob Martin",
+      "details": "Role changed to moderator."
+    },
+    {
+      "id": "log_1792053930068_b1dc",
+      "timestamp": 1792053930068,
+      "adminId": "Bob Martin",
+      "adminName": "Bob Martin",
+      "action": "USER_ACCOUNT_DELETED",
+      "targetId": "user_1792053929861_t5sv",
+      "targetName": "Bob Martin (@bob_martin_929751)",
+      "details": "Account was permanently purged from database."
+    },
+    {
+      "id": "log_1792053930066_oof8",
+      "timestamp": 1792053930066,
+      "adminId": "Alice Saved",
+      "adminName": "Alice Saved",
+      "action": "USER_ACCOUNT_DELETED",
+      "targetId": "user_1792053929839_7s06",
+      "targetName": "Alice Saved (@alice_walker_929751)",
+      "details": "Account was permanently purged from database."
+    },
+    {
+      "id": "log_1792053930002_pnf1",
+      "timestamp": 1792053930002,
+      "adminId": "user_1792053929839_7s06",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowCalls=enabled"
+    },
+    {
+      "id": "log_1792053929998_balw",
+      "timestamp": 1792053929998,
+      "adminId": "user_1792053929839_7s06",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowCalls=disabled"
+    },
+    {
+      "id": "log_1792053929955_a3re",
+      "timestamp": 1792053929955,
+      "adminId": "user_1792053929839_7s06",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowRegistration=enabled, allowMessaging=enabled, allowCalls=enabled, allowGroups=enabled, allowCommunities=enabled, voiceEffectsEnabled=enabled, voiceModifiers=enabled"
+    },
+    {
+      "id": "log_1792053929922_o0ui",
+      "timestamp": 1792053929922,
+      "adminId": "user_1792053929839_7s06",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowRegistration=disabled, allowMessaging=disabled, allowCalls=disabled, allowGroups=disabled, allowCommunities=disabled, voiceEffectsEnabled=disabled"
+    },
+    {
+      "id": "log_1792053929914_mune",
+      "timestamp": 1792053929915,
+      "adminId": "user_1792053929839_7s06",
+      "adminName": "Alice Saved",
+      "action": "USER_ROLE_UPDATED",
+      "targetId": "user_1792053929861_t5sv",
+      "targetName": "Bob Martin",
+      "details": "Role changed to user."
+    },
+    {
+      "id": "log_1792053929910_r46u",
+      "timestamp": 1792053929910,
+      "adminId": "user_1792053929839_7s06",
+      "adminName": "Alice Saved",
+      "action": "USER_VERIFIED_BLUE_TICK",
+      "targetId": "user_1792053929861_t5sv",
+      "targetName": "Bob Martin",
+      "details": "Verification blue tick granted."
+    },
+    {
+      "id": "log_1792053929902_kelt",
+      "timestamp": 1792053929902,
+      "adminId": "user_1792053929839_7s06",
+      "adminName": "Alice Saved",
+      "action": "USER_ROLE_UPDATED",
+      "targetId": "user_1792053929861_t5sv",
+      "targetName": "Bob Martin",
+      "details": "Role changed to moderator."
+    },
+    {
+      "id": "log_1792053745319_jm4w",
+      "timestamp": 1792053745319,
+      "adminId": "Bob Martin",
+      "adminName": "Bob Martin",
+      "action": "USER_ACCOUNT_DELETED",
+      "targetId": "user_1792053745166_asva",
+      "targetName": "Bob Martin (@bob_martin_745066)",
+      "details": "Account was permanently purged from database."
+    },
+    {
+      "id": "log_1792053745318_3kjn",
+      "timestamp": 1792053745318,
+      "adminId": "Alice Saved",
+      "adminName": "Alice Saved",
+      "action": "USER_ACCOUNT_DELETED",
+      "targetId": "user_1792053745150_wea3",
+      "targetName": "Alice Saved (@alice_walker_745066)",
+      "details": "Account was permanently purged from database."
+    },
+    {
+      "id": "log_1792053745287_ye45",
+      "timestamp": 1792053745287,
+      "adminId": "user_1792053745150_wea3",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowCalls=enabled"
+    },
+    {
+      "id": "log_1792053745283_5x8g",
+      "timestamp": 1792053745283,
+      "adminId": "user_1792053745150_wea3",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowCalls=disabled"
+    },
+    {
+      "id": "log_1792053745249_gil8",
+      "timestamp": 1792053745249,
+      "adminId": "user_1792053745150_wea3",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowRegistration=enabled, allowMessaging=enabled, allowCalls=enabled, allowGroups=enabled, allowCommunities=enabled, voiceEffectsEnabled=enabled, voiceModifiers=enabled"
+    },
+    {
+      "id": "log_1792053745221_jlqy",
+      "timestamp": 1792053745221,
+      "adminId": "user_1792053745150_wea3",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowRegistration=disabled, allowMessaging=disabled, allowCalls=disabled, allowGroups=disabled, allowCommunities=disabled, voiceEffectsEnabled=disabled"
+    },
+    {
+      "id": "log_1792053745215_fhal",
+      "timestamp": 1792053745215,
+      "adminId": "user_1792053745150_wea3",
+      "adminName": "Alice Saved",
+      "action": "USER_ROLE_UPDATED",
+      "targetId": "user_1792053745166_asva",
+      "targetName": "Bob Martin",
+      "details": "Role changed to user."
+    },
+    {
+      "id": "log_1792053745210_chnw",
+      "timestamp": 1792053745210,
+      "adminId": "user_1792053745150_wea3",
+      "adminName": "Alice Saved",
+      "action": "USER_VERIFIED_BLUE_TICK",
+      "targetId": "user_1792053745166_asva",
+      "targetName": "Bob Martin",
+      "details": "Verification blue tick granted."
+    },
+    {
+      "id": "log_1792053745202_vmbo",
+      "timestamp": 1792053745202,
+      "adminId": "user_1792053745150_wea3",
+      "adminName": "Alice Saved",
+      "action": "USER_ROLE_UPDATED",
+      "targetId": "user_1792053745166_asva",
+      "targetName": "Bob Martin",
+      "details": "Role changed to moderator."
+    },
+    {
+      "id": "log_1792051656453_px2x",
+      "timestamp": 1792051656453,
+      "adminId": "user_1792051656247_axxy",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowCalls=enabled"
+    },
+    {
+      "id": "log_1792051656443_a7dg",
+      "timestamp": 1792051656443,
+      "adminId": "user_1792051656247_axxy",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowCalls=disabled"
+    },
+    {
+      "id": "log_1792051656412_ea3v",
+      "timestamp": 1792051656412,
+      "adminId": "user_1792051656247_axxy",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowRegistration=enabled, allowMessaging=enabled, allowCalls=enabled, allowGroups=enabled, allowCommunities=enabled, voiceEffectsEnabled=enabled, voiceModifiers=enabled"
+    },
+    {
+      "id": "log_1792051656391_kdgn",
+      "timestamp": 1792051656391,
+      "adminId": "user_1792051656247_axxy",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowRegistration=disabled, allowMessaging=disabled, allowCalls=disabled, allowGroups=disabled, allowCommunities=disabled, voiceEffectsEnabled=disabled"
+    },
+    {
+      "id": "log_1792051656359_k3zg",
+      "timestamp": 1792051656359,
+      "adminId": "user_1792051656247_axxy",
+      "adminName": "Alice Saved",
+      "action": "USER_ROLE_UPDATED",
+      "targetId": "user_1792051656290_zsyz",
+      "targetName": "Bob Martin",
+      "details": "Role changed to user."
+    },
+    {
+      "id": "log_1792051656351_hnba",
+      "timestamp": 1792051656351,
+      "adminId": "user_1792051656247_axxy",
+      "adminName": "Alice Saved",
+      "action": "USER_VERIFIED_BLUE_TICK",
+      "targetId": "user_1792051656290_zsyz",
+      "targetName": "Bob Martin",
+      "details": "Verification blue tick granted."
+    },
+    {
+      "id": "log_1792051656337_yync",
+      "timestamp": 1792051656337,
+      "adminId": "user_1792051656247_axxy",
+      "adminName": "Alice Saved",
+      "action": "USER_ROLE_UPDATED",
+      "targetId": "user_1792051656290_zsyz",
+      "targetName": "Bob Martin",
+      "details": "Role changed to moderator."
+    },
+    {
+      "id": "log_1792051600455_xq5y",
+      "timestamp": 1792051600455,
+      "adminId": "user_1792051600303_2ya6",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowCalls=enabled"
+    },
+    {
+      "id": "log_1792051600451_ccyf",
+      "timestamp": 1792051600451,
+      "adminId": "user_1792051600303_2ya6",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowCalls=disabled"
+    },
+    {
+      "id": "log_1792051600393_hntd",
+      "timestamp": 1792051600393,
+      "adminId": "user_1792051600303_2ya6",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowRegistration=disabled, allowMessaging=disabled, allowCalls=disabled, allowGroups=disabled, allowCommunities=disabled, voiceEffectsEnabled=disabled, voiceModifiers=disabled"
+    },
+    {
+      "id": "log_1792051600386_1a69",
+      "timestamp": 1792051600386,
+      "adminId": "user_1792051600303_2ya6",
+      "adminName": "Alice Saved",
+      "action": "USER_ROLE_UPDATED",
+      "targetId": "user_1792051600327_8wcj",
+      "targetName": "Bob Martin",
+      "details": "Role changed to user."
+    },
+    {
+      "id": "log_1792051600376_m70q",
+      "timestamp": 1792051600376,
+      "adminId": "user_1792051600303_2ya6",
+      "adminName": "Alice Saved",
+      "action": "USER_VERIFIED_BLUE_TICK",
+      "targetId": "user_1792051600327_8wcj",
+      "targetName": "Bob Martin",
+      "details": "Verification blue tick granted."
+    },
+    {
+      "id": "log_1792051600366_5b5j",
+      "timestamp": 1792051600366,
+      "adminId": "user_1792051600303_2ya6",
+      "adminName": "Alice Saved",
+      "action": "USER_ROLE_UPDATED",
+      "targetId": "user_1792051600327_8wcj",
+      "targetName": "Bob Martin",
+      "details": "Role changed to moderator."
+    },
+    {
+      "id": "log_1792051557099_ikbx",
+      "timestamp": 1792051557099,
+      "adminId": "user_1792051556914_hmgq",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowCalls=enabled"
+    },
+    {
+      "id": "log_1792051557059_1p4e",
+      "timestamp": 1792051557059,
+      "adminId": "user_1792051556914_hmgq",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowCalls=disabled"
+    },
+    {
+      "id": "log_1792051557006_3rqs",
+      "timestamp": 1792051557006,
+      "adminId": "user_1792051556914_hmgq",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowRegistration=disabled, allowMessaging=disabled, allowCalls=disabled, allowGroups=disabled, allowCommunities=disabled, voiceEffectsEnabled=disabled, voiceModifiers=disabled"
+    },
+    {
+      "id": "log_1792051556999_ixfh",
+      "timestamp": 1792051556999,
+      "adminId": "user_1792051556914_hmgq",
+      "adminName": "Alice Saved",
+      "action": "USER_ROLE_UPDATED",
+      "targetId": "user_1792051556935_gzs8",
+      "targetName": "Bob Martin",
+      "details": "Role changed to user."
+    },
+    {
+      "id": "log_1792051556990_xevg",
+      "timestamp": 1792051556990,
+      "adminId": "user_1792051556914_hmgq",
+      "adminName": "Alice Saved",
+      "action": "USER_VERIFIED_BLUE_TICK",
+      "targetId": "user_1792051556935_gzs8",
+      "targetName": "Bob Martin",
+      "details": "Verification blue tick granted."
+    },
+    {
+      "id": "log_1792051556982_4gxy",
+      "timestamp": 1792051556982,
+      "adminId": "user_1792051556914_hmgq",
+      "adminName": "Alice Saved",
+      "action": "USER_ROLE_UPDATED",
+      "targetId": "user_1792051556935_gzs8",
+      "targetName": "Bob Martin",
+      "details": "Role changed to moderator."
+    },
+    {
+      "id": "log_1792051505584_518m",
+      "timestamp": 1792051505584,
+      "adminId": "user_1792051505509_319i",
+      "adminName": "Alice Saved",
+      "action": "PLATFORM_FEATURES_UPDATED",
+      "details": "allowRegistration=disabled, allowMessaging=disabled, allowCalls=disabled, allowGroups=disabled, allowCommunities=disabled, voiceEffectsEnabled=disabled, voiceModifiers=disabled"
+    },
+    {
+      "id": "log_1792051505577_efus",
+      "timestamp": 1792051505577,
+      "adminId": "user_1792051505509_319i",
+      "adminName": "Alice Saved",
+      "action": "USER_ROLE_UPDATED",
+      "targetId": "user_1792051505528_b8ce",
+      "targetName": "Bob Martin",
+      "details": "Role changed to user."
+    },
+    {
+      "id": "log_1792051505572_9nlg",
+      "timestamp": 1792051505572,
+      "adminId": "user_1792051505509_319i",
+      "adminName": "Alice Saved",
+      "action": "USER_VERIFIED_BLUE_TICK",
+      "targetId": "user_1792051505528_b8ce",
+      "targetName": "Bob Martin",
+      "details": "Verification blue tick granted."
+    },
+    {
+      "id": "log_1792051505564_xga4",
+      "timestamp": 1792051505564,
+      "adminId": "user_1792051505509_319i",
+      "adminName": "Alice Saved",
+      "action": "USER_ROLE_UPDATED",
+      "targetId": "user_1792051505528_b8ce",
+      "targetName": "Bob Martin",
+      "details": "Role changed to moderator."
+    },
+    {
+      "id": "log_1790691161084_irnr",
+      "timestamp": 1790691161084,
+      "adminId": "Bob Martin",
+      "adminName": "Bob Martin",
+      "action": "USER_ACCOUNT_DELETED",
+      "targetId": "user_1790691160992_p73v",
+      "targetName": "Bob Martin (@bob_martin_test)",
+      "details": "Account was permanently purged from database."
+    },
+    {
+      "id": "log_1790691161079_wj5p",
+      "timestamp": 1790691161079,
+      "adminId": "Alice Walker",
+      "adminName": "Alice Walker",
+      "action": "USER_ACCOUNT_DELETED",
+      "targetId": "user_1790691160974_umfp",
+      "targetName": "Alice Walker (@alice_walker_test)",
+      "details": "Account was permanently purged from database."
+    }
+  ],
+  "pushSubscriptions": {},
+  "authSessions": {
+    "cf41200e3e5ee6100e8803f96a2807eeb8d47acd094914882227f90d0537bfd9": {
+      "userId": "user_1792051460792_qaqf",
+      "expiresAt": 1794643460792
+    },
+    "d6a7213d3752c3f70d42a9d6e3834665c0ab07f4eda9ddc871484f11a4f73898": {
+      "userId": "user_1792051460809_3sjb",
+      "expiresAt": 1794643460809
+    },
+    "a9410e6c337e8a58453f929205538237ca7dbfe9fd3da6fbdc054f02515e1cb2": {
+      "userId": "user_1792051460792_qaqf",
+      "expiresAt": 1794643460828
+    },
+    "0d047590d5d9e6ad2472c0e07256041bf021c20c2e39d57dd9c5ccf558b4d88b": {
+      "userId": "user_1792051505509_319i",
+      "expiresAt": 1794643505510
+    },
+    "dfddba419f3ebb7b744f2279ea119d5a96475fad274b25419d1effa656a8ff2f": {
+      "userId": "user_1792051505528_b8ce",
+      "expiresAt": 1794643505528
+    },
+    "d80ff8d40c56e869362b9dd09ef0eb3b3264ee6b7086a95b9f1c8cd8656a0542": {
+      "userId": "user_1792051505509_319i",
+      "expiresAt": 1794643505544
+    },
+    "3f05a09881d327a4e36b05aeaf8dc6686256d7c20dd5c5bcdfd15304d8f6ff19": {
+      "userId": "user_1792051505509_319i",
+      "expiresAt": 1794643505549
+    },
+    "41f16cea2ca568e83ed63013dc4f9ec6f98e5c95b30169aaea5d42e121e88cc5": {
+      "userId": "user_1792051505528_b8ce",
+      "expiresAt": 1794643505555
+    },
+    "ce1a4e6a3c0e740f36bc98bec911923ddc63b129f2e561b87b34d53df92a8222": {
+      "userId": "user_1792051556914_hmgq",
+      "expiresAt": 1794643556915
+    },
+    "9297b3e54bd32d6abf9fdbecf1b3c29c4234cbab9f88c0d2739d9b7543a48dd3": {
+      "userId": "user_1792051556935_gzs8",
+      "expiresAt": 1794643556936
+    },
+    "d67066de3cc826e930f82295502df290175290745b9d0979a5d484f186cd739f": {
+      "userId": "user_1792051556914_hmgq",
+      "expiresAt": 1794643556956
+    },
+    "0b41e08e2d11fc7f8fe70d8fa4245601ec385c7b196e2e34f7eb28b949eeacaa": {
+      "userId": "user_1792051556914_hmgq",
+      "expiresAt": 1794643556962
+    },
+    "4b25dd15f654c8810eb9d79b4f7748ed5aebdc1af05c873dfe02eebc62ffbeea": {
+      "userId": "user_1792051556935_gzs8",
+      "expiresAt": 1794643556968
+    },
+    "ef60a96b9cf95dc83ca9e2e63d4e3d6479d546272db83996dfa2642708826a22": {
+      "userId": "user_1792051600303_2ya6",
+      "expiresAt": 1794643600304
+    },
+    "7a842e5e6ee1d95d23d79c49c0cdaa400db4a944a800ca2a7f5e31f099bcebe1": {
+      "userId": "user_1792051600327_8wcj",
+      "expiresAt": 1794643600327
+    },
+    "941240440b28c277505bcc86a46823f9b3bb2d3433800a19796707a7d8bb5dce": {
+      "userId": "user_1792051600303_2ya6",
+      "expiresAt": 1794643600345
+    },
+    "fba860b0e4056dba85f7d246d5626413a92b39a00c2f8fbaa88308fa7289c8da": {
+      "userId": "user_1792051600303_2ya6",
+      "expiresAt": 1794643600349
+    },
+    "beea2db6ece85c2e385efa5b4d9bb947da524b1b5b8a63bc15d47dcb27dc2e41": {
+      "userId": "user_1792051600327_8wcj",
+      "expiresAt": 1794643600353
+    },
+    "33463077df6e45a842f04a4cfc18de840a7228cac21e1da838981ecffe0f16b9": {
+      "userId": "user_1792051656247_axxy",
+      "expiresAt": 1794643656247
+    },
+    "ab6bcb76c5cb7812a7d5c074b3ceeed7395010061be18e922a1e51df4cbd5cbd": {
+      "userId": "user_1792051656290_zsyz",
+      "expiresAt": 1794643656290
+    },
+    "12f0aa7304c9de24f5fbda75234a812dae3d41a8eb0b606e20b4c5eb2c5b06a0": {
+      "userId": "user_1792051656247_axxy",
+      "expiresAt": 1794643656306
+    },
+    "2ddac6e973bb45fc610d87fca4e40eb80c9ec4d84fb13bfb9625a9f1a8fa06d1": {
+      "userId": "user_1792051656290_zsyz",
+      "expiresAt": 1794643656319
+    },
+    "6b866b82150b0930b7a93c6a34437cb035e4ed7d3d8abf94bae48dd155790821": {
+      "userId": "user_1792053745150_wea3",
+      "expiresAt": 1794645745150
+    },
+    "96f17e9f09f1c278cc38a91f07256c5eda0caf74b21160333275c42fcd9d181d": {
+      "userId": "user_1792053745166_asva",
+      "expiresAt": 1794645745166
+    },
+    "61cc421534bdfaa41d68fa4630e1db7052a8df8ef7740daf0ec751d467072315": {
+      "userId": "user_1792053745150_wea3",
+      "expiresAt": 1794645745182
+    },
+    "6f19ff24fb4c5731bdd1fd95563d0781537f3d5e70a037573aad2d77cd91c249": {
+      "userId": "user_1792053745166_asva",
+      "expiresAt": 1794645745192
+    },
+    "63e25923813fc2e5114fda7c9b296103ad1522bdf28b5006b412d75226353a98": {
+      "userId": "user_1792053929839_7s06",
+      "expiresAt": 1794645929841
+    },
+    "8398295f2284dd40d067448045e6e153dc809a57482f4af7e4eb5a9f755d4d3c": {
+      "userId": "user_1792053929861_t5sv",
+      "expiresAt": 1794645929861
+    },
+    "c588d272facff3114dc64b91bc97fb8bed96f7f2409a8b18e70fa6e89eda61e7": {
+      "userId": "user_1792053929839_7s06",
+      "expiresAt": 1794645929878
+    },
+    "cb5d1ebef82aa3b8e0557b5299befa018faa25ddc8b5b6f6f838f86872a97bbd": {
+      "userId": "user_1792053929861_t5sv",
+      "expiresAt": 1794645929889
+    },
+    "882f9e22313e4f1785002cf5d1611caf886e144cab4693cb46027f310ea16c4b": {
+      "userId": "user_1792055232458_1p90",
+      "expiresAt": 1794647232459
+    },
+    "47edc9d5e0ef14e258c2008e42ede283b11f8e51b08f9b903d26e90b040692d4": {
+      "userId": "user_1792055232478_nmve",
+      "expiresAt": 1794647232479
+    },
+    "cbd64bfa1159ae22e2957c626d04e7329fe70082b94295c16f2c70e476c15bc4": {
+      "userId": "user_1792055232458_1p90",
+      "expiresAt": 1794647232495
+    },
+    "674fc52aa1cbe258c3b4215ab05d39eb94f23798b5eb698959ceccfac5f6fa71": {
+      "userId": "user_1792055232478_nmve",
+      "expiresAt": 1794647232506
+    },
+    "955189779d6bb6ba3cbd6e53d81e38aff7c64eb349eb10eb8232452c77297bf7": {
+      "userId": "user_1792159729390_y5u5",
+      "expiresAt": 1794751729390
+    },
+    "7edfdacfbd8eb7d01a853f08e929dff855252b9c161c190c7c65aaae06126ad8": {
+      "userId": "user_admin_prosper",
+      "expiresAt": 1794751746450
+    },
+    "18b8b7639d1f0007885c4e82f12c13e9d4928ffa72846515feda717f57c52503": {
+      "userId": "user_admin_fastexpress",
+      "expiresAt": 1794753052465
+    },
+    "181c6c4311cd1d41d0e7f41bd0a2db6a3392affa493979d92e1701d1006bd8d8": {
+      "userId": "user_admin_prosper",
+      "expiresAt": 1794753052485
+    },
+    "ad65c2e41cd65812a0cfe00a14bbe0129342c55700cf5f7d4f9f8d577d4035aa": {
+      "userId": "user_admin_fastexpress",
+      "expiresAt": 1794836095884
+    },
+    "ee5f5b5b2fa2c852cf38fdcfed1c86b4fbcb91f64de09cfb3df32cbf8414ccc1": {
+      "userId": "user_admin_prosper",
+      "expiresAt": 1794836099445
+    }
+  },
+  "platformFeatures": {
+    "allowRegistration": true,
+    "allowMessaging": true,
+    "allowCalls": true,
+    "allowVideoCalls": true,
+    "allowGroupCalls": true,
+    "allowGroups": true,
+    "allowCommunities": true,
+    "allowVoiceChanger": true,
+    "allowFileSharing": true,
+    "allowMediaSharing": true,
+    "allowReactions": true,
+    "allowStories": true,
+    "allowNotifications": true,
+    "voiceEffectsEnabled": true,
+    "voiceModifiers": [
+      "American 🇺🇸",
+      "British 🇬🇧",
+      "Indian 🇮🇳",
+      "Asian 🌏",
+      "Australian 🇦🇺",
+      "Jamaican 🇯🇲"
+    ]
+  },
+  "maintenanceMode": false
+}

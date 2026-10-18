@@ -1,0 +1,12 @@
+{
+  "name": "Chat Time Business ",
+  "description": "A secure, all-in-one messaging platform featuring private chats, group calls, and discoverable communities with enhanced user privacy.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

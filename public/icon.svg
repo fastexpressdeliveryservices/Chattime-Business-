@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <defs>
+    <linearGradient id="ctBgGrad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#450a0a" />
+      <stop offset="50%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="ctAccentGrad" x1="96" y1="96" x2="416" y2="416" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#f87171" />
+      <stop offset="50%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#b91c1c" />
+    </linearGradient>
+    <linearGradient id="ctGlowGrad" x1="128" y1="128" x2="384" y2="384" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#991b1b" stop-opacity="0.0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Outer Squircle Red Chat Tile Background -->
+  <rect width="512" height="512" rx="116" fill="url(#ctBgGrad)" />
+  <rect x="8" y="8" width="496" height="496" rx="108" stroke="#ef4444" stroke-opacity="0.38" stroke-width="6" />
+
+  <!-- Radiant Ambient Glow -->
+  <circle cx="256" cy="256" r="180" fill="url(#ctGlowGrad)" />
+
+  <!-- Primary Chat Bubble Base in Radiant Red -->
+  <path
+    d="M256 108C167.634 108 96 171.576 96 250C96 285.12 110.36 317.28 134.25 342.12C129.6 364.84 116.82 387.4 115.1 390.3C112.46 394.75 115.92 400.4 121.08 399.9C150.42 397.05 178.18 386.2 197.8 376.4C216.12 382.65 235.68 386 256 386C344.366 386 416 322.424 416 244C416 165.576 344.366 108 256 108Z"
+    fill="url(#ctAccentGrad)"
+  />
+
+  <!-- Central Dark Clock Face -->
+  <circle cx="256" cy="246" r="88" fill="#020617" />
+  <circle cx="256" cy="246" r="76" stroke="#f87171" stroke-width="6" stroke-opacity="0.45" stroke-dasharray="18 10" />
+
+  <!-- Clock Hands / Real-Time Vector (Chat Time) -->
+  <path
+    d="M256 192V246L294 268"
+    stroke="#ffffff"
+    stroke-width="16"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="256" cy="246" r="12" fill="#ef4444" />
+
+  <!-- Active Status Beacon in Crimson Red -->
+  <circle cx="356" cy="156" r="24" fill="#020617" />
+  <circle cx="356" cy="156" r="16" fill="#ef4444" />
+  <circle cx="356" cy="156" r="7" fill="#fecaca" />
+</svg>
