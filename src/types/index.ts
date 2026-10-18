@@ -130,6 +130,8 @@ export interface User {
     readReceipts: boolean;
     discoverable: boolean;
     whoCanCallMe: 'everyone' | 'contacts';
+    countryVisibility?: 'everyone' | 'contacts' | 'nobody';
+    joinDateVisibility?: 'everyone' | 'contacts' | 'nobody';
   };
   securitySettings: {
     twoFactorEnabled: boolean;

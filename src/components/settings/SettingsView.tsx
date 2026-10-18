@@ -33,6 +33,11 @@ import {
   MoreVertical,
   ExternalLink,
   Zap,
+  HelpCircle,
+  MessageSquare,
+  FileText,
+  ChevronRight,
+  Info,
 } from 'lucide-react';
 import { useChatTime } from '../../context/ChatTimeContext';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
@@ -73,16 +78,93 @@ export const SettingsView: React.FC = () => {
     deleteMyAccount,
     addToast,
     setActiveTab,
+    startDirectChat,
+    sendMessage,
     setVerificationBadgeByAdmin,
   } = useChatTime();
 
   const [activeSection, setActiveSection] = useState<
-    'profile' | 'appearance' | 'notifications' | 'language' | 'privacy' | 'security' | 'app'
+    'profile' | 'appearance' | 'notifications' | 'language' | 'privacy' | 'security' | 'help' | 'app'
   >('profile');
   const [langSearch, setLangSearch] = useState('');
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  // Help Centre state (WhatsApp styled)
+  const [helpSearch, setHelpSearch] = useState('');
+  const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
+  const [contactSubject, setContactSubject] = useState('Account & Login');
+  const [contactMessage, setContactMessage] = useState('');
+  const [isSendingSupportMsg, setIsSendingSupportMsg] = useState(false);
+
+  const HELP_ARTICLES = [
+    {
+      id: 'verify',
+      category: 'Account & Verification',
+      title: 'How does verification code & email work?',
+      content:
+        'ChatTime uses official email verification codes. During signup, a 6-digit one-time passcode (OTP) is dispatched from "ChatTime Business" directly to your email address with the official red app emblem. Enter the code within 10 minutes to verify your account.',
+    },
+    {
+      id: 'lastseen',
+      category: 'Privacy & Security',
+      title: 'How to hide Last Seen & Online presence?',
+      content:
+        'Go to Settings > Privacy Controls > Last Seen & Online Status. You can select "Everyone", "My Contacts", or "Nobody". When set to Nobody, other users will not see when you were last active or online, and your status remains completely private without displaying any privacy tags.',
+    },
+    {
+      id: 'hidenumber',
+      category: 'Privacy & Security',
+      title: 'How to hide your Phone Number and Country?',
+      content:
+        'Under Settings > Privacy Controls, you can configure "Phone Number Visibility" and "Country & Region Visibility". Selecting "Nobody" or "Contacts Only" ensures your phone number and country remain hidden from other users across direct chats and profile views.',
+    },
+    {
+      id: 'readreceipts',
+      category: 'Chats & Messaging',
+      title: 'How do read receipts and checkmarks work?',
+      content:
+        'ChatTime features standard real-time checkmarks: One grey tick means sent to the server; two grey ticks mean delivered to the recipient; and two sky-blue ticks mean read by the recipient. You can toggle read receipts off under Privacy Controls at any time.',
+    },
+    {
+      id: 'encryption',
+      category: 'Security & Safety',
+      title: 'Are messages and calls end-to-end encrypted?',
+      content:
+        'Yes. All direct chats, voice notes, media, and peer-to-peer audio/video calls in ChatTime are end-to-end encrypted using industry-standard cryptography. No one outside the conversation, not even ChatTime staff, can read or listen to your communications.',
+    },
+    {
+      id: 'pinlock',
+      category: 'Security & Safety',
+      title: 'Setting up 4-digit PIN App Lock',
+      content:
+        'Protect your messages from unauthorized local access by enabling a 4-digit PIN under Settings > Security & App Lock. Once enabled, ChatTime prompts for your PIN when reopening the application or after periods of inactivity.',
+    },
+  ];
+
+  const handleContactSupport = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSendingSupportMsg(true);
+    try {
+      const supportChatId = startDirectChat('user_chattime_support');
+      if (contactMessage.trim()) {
+        const fullMsg = `[Inquiry: ${contactSubject}]\n${contactMessage.trim()}`;
+        await sendMessage(supportChatId, fullMsg);
+      }
+      setActiveTab('chats');
+      addToast(
+        'Connected to Support',
+        'Official ChatTime 24/7 Support desk opened.',
+        'success'
+      );
+      setContactMessage('');
+    } catch {
+      setActiveTab('chats');
+    } finally {
+      setIsSendingSupportMsg(false);
+    }
+  };
 
   // PWA Install state
   const { isInstallable, isInstalled, isIOS, isAndroid, install } = usePWAInstall();
@@ -263,6 +345,7 @@ export const SettingsView: React.FC = () => {
               { id: 'language', label: t('language', 'App Language'), icon: Globe },
               { id: 'privacy', label: t('privacy', 'Privacy Controls'), icon: Eye },
               { id: 'security', label: t('security', 'Security & Lock'), icon: Lock },
+              { id: 'help', label: t('helpCentre', 'Help & Support'), icon: HelpCircle },
               { id: 'app', label: isInstalled ? t('installedOnDevice', 'App Installed (v2.5)') : t('installOnPhone', 'Install on Phone'), icon: Smartphone },
             ].map((item) => {
               const Icon = item.icon;
@@ -1299,6 +1382,42 @@ export const SettingsView: React.FC = () => {
                 >
                   <option value="everyone">Everyone</option>
                   <option value="contacts">Contacts Only</option>
+                </select>
+              </div>
+
+              <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-100">Country & Region Visibility</h4>
+                  <p className="text-[11px] text-slate-400">
+                    Control who can see your country on your profile
+                  </p>
+                </div>
+                <select
+                  value={currentUser.privacySettings.countryVisibility || 'everyone'}
+                  onChange={(e) => updatePrivacyField({ countryVisibility: e.target.value as any })}
+                  className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-200"
+                >
+                  <option value="everyone">Everyone</option>
+                  <option value="contacts">My Contacts Only</option>
+                  <option value="nobody">Nobody (Hidden)</option>
+                </select>
+              </div>
+
+              <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-100">Date of Joining Visibility</h4>
+                  <p className="text-[11px] text-slate-400">
+                    Control who can see when you joined ChatTime
+                  </p>
+                </div>
+                <select
+                  value={currentUser.privacySettings.joinDateVisibility || 'everyone'}
+                  onChange={(e) => updatePrivacyField({ joinDateVisibility: e.target.value as any })}
+                  className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-200"
+                >
+                  <option value="everyone">Everyone</option>
+                  <option value="contacts">My Contacts Only</option>
+                  <option value="nobody">Nobody (Hidden)</option>
                 </select>
               </div>
             </div>

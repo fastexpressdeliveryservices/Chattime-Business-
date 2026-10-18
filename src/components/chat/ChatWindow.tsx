@@ -1978,6 +1978,11 @@ export const ChatWindow: React.FC = () => {
                   type="text"
                   value={inputText}
                   onChange={(e) => handleInputChange(e.target.value)}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    }, 100);
+                  }}
                   placeholder={isViewOnceMode ? 'View-once message...' : t('typeMessage', `Message ${displayName}...`)}
                   className={`w-full bg-slate-950 border rounded-2xl px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition-colors ${
                     isViewOnceMode

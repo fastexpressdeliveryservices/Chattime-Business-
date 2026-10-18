@@ -359,7 +359,18 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
 
-  const [users, setUsers] = useState<Record<string, User>>({});
+  const [users, setUsers] = useState<Record<string, User>>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('chattime_active_user_profile');
+      if (cached) {
+        try {
+          const u = JSON.parse(cached);
+          if (u && u.id) return { [u.id]: u };
+        } catch {}
+      }
+    }
+    return {};
+  });
   const [chats, setChats] = useState<Chat[]>([]);
   const [messages, setMessages] = useState<Record<string, Message[]>>({});
   const [calls, setCalls] = useState<CallRecord[]>([]);
@@ -1036,13 +1047,23 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
         usersRef.current = userMap;
         setUsers(userMap);
-        if (targetId && !userMap[targetId]) {
-          // Stored user no longer exists in DB
-          sessionStorage.removeItem('chattime_active_user_id');
-          localStorage.removeItem('chattime_active_user_id');
-          setActiveUserId(null);
-        } else if (targetId && userMap[targetId]) {
+        if (targetId && userMap[targetId]) {
           sessionStorage.setItem('chattime_active_user_id', targetId);
+          localStorage.setItem('chattime_active_user_id', targetId);
+          localStorage.setItem('chattime_active_user_profile', JSON.stringify(userMap[targetId]));
+        } else if (targetId && !userMap[targetId]) {
+          // If server momentarily returned empty or is restarting, check cached user profile instead of logging out
+          const cachedProfile = localStorage.getItem('chattime_active_user_profile');
+          if (cachedProfile) {
+            try {
+              const parsed = JSON.parse(cachedProfile);
+              if (parsed && parsed.id === targetId) {
+                userMap[targetId] = parsed;
+                usersRef.current = userMap;
+                setUsers({ ...userMap });
+              }
+            } catch {}
+          }
         }
       }
       if (data.chats) {

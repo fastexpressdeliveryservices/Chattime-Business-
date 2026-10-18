@@ -138,8 +138,23 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
   const canSeePresence =
     isSelf ||
     isAdminViewer ||
-    lastSeenVis === 'everyone' ||
-    (lastSeenVis === 'contacts' && isContact);
+    (lastSeenVis === 'everyone' && currentUser.privacySettings?.lastSeenVisibility !== 'nobody') ||
+    (lastSeenVis === 'contacts' && isContact && currentUser.privacySettings?.lastSeenVisibility !== 'nobody');
+
+  // Country & Member Since privacy
+  const countryVis = targetUser.privacySettings?.countryVisibility || 'everyone';
+  const canSeeCountry =
+    isSelf ||
+    isAdminViewer ||
+    countryVis === 'everyone' ||
+    (countryVis === 'contacts' && isContact);
+
+  const joinDateVis = targetUser.privacySettings?.joinDateVisibility || 'everyone';
+  const canSeeJoinDate =
+    isSelf ||
+    isAdminViewer ||
+    joinDateVis === 'everyone' ||
+    (joinDateVis === 'contacts' && isContact);
 
   // Mutual groups & communities wrapped in useMemo to prevent hangs
   const mutualGroups = useMemo(() => {
@@ -330,13 +345,17 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
                 <span>{targetUser.username}</span>
               </div>
 
-              <p className={`text-xs ${textMutedClass}`}>
-                {canSeePresence
-                  ? targetUser.isOnline
+              {canSeePresence ? (
+                <p className={`text-xs ${textMutedClass}`}>
+                  {targetUser.isOnline
                     ? t('activeNow', 'Active Now on ChatTime')
-                    : formatLastSeen(targetUser.lastSeen)
-                  : t('lastSeenPrivate', 'Last seen private')}
-              </p>
+                    : formatLastSeen(targetUser.lastSeen)}
+                </p>
+              ) : targetUser.bio ? (
+                <p className={`text-xs truncate max-w-xs ${textMutedClass}`}>
+                  {targetUser.bio}
+                </p>
+              ) : null}
 
               {/* Follower / Following Stats */}
               <div className="flex items-center justify-center gap-4 pt-2">
@@ -637,14 +656,14 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
               <div className={`flex items-center justify-between p-3.5 rounded-xl border ${innerCardBgClass}`}>
                 <div>
                   <div className={`text-lg font-mono font-bold tracking-wide ${headingClass}`}>
-                    {displayedNumber || t('notAvailable', 'Not available')}
+                    {canSeeFullNumber ? (displayedNumber || t('notAvailable', 'Not available')) : t('numberHidden', 'Hidden for privacy')}
                   </div>
                   <div className={`text-[11px] mt-0.5 ${textMutedClass}`}>
                     {canSeeFullNumber
                       ? isAdminViewer && !isSelf && targetUser.phonePrivate
                         ? t('visibleAdmin', 'Visible to you as Platform Administrator')
                         : `${t('visibility', 'Visibility')}: ${numberVis}`
-                      : t('hiddenInPrivacy', 'This user has hidden their phone number in privacy settings')}
+                      : t('hiddenInPrivacy', 'This user has hidden their phone number')}
                   </div>
                 </div>
                 {canSeeFullNumber && (
@@ -667,30 +686,36 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
               </div>
             </div>
 
-            {/* Account Metadata Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className={`p-4 rounded-2xl border ${cardBgClass}`}>
-                <div className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1 ${textMutedClass}`}>
-                  <Globe className="w-3.5 h-3.5 text-teal-500" /> {t('countryRegion', 'Country / Region')}
-                </div>
-                <div className={`text-sm font-semibold ${headingClass}`}>
-                  {targetUser.countryName || 'Global'} ({targetUser.countryCode || '+1'})
-                </div>
-              </div>
+            {/* Account Metadata Grid (Respects Country & Member Since privacy) */}
+            {(canSeeCountry || canSeeJoinDate) && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {canSeeCountry && (
+                  <div className={`p-4 rounded-2xl border ${cardBgClass}`}>
+                    <div className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1 ${textMutedClass}`}>
+                      <Globe className="w-3.5 h-3.5 text-teal-500" /> {t('countryRegion', 'Country / Region')}
+                    </div>
+                    <div className={`text-sm font-semibold ${headingClass}`}>
+                      {targetUser.countryName || 'Global'} ({targetUser.countryCode || '+1'})
+                    </div>
+                  </div>
+                )}
 
-              <div className={`p-4 rounded-2xl border ${cardBgClass}`}>
-                <div className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1 ${textMutedClass}`}>
-                  <Calendar className="w-3.5 h-3.5 text-teal-500" /> {t('memberSince', 'Member Since')}
-                </div>
-                <div className={`text-sm font-semibold ${headingClass}`}>
-                  {new Date(targetUser.createdAt || Date.now()).toLocaleDateString(undefined, {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </div>
+                {canSeeJoinDate && (
+                  <div className={`p-4 rounded-2xl border ${cardBgClass}`}>
+                    <div className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1 ${textMutedClass}`}>
+                      <Calendar className="w-3.5 h-3.5 text-teal-500" /> {t('memberSince', 'Member Since')}
+                    </div>
+                    <div className={`text-sm font-semibold ${headingClass}`}>
+                      {new Date(targetUser.createdAt || Date.now()).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
             {/* Mutual Groups & Joined Communities */}
             <div className={`p-5 rounded-2xl border space-y-3 ${cardBgClass}`}>

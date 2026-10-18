@@ -2,8 +2,13 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
     <script>
+      /* Android and iOS keyboard jump prevention: Lock overscroll behavior cleanly */
+      if (typeof document !== 'undefined') {
+        document.documentElement.style.overscrollBehavior = 'none';
+      }
+
       /* Disable pinch zoom and double-tap zoom on iOS Safari and Android browsers */
       document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
       document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });

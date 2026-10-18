@@ -34,31 +34,11 @@ export const MessageStatusTicks: React.FC<MessageStatusTicksProps> = ({
   if (status === 'read') {
     return (
       <span
-        className={`inline-flex items-center select-none font-bold ${
-          isLightBubble
-            ? 'text-sky-950 drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]'
-            : 'text-sky-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]'
-        } ${className}`}
-        title="Read (3 checkmarks / 3 good)"
-        aria-label="Read by recipient - 3 checkmarks"
+        className={`inline-flex items-center select-none font-bold text-sky-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)] ${className}`}
+        title="Read (Double blue checkmarks)"
+        aria-label="Read by recipient"
       >
-        {/* Precise SVG with 3 distinct checkmarks ("3 good") that never wrap or misalign */}
-        <svg
-          viewBox="0 0 25 15"
-          className="w-4.5 h-3 inline-block shrink-0"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          {/* Tick 1 */}
-          <polyline points="1.5 8 4.5 11 9 5" />
-          {/* Tick 2 */}
-          <polyline points="6.5 8 9.5 11 14 5" />
-          {/* Tick 3 */}
-          <polyline points="11.5 8 14.5 11 19 5" />
-        </svg>
+        <CheckCheck className="w-3.5 h-3.5 stroke-[2.2] text-[#38bdf8]" />
       </span>
     );
   }

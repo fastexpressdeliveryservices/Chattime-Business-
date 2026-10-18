@@ -99,6 +99,17 @@ const RESEND_API_KEY =
   process.env.RESEND_API_KEY ||
   (process.env.SMTP_PASS && process.env.SMTP_PASS.startsWith('re_') ? process.env.SMTP_PASS : '');
 
+// Pre-load App Logo base64 for embedding directly inside verification emails
+let appLogoBase64 = '';
+try {
+  const logoFile = path.resolve(__dirname, 'public/app-logo.jpg');
+  if (fs.existsSync(logoFile)) {
+    appLogoBase64 = fs.readFileSync(logoFile).toString('base64');
+  }
+} catch (e) {
+  console.warn('[Mail] Could not pre-load app-logo.jpg for inline email attachment:', e);
+}
+
 // Nodemailer SMTP Transporter
 let mailTransporter: Transporter | null = null;
 if (process.env.SMTP_HOST && process.env.SMTP_PASS) {
@@ -127,7 +138,16 @@ async function sendEmailViaService(
   // 1. Resend API if RESEND_API_KEY is configured or detected from SMTP_PASS (re_...)
   if (RESEND_API_KEY) {
     try {
-      const res = await fetch('https://api.resend.com/emails', {
+      const attachments: any[] = [];
+      if (appLogoBase64) {
+        attachments.push({
+          filename: 'app-logo.jpg',
+          content: appLogoBase64,
+        });
+      }
+
+      // First attempt with official custom domain address
+      let res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${RESEND_API_KEY}`,
@@ -139,31 +159,68 @@ async function sendEmailViaService(
           subject,
           text,
           html,
+          attachments: attachments.length > 0 ? attachments : undefined,
         }),
       });
+
+      // If custom domain is not yet verified on user's Resend dashboard, auto-fallback to onboarding@resend.dev
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        console.warn(`[Resend] Custom domain attempt failed (${res.status}):`, errJson);
+        const errMsg = JSON.stringify(errJson).toLowerCase();
+        if (errMsg.includes('domain') || errMsg.includes('not verified') || errMsg.includes('validation_error')) {
+          console.log(`[Resend] Retrying via fallback sender "ChatTime Business" <onboarding@resend.dev>...`);
+          res = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${RESEND_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              from: `"ChatTime Business" <onboarding@resend.dev>`,
+              to: [destEmail],
+              subject,
+              text,
+              html,
+              attachments: attachments.length > 0 ? attachments : undefined,
+            }),
+          });
+        }
+      }
+
       if (res.ok) {
         const data = await res.json().catch(() => ({}));
-        console.log(`[Resend] Email dispatched successfully to ${destEmail} from ${SENDER_FROM}:`, data);
+        console.log(`[Resend] Email dispatched successfully to ${destEmail}:`, data);
         return { success: true, provider: 'resend' };
       } else {
         const errJson = await res.json().catch(() => ({}));
-        console.warn(`[Resend] Failed to send email:`, errJson);
+        console.warn(`[Resend] Both primary and fallback attempts failed:`, errJson);
       }
     } catch (e: any) {
-      console.warn(`[Resend] Error sending email:`, e?.message);
+      console.warn(`[Resend] Error calling Resend API:`, e?.message);
     }
   }
 
   // 2. Nodemailer SMTP Transporter
   if (mailTransporter) {
     try {
-      await mailTransporter.sendMail({
+      const mailOptions: any = {
         from: SENDER_FROM,
         to: destEmail,
         subject,
         text,
         html,
-      });
+      };
+      if (appLogoBase64) {
+        mailOptions.attachments = [
+          {
+            filename: 'app-logo.jpg',
+            content: Buffer.from(appLogoBase64, 'base64'),
+            cid: 'applogo',
+          },
+        ];
+      }
+      await mailTransporter.sendMail(mailOptions);
       console.log(`[SMTP] Verification email sent to ${destEmail} from ${SENDER_FROM}`);
       return { success: true, provider: 'smtp' };
     } catch (sendErr: any) {
@@ -202,7 +259,7 @@ function generateOtpEmailHtml(code: string, phone: string, email: string): strin
               <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
                 <tr>
                   <td align="center" style="vertical-align: middle;">
-                    <img src="${logoUrl}" alt="ChatTime Business Logo" width="84" height="84" style="border-radius: 24px; display: block; margin: 0 auto; border: 2.5px solid rgba(239, 68, 68, 0.6); box-shadow: 0 12px 28px rgba(239, 68, 68, 0.45); background: #991b1b;" />
+                    <img src="${logoUrl}" alt="ChatTime Business Logo" width="84" height="84" style="border-radius: 22px; display: block; margin: 0 auto; border: 2.5px solid rgba(239, 68, 68, 0.6); box-shadow: 0 12px 28px rgba(239, 68, 68, 0.45); background: #991b1b; object-fit: cover;" />
                   </td>
                 </tr>
               </table>
@@ -1175,8 +1232,8 @@ app.post('/api/auth/send-otp', async (req, res) => {
 
   if (destEmail) {
     emailHtml = generateOtpEmailHtml(code, String(phone).trim(), destEmail);
-    const subject = `Chat Time: Your Verification Code is ${code}`;
-    const text = `Chat Time Verification Code for ${phone}: ${code}\n\nEnter this code to verify your account in Chat Time. Code expires in 10 minutes.`;
+    const subject = `ChatTime Business: Your Verification Code is ${code}`;
+    const text = `ChatTime Business Verification Code for ${phone}: ${code}\n\nEnter this code to verify your account in ChatTime Business. Code expires in 10 minutes.`;
 
     const dispatchResult = await sendEmailViaService(destEmail, subject, text, emailHtml);
     emailSent = dispatchResult.success;
@@ -2797,6 +2854,76 @@ app.post('/api/admin/platform-features', (req, res) => {
   const features = dbManager.updatePlatformFeatures(updates, admin.id, admin.name);
   broadcast({ type: 'platform:features', features });
   res.json({ success: true, features });
+});
+
+// Admin Automated Welcome Message & Bot Configuration
+app.get('/api/admin/welcome-config', (req, res) => {
+  res.json(dbManager.getWelcomeSettings());
+});
+
+app.post('/api/admin/welcome-config', (req, res) => {
+  const { enabled, senderName, senderAvatar, messageText, senderId } = req.body;
+  const updated = dbManager.updateWelcomeSettings({
+    enabled: typeof enabled === 'boolean' ? enabled : true,
+    senderName: senderName ? String(senderName).trim() : 'ChatTime Support',
+    senderAvatar: senderAvatar ? String(senderAvatar).trim() : '/icon.svg',
+    messageText: messageText ? String(messageText).trim() : 'Hello! Welcome to ChatTime Business.',
+    senderId: senderId || 'user_chattime_support',
+  });
+  res.json({ success: true, config: updated });
+});
+
+// Create Official System / Support Account (e.g. Welcome Bot, Customer Care)
+app.post('/api/admin/system-accounts', (req, res) => {
+  const { name, username, bio, avatar, badgeType } = req.body;
+  if (!name || !username) {
+    return res.status(400).json({ error: 'Account name and username are required.' });
+  }
+  const cleanUsername = String(username).toLowerCase().replace(/[^a-z0-9_]/g, '');
+  const existing = dbManager.getUserByUsername(cleanUsername);
+  if (existing) {
+    return res.status(409).json({ error: 'Username already in use.' });
+  }
+
+  const systemUser = dbManager.addUser({
+    id: 'user_sys_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+    name: String(name).trim(),
+    username: cleanUsername,
+    chatTimeNumber: '+1 800 242 8846',
+    phoneNumber: '+1 800 242 8846',
+    phoneVerified: true,
+    countryCode: '+1',
+    countryName: 'United States',
+    avatar: avatar || '/icon.svg',
+    bio: bio || 'Official ChatTime Support & Assistant Account',
+    statusFeeling: '🛡️ Official ChatTime System',
+    isOnline: true,
+    lastSeen: Date.now(),
+    role: 'support',
+    isVerified: true,
+    isRedVerified: badgeType === 'red',
+    verificationBadge: badgeType || 'red',
+    verificationBadgeType: badgeType || 'red',
+    contacts: [],
+    privacySettings: {
+      lastSeenVisibility: 'everyone',
+      numberVisibility: 'everyone',
+      statusVisibility: 'everyone',
+      readReceipts: true,
+      discoverable: true,
+      whoCanCallMe: 'everyone',
+      countryVisibility: 'everyone',
+      joinDateVisibility: 'everyone',
+    },
+    securitySettings: {
+      twoFactorEnabled: false,
+      pinEnabled: false,
+      biometricSupported: false,
+      activeSessions: [],
+    },
+  });
+
+  res.status(201).json({ success: true, account: systemUser });
 });
 
 // Admin Export Complete Database Backup

@@ -71,7 +71,22 @@ export interface ChatTimeDatabase {
   authSessions: Record<string, { userId: string; expiresAt: number }>;
   platformFeatures: PlatformFeatureSettings;
   maintenanceMode?: boolean;
+  welcomeSettings?: {
+    enabled: boolean;
+    senderId: string;
+    senderName: string;
+    senderAvatar: string;
+    messageText: string;
+  };
 }
+
+export const DEFAULT_WELCOME_SETTINGS = {
+  enabled: true,
+  senderId: 'user_chattime_support',
+  senderName: 'ChatTime Support',
+  senderAvatar: '/icon.svg',
+  messageText: 'Hello! Welcome to ChatTime Business. We are delighted to have you. If you need any assistance, have questions, or want to explore features, reply here anytime. End-to-end encrypted support is available 24/7.',
+};
 
 export interface StoredPushSubscription {
   endpoint: string;
@@ -121,6 +136,7 @@ class DatabaseManager {
             authSessions: parsed.authSessions || {},
             platformFeatures: { ...DEFAULT_PLATFORM_FEATURES, ...(parsed.platformFeatures || {}) },
             maintenanceMode: Boolean(parsed.maintenanceMode),
+            welcomeSettings: parsed.welcomeSettings || { ...DEFAULT_WELCOME_SETTINGS },
           };
           this.ensureAdminAndOfficialChannel(loaded);
           this.persist(loaded);
@@ -148,6 +164,7 @@ class DatabaseManager {
       authSessions: {},
       platformFeatures: { ...DEFAULT_PLATFORM_FEATURES },
       maintenanceMode: false,
+      welcomeSettings: { ...DEFAULT_WELCOME_SETTINGS },
     };
 
     this.ensureAdminAndOfficialChannel(initialDb);
@@ -525,7 +542,10 @@ class DatabaseManager {
     }
 
     this.db.users.push(user);
-    this.save();
+    if (user.role !== 'admin' && user.id !== 'user_chattime_support') {
+      this.createWelcomeChatForUser(user);
+    }
+    this.persist(this.db);
     return user;
   }
 
@@ -1488,6 +1508,71 @@ class DatabaseManager {
       this.save();
     }
     return purgedCount;
+  }
+
+  // --- Welcome Bot & Support Accounts ---
+  getWelcomeSettings() {
+    return this.db.welcomeSettings || { ...DEFAULT_WELCOME_SETTINGS };
+  }
+
+  updateWelcomeSettings(updates: Partial<typeof DEFAULT_WELCOME_SETTINGS>) {
+    this.db.welcomeSettings = { ...this.getWelcomeSettings(), ...updates };
+    this.persist(this.db);
+    return this.db.welcomeSettings;
+  }
+
+  createWelcomeChatForUser(newUser: User): void {
+    const settings = this.getWelcomeSettings();
+    if (!settings.enabled) return;
+
+    const sender = this.getUserById(settings.senderId) || this.getUserById('user_chattime_support');
+    const senderId = sender?.id || 'user_chattime_support';
+    const senderName = settings.senderName || sender?.name || 'ChatTime Support';
+    const senderAvatar = settings.senderAvatar || sender?.avatar || '/icon.svg';
+
+    const welcomeChatId = `chat_support_${newUser.id}`;
+    const welcomeChat: Chat = {
+      id: welcomeChatId,
+      type: 'direct',
+      name: senderName,
+      avatar: senderAvatar,
+      folder: 'direct',
+      participants: [senderId, newUser.id],
+      isPinned: true,
+      isVerified: true,
+      unreadCount: 1,
+      createdAt: Date.now(),
+      lastMessage: {
+        id: `msg_welcome_${Date.now()}`,
+        chatId: welcomeChatId,
+        senderId: senderId,
+        senderName: senderName,
+        senderAvatar: senderAvatar,
+        type: 'text',
+        content: settings.messageText,
+        timestamp: Date.now(),
+        reactions: {},
+        status: 'delivered',
+      },
+    };
+
+    this.addChat(welcomeChat);
+    if (!this.db.messages[welcomeChatId] || this.db.messages[welcomeChatId].length === 0) {
+      this.db.messages[welcomeChatId] = [
+        {
+          id: `msg_welcome_${Date.now()}`,
+          chatId: welcomeChatId,
+          senderId: senderId,
+          senderName: senderName,
+          senderAvatar: senderAvatar,
+          type: 'text',
+          content: settings.messageText,
+          timestamp: Date.now(),
+          reactions: {},
+          status: 'delivered',
+        },
+      ];
+    }
   }
 
   // --- Full State Bootstrap ---

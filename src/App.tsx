@@ -73,6 +73,9 @@ const ChatTimeMain: React.FC = () => {
     const updateAppHeight = () => {
       const height = viewport?.height ?? window.innerHeight;
       document.documentElement.style.setProperty('--app-height', `${Math.round(height)}px`);
+      if (window.scrollY !== 0 || window.scrollX !== 0) {
+        window.scrollTo(0, 0);
+      }
     };
 
     updateAppHeight();
