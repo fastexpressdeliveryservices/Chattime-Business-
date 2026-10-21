@@ -304,12 +304,33 @@ export const ChatWindow: React.FC = () => {
   }, [activeChat?.id, chatMessages, currentUser.id, markChatRead]);
 
   const [isVoicePaused, setIsVoicePaused] = useState(false);
+  const [voicePlaybackSpeed, setVoicePlaybackSpeed] = useState<number>(1);
+
+  const handleCycleVoiceSpeed = () => {
+    const nextSpeed = voicePlaybackSpeed === 1 ? 1.5 : voicePlaybackSpeed === 1.5 ? 2 : 1;
+    setVoicePlaybackSpeed(nextSpeed);
+    if (audioElementRef.current) {
+      audioElementRef.current.playbackRate = nextSpeed;
+    }
+  };
+
+  const handleSeekVoice = (e: React.MouseEvent<HTMLDivElement>, msgId: string, totalDur: number) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const pct = Math.max(0, Math.min(1, clickX / rect.width));
+    const newTime = pct * totalDur;
+    if (activePlayingAudioId === msgId && audioElementRef.current) {
+      audioElementRef.current.currentTime = newTime;
+    }
+    setAudioPlaybackElapsed(Math.floor(newTime));
+  };
 
   const handleToggleVoicePlay = (msgId: string) => {
     if (activePlayingAudioId === msgId) {
       if (isVoicePaused) {
         // Resume
         if (audioElementRef.current) {
+          audioElementRef.current.playbackRate = voicePlaybackSpeed;
           audioElementRef.current.play().catch(() => {});
         }
         setIsVoicePaused(false);
@@ -369,6 +390,7 @@ export const ChatWindow: React.FC = () => {
     }
 
     if (audio) {
+      audio.playbackRate = voicePlaybackSpeed;
       audio.play().catch(() => {});
       audio.ontimeupdate = () => {
         if (audio) {
@@ -392,13 +414,13 @@ export const ChatWindow: React.FC = () => {
           }
           return prev + 1;
         });
-      }, 1000);
+      }, Math.round(1000 / (voicePlaybackSpeed || 1)));
 
       return () => {
         clearInterval(interval);
       };
     }
-  }, [activePlayingAudioId, isVoicePaused, allChatMessages]);
+  }, [activePlayingAudioId, isVoicePaused, allChatMessages, voicePlaybackSpeed]);
 
   if (!activeChat) {
     return (
@@ -448,6 +470,11 @@ export const ChatWindow: React.FC = () => {
     (currentUser.role === 'admin' ||
       lastSeenVis === 'everyone' ||
       (lastSeenVis === 'contacts' && isContact));
+
+  const shouldHideReadReceipts =
+    activeChat.type === 'direct' &&
+    (currentUser.privacySettings?.readReceipts === false ||
+      peerUser?.privacySettings?.readReceipts === false);
 
   const pinnedMessage = activeChat.pinnedMessageId
     ? allChatMessages.find((m) => m.id === activeChat.pinnedMessageId)
@@ -830,11 +857,11 @@ export const ChatWindow: React.FC = () => {
                     </span>
                   ) : peerUser ? (
                     <>
-                      <span className="truncate">
+                      <span className={`truncate ${peerUser.isOnline && canSeePresence ? 'text-emerald-400 font-medium' : 'text-slate-400'}`}>
                         {canSeePresence
                           ? peerUser.isOnline
-                            ? t('online', 'Online')
-                            : formatLastSeen(peerUser.lastSeen)
+                            ? t('online', 'online')
+                            : formatLastSeen(peerUser.lastSeen, peerUser.isOnline)
                           : `@${peerUser.username}`}
                       </span>
                       {peerPhone && (
@@ -1338,12 +1365,14 @@ export const ChatWindow: React.FC = () => {
                               </button>
                               <div className="flex-1 min-w-0">
                                 <div
-                                  className={`h-1.5 rounded-full overflow-hidden ${
+                                  onClick={(e) => handleSeekVoice(e, msg.id, msg.audioDuration || 10)}
+                                  className={`h-2 rounded-full overflow-hidden cursor-pointer relative group/scrub py-0.5 ${
                                     isOwn ? 'bg-slate-950/25' : 'bg-slate-800'
                                   }`}
+                                  title="Tap to scrub voice note"
                                 >
                                   <div
-                                    className={`h-full transition-all ${
+                                    className={`h-full rounded-full transition-all ${
                                       isOwn ? 'bg-slate-950' : 'bg-teal-400'
                                     }`}
                                     style={{
@@ -1368,11 +1397,31 @@ export const ChatWindow: React.FC = () => {
                                       ? formatAudioDuration(audioPlaybackElapsed)
                                       : formatAudioDuration(msg.audioDuration || 10)}
                                   </span>
-                                  {msg.voiceModifier && (
-                                    <span className="px-1.5 py-0.5 rounded-md text-[9px] font-sans font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                                      {msg.voiceModifier}
-                                    </span>
-                                  )}
+
+                                  <div className="flex items-center gap-1.5">
+                                    {msg.voiceModifier && (
+                                      <span className="px-1.5 py-0.5 rounded-md text-[9px] font-sans font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                                        {msg.voiceModifier}
+                                      </span>
+                                    )}
+
+                                    {/* Playback Speed Pill Button (WhatsApp style: 1x, 1.5x, 2x) */}
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleCycleVoiceSpeed();
+                                      }}
+                                      className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold font-mono transition-transform active:scale-90 cursor-pointer ${
+                                        isOwn
+                                          ? 'bg-slate-950/40 hover:bg-slate-950/60 text-teal-300 border border-slate-950/30'
+                                          : 'bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30'
+                                      }`}
+                                      title="Toggle voice speed: 1x / 1.5x / 2x"
+                                    >
+                                      {voicePlaybackSpeed}x
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -1499,6 +1548,7 @@ export const ChatWindow: React.FC = () => {
                           <MessageStatusTicks
                             status={msg.status}
                             isLightBubble={isOwn}
+                            hideReadReceipts={shouldHideReadReceipts}
                             className="ml-0.5"
                           />
                         )}

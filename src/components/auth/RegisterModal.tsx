@@ -20,6 +20,7 @@ import {
   Building2,
   KeyRound,
   ChevronDown,
+  ShieldAlert,
 } from 'lucide-react';
 import { SUPPORTED_COUNTRIES, generateChatTimeNumber } from '../../data/countries';
 import { useChatTime } from '../../context/ChatTimeContext';
@@ -46,7 +47,7 @@ interface RegisterModalProps {
 }
 
 export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose }) => {
-  const { registerNewAccount, loginAccount, sendPhoneOtp, verifyPhoneOtp, addToast } =
+  const { registerNewAccount, loginAccount, sendPhoneOtp, verifyPhoneOtp, addToast, platformFeatures } =
     useChatTime();
   const [mode, setMode] = useState<'register' | 'login'>('register');
   // 3-step WhatsApp Business registration flow:
@@ -413,7 +414,26 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose })
         </div>
 
         <div className="overflow-y-auto flex-1">
-          {mode === 'register' ? (
+          {mode === 'register' && platformFeatures && !platformFeatures.allowRegistration ? (
+            <div className="p-8 text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto shadow-lg">
+                <ShieldAlert className="w-7 h-7" />
+              </div>
+              <div className="space-y-1.5">
+                <h4 className="text-base font-bold text-white">Registration Temporarily Paused</h4>
+                <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+                  New account creation is currently closed by the platform administrator. Existing account holders can sign in using their registered number or username.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMode('login')}
+                className="px-5 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+              >
+                Sign In to Existing Account
+              </button>
+            </div>
+          ) : mode === 'register' ? (
             <div className="p-5 space-y-4">
               {/* 3-Step Progress Indicator */}
               <div className="space-y-1.5">

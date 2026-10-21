@@ -142,7 +142,11 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onOpenRegister: _onOpenReg
 
         {/* Current User Profile Trigger (Opens in front on the app with Back icon) */}
         <button
-          onClick={() => setInspectedUserId(currentUser.id)}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setInspectedUserId(currentUser?.id || 'me');
+          }}
           aria-label="Open your profile"
           className="min-h-11 flex items-center gap-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl pl-1.5 pr-2.5 py-1 transition-all cursor-pointer active:scale-95 shadow-sm"
         >

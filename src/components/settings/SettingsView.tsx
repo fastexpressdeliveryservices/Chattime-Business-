@@ -1571,6 +1571,173 @@ export const SettingsView: React.FC = () => {
           </div>
         )}
 
+        {/* 6. HELP & SUPPORT (WhatsApp Style) */}
+        {activeSection === 'help' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div>
+              <h3 className="text-base font-bold text-slate-100 font-display flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-teal-400" />
+                <span>Help Centre & Support</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Browse help topics, contact our 24/7 dedicated support desk, or check your encryption and app info.
+              </p>
+            </div>
+
+            {/* Quick Contact Support Banner */}
+            <div className="p-5 bg-gradient-to-r from-teal-950/60 via-slate-900 to-slate-900 border border-teal-500/30 rounded-3xl space-y-4 shadow-xl">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-teal-500/20 border border-teal-500/40 flex items-center justify-center shrink-0">
+                    <MessageSquare className="w-5 h-5 text-teal-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
+                      Chat with ChatTime Support
+                      <span className="inline-block w-4 h-4 bg-teal-500 rounded-full text-slate-950 font-bold text-[10px] flex items-center justify-center">✓</span>
+                    </h4>
+                    <p className="text-xs text-slate-400">
+                      Official 24/7 direct encrypted support desk.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-1">
+                <div className="flex flex-wrap gap-2">
+                  {['Account & Login', 'Verification / OTP', 'Privacy & Settings', 'Voice / Video Calls', 'Other Question'].map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setContactSubject(cat)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                        contactSubject === cat
+                          ? 'bg-teal-500 text-slate-950 font-bold'
+                          : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+
+                <textarea
+                  value={contactMessage}
+                  onChange={(e) => setContactMessage(e.target.value)}
+                  placeholder="How can we help you? Describe your question or issue..."
+                  rows={3}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500/80 resize-none"
+                />
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
+                    End-to-end encrypted inquiry
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleContactSupport()}
+                    disabled={isSendingSupportMsg}
+                    className="px-5 py-2.5 rounded-2xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-teal-500/20 cursor-pointer disabled:opacity-50"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>{isSendingSupportMsg ? 'Opening...' : 'Start Support Chat'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Search Help Articles */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={helpSearch}
+                onChange={(e) => setHelpSearch(e.target.value)}
+                placeholder="Search help articles, FAQs & security guides..."
+                className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-500/80"
+              />
+            </div>
+
+            {/* FAQ Accordion List */}
+            <div className="space-y-2.5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
+                Frequently Asked Questions
+              </h4>
+              {HELP_ARTICLES.filter(
+                (a) =>
+                  !helpSearch ||
+                  a.title.toLowerCase().includes(helpSearch.toLowerCase()) ||
+                  a.content.toLowerCase().includes(helpSearch.toLowerCase()) ||
+                  a.category.toLowerCase().includes(helpSearch.toLowerCase())
+              ).map((article) => {
+                const isExpanded = expandedFaqId === article.id;
+                return (
+                  <div
+                    key={article.id}
+                    className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden transition-all"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setExpandedFaqId(isExpanded ? null : article.id)}
+                      className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-800/40 transition-colors"
+                    >
+                      <div className="pr-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400 block mb-0.5">
+                          {article.category}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-100">
+                          {article.title}
+                        </span>
+                      </div>
+                      <ChevronRight
+                        className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${
+                          isExpanded ? 'rotate-90 text-teal-400' : ''
+                        }`}
+                      />
+                    </button>
+                    {isExpanded && (
+                      <div className="p-4 pt-1 border-t border-slate-800/60 text-xs text-slate-300 leading-relaxed bg-slate-950/40 animate-in fade-in duration-150">
+                        {article.content}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Terms & Privacy Policy and App Info Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-200">
+                  <FileText className="w-4 h-4 text-teal-400" />
+                  <span>Terms & Privacy Policy</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  ChatTime guarantees complete user data confidentiality, zero selling of personal info, and cryptographically verified privacy.
+                </p>
+                <div className="text-[10px] font-bold text-teal-400 uppercase tracking-wider pt-1">
+                  Verified Legal Compliance
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-200">
+                  <Info className="w-4 h-4 text-teal-400" />
+                  <span>App Information</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  ChatTime Business Web & Mobile • Version 2.5.0 • End-to-end encrypted messaging engine active.
+                </p>
+                <div className="text-[10px] font-mono text-emerald-400 flex items-center gap-1.5 pt-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  System Operational (Live)
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 7. APP INSTALLATION & PWA / WEBAPK SYSTEM */}
         {activeSection === 'app' && (
           <div className="space-y-6 animate-in fade-in duration-200">

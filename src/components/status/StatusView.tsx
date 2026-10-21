@@ -267,12 +267,25 @@ export const StatusView: React.FC = () => {
       rawActiveStory
     : null;
 
+  const activeAuthor = currentActiveStory ? users[currentActiveStory.userId] : null;
+  const isActiveSaved = currentActiveStory ? (currentUser.contacts || []).includes(currentActiveStory.userId) : false;
+  const activeAuthorNum = currentActiveStory
+    ? currentActiveStory.userNumber || activeAuthor?.phoneNumber || activeAuthor?.chatTimeNumber
+    : '';
+  const activeStoryDisplayName = currentActiveStory
+    ? currentActiveStory.userId === currentUser.id
+      ? 'My Status'
+      : isActiveSaved
+      ? (activeAuthor?.name || currentActiveStory.userName)
+      : (activeAuthorNum || currentActiveStory.userName)
+    : '';
+
   const otherUsers = (Object.values(users) as User[]).filter((u) => u.id !== currentUser.id);
   const myAddedContacts = (currentUser.contacts || [])
     .map((cId) => users[cId])
     .filter((u): u is User => Boolean(u && u.id && !isGhosted(u.id)));
 
-  // Group contact stories by user so each user has a story ring
+  // Group contact stories by user so each user has a story ring (displaying saved contact name or available phone number)
   const groupedUserStories = React.useMemo(() => {
     const map = new Map<string, StatusStory[]>();
     contactStories.forEach((st) => {
@@ -280,15 +293,21 @@ export const StatusView: React.FC = () => {
       list.push(st);
       map.set(st.userId, list);
     });
-    return Array.from(map.entries()).map(([userId, userStories]) => ({
-      userId,
-      userName: userStories[0].userName,
-      userAvatar: userStories[0].userAvatar,
-      stories: userStories,
-      latestStory: userStories[0],
-      allViewed: userStories.every((s) => s.viewers.some((v) => v.userId === currentUser.id)),
-    }));
-  }, [contactStories, currentUser.id]);
+    return Array.from(map.entries()).map(([userId, userStories]) => {
+      const uAuthor = users[userId];
+      const isSaved = (currentUser.contacts || []).includes(userId);
+      const uNum = userStories[0].userNumber || uAuthor?.phoneNumber || uAuthor?.chatTimeNumber;
+      const uName = isSaved ? (uAuthor?.name || userStories[0].userName) : (uNum || userStories[0].userName);
+      return {
+        userId,
+        userName: uName,
+        userAvatar: userStories[0].userAvatar,
+        stories: userStories,
+        latestStory: userStories[0],
+        allViewed: userStories.every((s) => s.viewers.some((v) => v.userId === currentUser.id)),
+      };
+    });
+  }, [contactStories, currentUser.id, currentUser.contacts, users]);
 
   return (
     <div className="flex-1 h-full flex flex-col bg-slate-950 overflow-hidden select-none">
@@ -535,6 +554,14 @@ export const StatusView: React.FC = () => {
               )}
             </div>
 
+            {/* WhatsApp End-to-End Encryption Status Notice */}
+            <div className="flex items-center justify-center gap-2 py-2 px-3 rounded-2xl bg-slate-900/40 border border-slate-800/80 text-center">
+              <Lock className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+              <span className="text-[11px] text-slate-400">
+                Your status updates are <strong className="text-slate-200">end-to-end encrypted</strong> and visible only to your contacts.
+              </span>
+            </div>
+
             {/* Recent Contact Updates */}
             <div className="space-y-3">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -553,6 +580,11 @@ export const StatusView: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {contactStories.map((story, idx) => {
                     const hasViewed = story.viewers.some((v) => v.userId === currentUser.id);
+                    const author = users[story.userId];
+                    const isSaved = (currentUser.contacts || []).includes(story.userId);
+                    const authorNum = story.userNumber || author?.phoneNumber || author?.chatTimeNumber;
+                    const storyDisplayName = isSaved ? (author?.name || story.userName) : (authorNum || story.userName);
+
                     return (
                       <div
                         key={story.id}
@@ -569,7 +601,7 @@ export const StatusView: React.FC = () => {
                           >
                             <img
                               src={story.userAvatar}
-                              alt={story.userName}
+                              alt={storyDisplayName}
                               className="w-12 h-12 rounded-xl object-cover bg-slate-950"
                               referrerPolicy="no-referrer"
                             />
@@ -579,7 +611,7 @@ export const StatusView: React.FC = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-1">
                             <h4 className="text-sm font-semibold text-slate-100 truncate group-hover:text-teal-300 transition-colors">
-                              {story.userName}
+                              {storyDisplayName}
                             </h4>
                             {!hasViewed && (
                               <span className="px-1.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-[9px] font-bold uppercase">
@@ -912,13 +944,17 @@ export const StatusView: React.FC = () => {
                 <div className="flex items-center gap-2.5">
                   <img
                     src={currentActiveStory.userAvatar}
-                    alt={currentActiveStory.userName}
+                    alt={activeStoryDisplayName}
                     className="w-8 h-8 rounded-full object-cover border border-white/40"
                     referrerPolicy="no-referrer"
                   />
                   <div className="text-left">
-                    <div className="text-xs font-bold leading-none">
-                      {currentActiveStory.userName}
+                    <div className="text-xs font-bold leading-none flex items-center gap-1.5">
+                      <span>{activeStoryDisplayName}</span>
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-[9px] font-mono border border-teal-500/30">
+                        <Lock className="w-2.5 h-2.5 text-teal-400" />
+                        End-to-End Encrypted
+                      </span>
                     </div>
                     <div className="text-[10px] text-teal-300 font-mono mt-0.5">
                       {currentActiveStory.isExpired ? 'Archived History · ' : ''}
@@ -1094,7 +1130,7 @@ export const StatusView: React.FC = () => {
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') handleReplyToStory(currentActiveStory);
                       }}
-                      placeholder={`Reply to ${currentActiveStory.userName}...`}
+                      placeholder={`Reply to ${activeStoryDisplayName}...`}
                       className="flex-1 min-w-0 bg-transparent px-3 py-1.5 text-xs text-white placeholder-white/60 focus:outline-none"
                     />
                     <button

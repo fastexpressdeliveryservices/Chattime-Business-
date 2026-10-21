@@ -14,16 +14,16 @@
 }
 
 :root {
-  --accent-100: #ffedd5;
-  --accent-200: #fed7aa;
-  --accent-300: #fdba74;
-  --accent-400: #fb923c;
-  --accent-500: #f97316;
-  --accent-600: #ea580c;
-  --accent-700: #c2410c;
-  --accent-800: #9a3412;
-  --accent-900: #7c2d12;
-  --accent-950: #431407;
+  --accent-100: #d1fae5;
+  --accent-200: #a7f3d0;
+  --accent-300: #6ee7b7;
+  --accent-400: #34d399;
+  --accent-500: #10b981;
+  --accent-600: #059669;
+  --accent-700: #047857;
+  --accent-800: #065f46;
+  --accent-900: #064e3b;
+  --accent-950: #022c22;
 }
 
 /* Selectable Accent Color Themes */
@@ -309,9 +309,28 @@ html, body, #root {
   }
 }
 
+/* Native App Touch & Interaction Experience on Android & iOS */
+html, body {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+button, a, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input, textarea, [contenteditable="true"] {
+  touch-action: auto;
+}
+
 @supports (-webkit-touch-callout: none) {
   body {
     -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
   }
 }
 

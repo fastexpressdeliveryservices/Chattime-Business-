@@ -24,19 +24,39 @@ import { X, CheckCircle, AlertTriangle, Info } from 'lucide-react';
 
 export function isCurrentAdminApp(): boolean {
   if (typeof window === 'undefined') return false;
+
+  // 1. Explicit environment variable for dedicated admin builds (e.g. Vercel admin deployment)
+  if (
+    typeof import.meta !== 'undefined' &&
+    import.meta.env &&
+    (import.meta.env.VITE_APP_MODE === 'admin' ||
+      import.meta.env.VITE_IS_ADMIN === 'true' ||
+      import.meta.env.VITE_ADMIN_ONLY === 'true')
+  ) {
+    return true;
+  }
+
   const host = window.location.hostname.toLowerCase();
   const path = window.location.pathname.toLowerCase();
   const search = window.location.search.toLowerCase();
 
-  // 1. Dedicated domain or subdomain for administrators (e.g. admin.chattimeapp.name.ng)
-  if (host === 'admin.chattimeapp.name.ng' || host.startsWith('admin.')) {
+  // 2. Dedicated domain, subdomain or host containing 'admin' (e.g. admin.chattimeapp.name.ng, chattime-admin.vercel.app)
+  if (
+    host === 'admin.chattimeapp.name.ng' ||
+    host.startsWith('admin.') ||
+    host.includes('-admin.') ||
+    host.includes('admin-') ||
+    host.startsWith('admin-')
+  ) {
     return true;
   }
-  // 2. Dedicated path route (e.g. /admin or /admin/dashboard)
+
+  // 3. Dedicated path route (e.g. /admin or /admin/dashboard)
   if (path === '/admin' || path.startsWith('/admin/')) {
     return true;
   }
-  // 3. Flexible testing / sandbox parameter (?app=admin or ?view=admin)
+
+  // 4. Flexible testing / sandbox parameter (?app=admin or ?view=admin or ?mode=admin)
   if (
     search.includes('app=admin') ||
     search.includes('view=admin') ||

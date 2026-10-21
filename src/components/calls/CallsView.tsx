@@ -130,9 +130,9 @@ export const CallsView: React.FC = () => {
         {/* Top Header */}
         <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between gap-2">
           <div>
-            <h2 className="text-lg font-bold text-slate-100 font-display">{t('calls', 'Voice & Video Calls')}</h2>
+            <h2 className="text-lg font-bold text-slate-100 font-display">{t('calls', 'Calls')}</h2>
             <p className="text-xs text-slate-400">
-              {t('encryptionNote', 'End-to-end encrypted WebRTC calls with real-time ringtones & controls')}
+              End-to-end encrypted voice & video calling
             </p>
           </div>
 
@@ -141,12 +141,12 @@ export const CallsView: React.FC = () => {
               onClick={() => setShowDialer(!showDialer)}
               className={`md:hidden px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors ${
                 showDialer
-                  ? 'bg-teal-500 text-slate-950'
+                  ? 'bg-teal-500 text-slate-950 font-bold'
                   : 'bg-teal-500/10 text-teal-300 border border-teal-500/30'
               }`}
             >
               <Hash className="w-3.5 h-3.5" />
-              <span>{showDialer ? t('recentCalls', 'Logs') : t('dialPhone', 'Dialer')}</span>
+              <span>{showDialer ? 'Call History' : 'Keypad'}</span>
             </button>
 
             {calls.length > 0 && (
@@ -171,7 +171,7 @@ export const CallsView: React.FC = () => {
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            {t('all', 'All Calls')} ({calls.length})
+            {t('all', 'All')} ({calls.length})
           </button>
           <button
             onClick={() => setFilter('missed')}
@@ -192,7 +192,7 @@ export const CallsView: React.FC = () => {
             <div className="space-y-2.5">
               <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <Users className="w-3.5 h-3.5 text-teal-400" />
-                Start a Call with People on ChatTime
+                Start a New Call
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {allOtherUsers.map((u) => (
@@ -250,7 +250,7 @@ export const CallsView: React.FC = () => {
           {/* Call History List */}
           <div className="space-y-2.5">
             <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              {t('recentCalls', 'Recent Call History')}
+              {t('recentCalls', 'Recent Calls')}
             </h3>
 
             {filteredCalls.length === 0 ? (
@@ -332,7 +332,7 @@ export const CallsView: React.FC = () => {
                               className={isMissed ? 'text-rose-400 font-medium' : 'text-slate-400'}
                             >
                               {isMissed ? 'Missed' : isIncoming ? 'Incoming' : 'Outgoing'}{' '}
-                              {call.type === 'video' ? 'Video' : 'Voice'}
+                              {call.type === 'video' ? 'Video Call' : 'Voice Call'}
                             </span>
                             <span className="text-slate-600">·</span>
                             <span className="text-slate-400 font-mono text-[11px]">

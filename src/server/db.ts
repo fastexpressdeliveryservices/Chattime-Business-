@@ -45,6 +45,7 @@ const DEFAULT_PLATFORM_FEATURES: PlatformFeatureSettings = {
   allowGroupCalls: true,
   allowGroups: true,
   allowCommunities: true,
+  allowVoiceNotes: true,
   allowVoiceChanger: true,
   allowFileSharing: true,
   allowMediaSharing: true,

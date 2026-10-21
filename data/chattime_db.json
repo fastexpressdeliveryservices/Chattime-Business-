@@ -12,9 +12,9 @@
       "statusFeeling": "🛡️ Platform Admin",
       "phonePrivate": false,
       "isOnline": true,
-      "lastSeen": 1792161052485,
+      "lastSeen": 1792590654605,
       "createdAt": 1792042436110,
-      "role": "admin",
+      "role": "super_admin",
       "isVerified": true,
       "contacts": [],
       "privacySettings": {
@@ -212,7 +212,7 @@
       "isOnline": true,
       "lastSeen": 1792051505549,
       "createdAt": 1792051505509,
-      "role": "admin",
+      "role": "user",
       "isVerified": true,
       "contacts": [],
       "privacySettings": {
@@ -321,7 +321,7 @@
       "isOnline": false,
       "lastSeen": 1792051557115,
       "createdAt": 1792051556914,
-      "role": "admin",
+      "role": "user",
       "isVerified": true,
       "contacts": [
         "user_1792051556935_gzs8"
@@ -434,7 +434,7 @@
       "isOnline": false,
       "lastSeen": 1792051600497,
       "createdAt": 1792051600303,
-      "role": "admin",
+      "role": "user",
       "isVerified": true,
       "contacts": [
         "user_1792051600327_8wcj"
@@ -547,7 +547,7 @@
       "isOnline": true,
       "lastSeen": 1792051656440,
       "createdAt": 1792051656247,
-      "role": "admin",
+      "role": "user",
       "isVerified": true,
       "contacts": [
         "user_1792051656290_zsyz"
@@ -660,7 +660,7 @@
       "isOnline": true,
       "lastSeen": 1792055232591,
       "createdAt": 1792055232458,
-      "role": "admin",
+      "role": "user",
       "isVerified": true,
       "contacts": [
         "user_1792055232478_nmve"
@@ -769,7 +769,7 @@
       "isOnline": true,
       "lastSeen": 1792161052464,
       "createdAt": 1792161052464,
-      "role": "admin",
+      "role": "user",
       "isVerified": true,
       "isRedVerified": true,
       "verificationBadge": "red",
@@ -1134,6 +1134,36 @@
     }
   },
   "auditLogs": [
+    {
+      "id": "log_1792590650197_04a0",
+      "timestamp": 1792590650197,
+      "adminId": "user_admin_prosper",
+      "adminName": "Prosper Ikeokwu",
+      "action": "ADMIN_LOGIN_SUCCESS",
+      "details": "Administrator logged into management portal as SUPER_ADMIN.",
+      "status": "success",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "log_1792515652843_yzca",
+      "timestamp": 1792515652844,
+      "adminId": "user_admin_prosper",
+      "adminName": "Prosper Ikeokwu",
+      "action": "ADMIN_LOGIN_SUCCESS",
+      "details": "Administrator logged into management portal as SUPER_ADMIN.",
+      "status": "success",
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "id": "log_1792515607939_zp1l",
+      "timestamp": 1792515607939,
+      "adminId": "user_admin_prosper",
+      "adminName": "Prosper Ikeokwu",
+      "action": "ADMIN_LOGIN_SUCCESS",
+      "details": "Administrator logged into management portal as SUPER_ADMIN.",
+      "status": "success",
+      "ipAddress": "127.0.0.1"
+    },
     {
       "id": "log_1792244099446_lmq6",
       "timestamp": 1792244099446,
@@ -1780,6 +1810,34 @@
     "ee5f5b5b2fa2c852cf38fdcfed1c86b4fbcb91f64de09cfb3df32cbf8414ccc1": {
       "userId": "user_admin_prosper",
       "expiresAt": 1794836099445
+    },
+    "c3ac2e7675e529c57033e28467693a9e8dc88653608df58dd59e6b47629e9bbf": {
+      "userId": "user_admin_fastexpress",
+      "expiresAt": 1795102726115
+    },
+    "d5f750b59df45f9273065f6562da038b416c12afdfcf1f13b1532d0057c1f45f": {
+      "userId": "user_admin_prosper",
+      "expiresAt": 1795107607937
+    },
+    "8324554973e254cac17052e4eb0816ad5f6f3361b5d323d80dfcad745e6373d0": {
+      "userId": "user_admin_prosper",
+      "expiresAt": 1795107652842
+    },
+    "6f2f325654e851bcb521c89bb6c57babcffed0b4e44737e87185588fcd3b0a89": {
+      "userId": "user_admin_prosper",
+      "expiresAt": 1795107669895
+    },
+    "4918065f16b8b62671c0daf1b5703f04af588718d761217f18d5511525f7c686": {
+      "userId": "user_admin_prosper",
+      "expiresAt": 1795182650196
+    },
+    "53e45c72f6b32ac885507e2209edadadb8f7d63affdb0f43dc198bd430c3ec3d": {
+      "userId": "user_admin_prosper",
+      "expiresAt": 1795182654605
+    },
+    "d188e9b01342ffe0fad78e040e1fb93e054affdacec6ae0d3909f9589498499a": {
+      "userId": "user_admin_prosper",
+      "expiresAt": 1795182662144
     }
   },
   "platformFeatures": {
@@ -1790,6 +1848,7 @@
     "allowGroupCalls": true,
     "allowGroups": true,
     "allowCommunities": true,
+    "allowVoiceNotes": true,
     "allowVoiceChanger": true,
     "allowFileSharing": true,
     "allowMediaSharing": true,
@@ -1806,5 +1865,12 @@
       "Jamaican 🇯🇲"
     ]
   },
-  "maintenanceMode": false
+  "maintenanceMode": false,
+  "welcomeSettings": {
+    "enabled": true,
+    "senderId": "user_chattime_support",
+    "senderName": "ChatTime Support",
+    "senderAvatar": "/icon.svg",
+    "messageText": "Hello! Welcome to ChatTime Business. We are delighted to have you. If you need any assistance, have questions, or want to explore features, reply here anytime. End-to-end encrypted support is available 24/7."
+  }
 }

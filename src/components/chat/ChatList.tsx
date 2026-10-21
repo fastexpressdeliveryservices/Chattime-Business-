@@ -227,8 +227,18 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
               >
                 {/* Avatar + Status Ring + Presence Dot */}
                 <div
-                  className="relative shrink-0"
-                  title={displayName}
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (chat.type === 'direct' && peerUser?.id) {
+                      setInspectedUserId(peerUser.id);
+                    } else {
+                      setActiveChatId(chat.id);
+                    }
+                  }}
+                  className="relative shrink-0 cursor-pointer active:scale-95 transition-transform"
+                  title={`View ${displayName} profile`}
                 >
                   <img
                     src={displayAvatar}
@@ -307,6 +317,11 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
                             <MessageStatusTicks
                               status={lastMsg.status}
                               isLightBubble={false}
+                              hideReadReceipts={
+                                chat.type === 'direct' &&
+                                (currentUser.privacySettings?.readReceipts === false ||
+                                  getDirectPeer(chat)?.privacySettings?.readReceipts === false)
+                              }
                               className="shrink-0"
                             />
                           )}

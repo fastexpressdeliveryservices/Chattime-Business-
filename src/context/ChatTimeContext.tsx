@@ -33,6 +33,7 @@ import {
 } from '../utils/notificationSystem';
 import { registerPushSubscription, unregisterPushSubscription } from '../utils/pushNotifications';
 import { isSharedAppUrl } from '../utils/sharedUrl';
+import { buildApiUrl, getWsBaseUrl } from '../utils/apiConfig';
 
 export type NavigationTab =
   | 'chats'
@@ -415,7 +416,7 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
   const [accentColor, setAccentColorState] = useState<AccentColor>(() => {
     const saved = localStorage.getItem('chattime_accent') as AccentColor | null;
-    return saved || 'orange';
+    return saved || 'emerald';
   });
   const [appBackground, setAppBackgroundState] = useState<AppBackgroundStyle>(() => {
     const saved = localStorage.getItem('chattime_bg_style') as AppBackgroundStyle | null;
@@ -439,6 +440,7 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     allowGroupCalls: true,
     allowGroups: true,
     allowCommunities: true,
+    allowVoiceNotes: true,
     allowVoiceChanger: true,
     allowFileSharing: true,
     allowMediaSharing: true,
@@ -1030,7 +1032,7 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         sessionStorage.getItem('chattime_active_user_id') ??
         localStorage.getItem('chattime_active_user_id');
       const query = targetId ? `?userId=${encodeURIComponent(targetId)}` : '';
-      const res = await fetch(`/api/bootstrap${query}`);
+      const res = await fetch(buildApiUrl(`/api/bootstrap${query}`), { credentials: 'include' });
       if (!res.ok) {
         setIsAuthLoading(false);
         return;
@@ -1128,8 +1130,8 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     if (!activeUserId || !isAuthenticated) return;
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws${activeUserId ? `?userId=${encodeURIComponent(activeUserId)}` : ''}`;
+    const baseWs = getWsBaseUrl();
+    const wsUrl = `${baseWs}/ws${activeUserId ? `?userId=${encodeURIComponent(activeUserId)}` : ''}`;
     let ws: WebSocket;
     let reconnectTimer: ReturnType<typeof setTimeout>;
     let isClosedIntentionally = false;
@@ -2144,7 +2146,10 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
       });
       try {
-        await fetch(`/api/chats/${encodeURIComponent(chatId)}/messages/read`, { method: 'POST' });
+        await fetch(buildApiUrl(`/api/chats/${encodeURIComponent(chatId)}/messages/read`), {
+          method: 'POST',
+          credentials: 'include',
+        });
       } catch (err) {
         console.error('Failed to mark chat read:', err);
       }
@@ -2175,7 +2180,7 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (activeUserIdRef.current) {
       void unregisterPushSubscription(activeUserIdRef.current);
     }
-    void fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    void fetch(buildApiUrl('/api/auth/logout'), { method: 'POST', credentials: 'include' }).catch(() => {});
     sessionStorage.removeItem('chattime_active_user_id');
     localStorage.removeItem('chattime_active_user_id');
     if (wsRef.current) {
@@ -2192,9 +2197,10 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!currentUser.id) return { success: false, error: 'No active user session' };
     const deletingId = currentUser.id;
     try {
-      const res = await fetch(`/api/users/${encodeURIComponent(deletingId)}`, {
+      const res = await fetch(buildApiUrl(`/api/users/${encodeURIComponent(deletingId)}`), {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -2229,9 +2235,10 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       emailPreview?: any;
     }> => {
       try {
-        const res = await fetch('/api/auth/send-otp', {
+        const res = await fetch(buildApiUrl('/api/auth/send-otp'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             phone,
             email,
@@ -2271,9 +2278,10 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       options?: { updateCurrentUser?: boolean; countryCode?: string; countryName?: string }
     ): Promise<{ success: boolean; error?: string }> => {
       try {
-        const res = await fetch('/api/auth/verify-otp', {
+        const res = await fetch(buildApiUrl('/api/auth/verify-otp'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             phone,
             code,
@@ -2306,9 +2314,10 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const registerNewAccount = useCallback(
     async (params: RegisterAccountParams): Promise<{ user?: User; error?: string }> => {
       try {
-        const res = await fetch('/api/auth/register', {
+        const res = await fetch(buildApiUrl('/api/auth/register'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(params),
         });
         const data = await res.json();
@@ -2342,9 +2351,10 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const loginAccount = useCallback(
     async (identifier: string, pin?: string): Promise<{ user?: User; error?: string }> => {
       try {
-        const res = await fetch('/api/auth/login', {
+        const res = await fetch(buildApiUrl('/api/auth/login'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ identifier, pin }),
         });
         const data = await res.json();
@@ -2491,9 +2501,10 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const targetChat = chatsRef.current.find((c) => c.id === chatId);
 
       try {
-        const res = await fetch(`/api/chats/${chatId}/messages`, {
+        const res = await fetch(buildApiUrl(`/api/chats/${chatId}/messages`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             ...optimisticMessage,
             participants: targetChat?.participants,

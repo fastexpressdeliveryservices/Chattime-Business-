@@ -68,6 +68,7 @@ export interface PlatformFeatureSettings {
   allowGroupCalls: boolean;
   allowGroups: boolean;
   allowCommunities: boolean;
+  allowVoiceNotes: boolean;
   allowVoiceChanger: boolean;
   allowFileSharing: boolean;
   allowMediaSharing: boolean;
@@ -76,6 +77,8 @@ export interface PlatformFeatureSettings {
   allowNotifications: boolean;
   voiceEffectsEnabled: boolean;
   voiceModifiers: string[];
+  maintenanceMode?: boolean;
+  maintenanceNotice?: string;
 }
 
 export interface NotificationSettings {

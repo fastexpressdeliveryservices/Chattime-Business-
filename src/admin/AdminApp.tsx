@@ -40,11 +40,15 @@ import {
   Clock,
   Compass,
   Menu,
+  Bot,
+  Headphones,
+  Zap,
 } from 'lucide-react';
 import { User, Chat, PlatformFeatureSettings, AdminRole, AdminPermission, AdminAuditLog, AccountBoundingDetails } from '../types';
 import { formatTime, formatLastSeen } from '../utils/formatters';
 import { VerifiedBadge } from '../components/common/VerifiedBadge';
 import { AccountBoundingModal } from '../components/admin/AccountBoundingModal';
+import { buildApiUrl } from '../utils/apiConfig';
 
 const getStoredAdminToken = (): string => {
   try {
@@ -65,7 +69,8 @@ const adminFetch = async (input: RequestInfo | URL, init: RequestInit = {}): Pro
     headers.set('Authorization', `Bearer ${token}`);
     headers.set('x-admin-token', token);
   }
-  return fetch(input, {
+  const resolvedUrl = typeof input === 'string' ? buildApiUrl(input) : input;
+  return fetch(resolvedUrl, {
     ...init,
     credentials: 'include',
     headers,
@@ -86,8 +91,21 @@ export const AdminApp: React.FC = () => {
 
   // Dashboard Data State
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'users' | 'moderation' | 'calls' | 'features' | 'admins' | 'audit' | 'system'
+    'overview' | 'users' | 'moderation' | 'calls' | 'features' | 'admins' | 'audit' | 'system' | 'support'
   >('overview');
+  const [welcomeConfig, setWelcomeConfig] = useState({
+    enabled: true,
+    senderName: 'ChatTime Support',
+    senderAvatar: '/icon.svg',
+    messageText: 'Hello! Welcome to ChatTime Business. We are delighted to have you. If you need any assistance, have questions, or want to explore features, reply here anytime. End-to-end encrypted support is available 24/7.',
+    senderId: 'user_chattime_support',
+  });
+  const [isSavingWelcome, setIsSavingWelcome] = useState(false);
+  const [newSysName, setNewSysName] = useState('');
+  const [newSysUsername, setNewSysUsername] = useState('');
+  const [newSysBio, setNewSysBio] = useState('');
+  const [newSysBadge, setNewSysBadge] = useState<'red' | 'blue'>('red');
+  const [isCreatingSysAccount, setIsCreatingSysAccount] = useState(false);
   const [usersList, setUsersList] = useState<User[]>([]);
   const [reportsList, setReportsList] = useState<any[]>([]);
   const [auditLogsList, setAuditLogsList] = useState<AdminAuditLog[]>([]);
@@ -99,6 +117,7 @@ export const AdminApp: React.FC = () => {
     allowGroupCalls: true,
     allowGroups: true,
     allowCommunities: true,
+    allowVoiceNotes: true,
     allowVoiceChanger: true,
     allowFileSharing: true,
     allowMediaSharing: true,
@@ -571,24 +590,23 @@ export const AdminApp: React.FC = () => {
               <div className="font-bold flex items-center gap-1.5 text-amber-400">
                 <Crown className="w-3.5 h-3.5" /> Official Platform Admin Credentials
               </div>
-              <div className="text-[11px] text-slate-300 space-y-0.5 font-mono">
-                <div>User 1: <strong className="text-white">fastexpress_admin</strong> (<span className="text-teal-400">fastexpressdeliveryservices00@gmail.com</span>)</div>
-                <div>User 2: <strong className="text-white">prosperikeokwu</strong> (<span className="text-teal-400">prosperikeokwu@gmail.com</span>)</div>
-                <div>Password: <strong className="text-amber-300">admin123</strong></div>
+              <div className="text-[11px] text-slate-300 space-y-1 font-mono">
+                <div>Admin Code: <strong className="text-amber-300 font-bold text-xs">0814</strong> (or <span className="text-teal-400">fastexpressdeliveryservices00@gmail.com</span>)</div>
+                <div>Password: <strong className="text-amber-300 font-bold text-xs">prosper100@</strong></div>
               </div>
             </div>
 
             <form onSubmit={handleAdminLogin} className="space-y-4">
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                  Admin Identifier (Email / Username)
+                  Admin Login Code / Email / Username
                 </label>
                 <div className="relative">
                   <input
                     type="text"
                     value={identifierInput}
                     onChange={(e) => setIdentifierInput(e.target.value)}
-                    placeholder="fastexpress_admin or email"
+                    placeholder="Enter code: 0814 or email"
                     required
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-500 transition-colors"
                   />
@@ -597,13 +615,13 @@ export const AdminApp: React.FC = () => {
 
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                  Master Password / PIN
+                  Admin Password
                 </label>
                 <input
                   type="password"
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
-                  placeholder="admin123"
+                  placeholder="prosper100@"
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-500 transition-colors font-mono"
                 />
               </div>
@@ -1336,37 +1354,200 @@ export const AdminApp: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Quick Presets / Disable Controls */}
+                <div className="mb-6 p-4 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                      <Zap className="w-4 h-4 text-amber-400" /> Quick Disable & Kill Switches
+                    </span>
+                    <span className="text-[11px] font-mono text-slate-400">Live Server Propagation</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const updates = { allowCalls: false, allowVideoCalls: false, allowGroupCalls: false };
+                        setPlatformFeatures((prev) => ({ ...prev, ...updates }));
+                        await adminFetch('/api/admin/platform-features', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ adminId: adminUser?.id, updates }),
+                        });
+                        showToast('Calls Disabled', 'All voice, video, and group calling disabled across platform.', 'info');
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-bold cursor-pointer transition-all"
+                    >
+                      Disable All Calls
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const updates = { allowVideoCalls: !platformFeatures.allowVideoCalls };
+                        setPlatformFeatures((prev) => ({ ...prev, ...updates }));
+                        await adminFetch('/api/admin/platform-features', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ adminId: adminUser?.id, updates }),
+                        });
+                        showToast('Video Calls', `Video calling ${updates.allowVideoCalls ? 'enabled' : 'disabled'}.`, 'info');
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-300 text-xs font-bold cursor-pointer transition-all"
+                    >
+                      {platformFeatures.allowVideoCalls ? 'Disable Video Calls' : 'Enable Video Calls'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const updates = { allowVoiceNotes: !platformFeatures.allowVoiceNotes };
+                        setPlatformFeatures((prev) => ({ ...prev, ...updates }));
+                        await adminFetch('/api/admin/platform-features', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ adminId: adminUser?.id, updates }),
+                        });
+                        showToast('Voice Notes', `Voice note recording ${updates.allowVoiceNotes ? 'enabled' : 'disabled'}.`, 'info');
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-bold cursor-pointer transition-all"
+                    >
+                      {platformFeatures.allowVoiceNotes ? 'Disable Voice Notes' : 'Enable Voice Notes'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const updates = { allowRegistration: !platformFeatures.allowRegistration };
+                        setPlatformFeatures((prev) => ({ ...prev, ...updates }));
+                        await adminFetch('/api/admin/platform-features', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ adminId: adminUser?.id, updates }),
+                        });
+                        showToast('Registration', `New user registration ${updates.allowRegistration ? 'opened' : 'closed'}.`, 'info');
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/30 text-orange-300 text-xs font-bold cursor-pointer transition-all"
+                    >
+                      {platformFeatures.allowRegistration ? 'Disable Registration' : 'Enable Registration'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const updates = { allowFileSharing: false, allowMediaSharing: false };
+                        setPlatformFeatures((prev) => ({ ...prev, ...updates }));
+                        await adminFetch('/api/admin/platform-features', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ adminId: adminUser?.id, updates }),
+                        });
+                        showToast('Uploads Disabled', 'File and photo uploads disabled across platform.', 'info');
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-bold cursor-pointer transition-all"
+                    >
+                      Disable File/Media Uploads
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const updates = { maintenanceMode: !platformFeatures.maintenanceMode };
+                        setPlatformFeatures((prev) => ({ ...prev, ...updates }));
+                        await adminFetch('/api/admin/platform-features', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ adminId: adminUser?.id, updates }),
+                        });
+                        showToast(
+                          'Maintenance Mode',
+                          updates.maintenanceMode ? 'Maintenance mode ACTIVATED.' : 'Maintenance mode deactivated.',
+                          updates.maintenanceMode ? 'info' : 'success'
+                        );
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all border ${
+                        platformFeatures.maintenanceMode
+                          ? 'bg-rose-600 text-white border-rose-500 shadow-lg shadow-rose-600/30'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                      }`}
+                    >
+                      {platformFeatures.maintenanceMode ? 'Deactivate Maintenance Mode' : 'Activate Maintenance Mode'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const updates = {
+                          allowRegistration: true,
+                          allowMessaging: true,
+                          allowCalls: true,
+                          allowVideoCalls: true,
+                          allowGroupCalls: true,
+                          allowGroups: true,
+                          allowCommunities: true,
+                          allowVoiceNotes: true,
+                          allowVoiceChanger: true,
+                          allowFileSharing: true,
+                          allowMediaSharing: true,
+                          allowReactions: true,
+                          allowStories: true,
+                          allowNotifications: true,
+                          maintenanceMode: false,
+                        };
+                        setPlatformFeatures((prev) => ({ ...prev, ...updates }));
+                        await adminFetch('/api/admin/platform-features', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ adminId: adminUser?.id, updates }),
+                        });
+                        showToast('All Features Enabled', 'All platform capabilities are fully active.', 'success');
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold cursor-pointer transition-all ml-auto"
+                    >
+                      Enable All Features
+                    </button>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
-                    { key: 'allowMessaging' as const, label: 'Instant Messaging', desc: 'Permit direct and group chat messages.' },
-                    { key: 'allowCalls' as const, label: 'Voice Calling', desc: 'Enable 1-to-1 WebRTC voice calls.' },
-                    { key: 'allowVideoCalls' as const, label: 'Video Calling', desc: 'Enable camera streaming and video calls.' },
-                    { key: 'allowGroupCalls' as const, label: 'Group Calls', desc: 'Allow multi-participant audio/video rooms.' },
-                    { key: 'allowRegistration' as const, label: 'New User Registration', desc: 'Allow new accounts to sign up on ChatTime.' },
-                    { key: 'allowVoiceChanger' as const, label: 'Voice Modifier AI', desc: 'Allow audio voice modulation and accents.' },
-                    { key: 'allowFileSharing' as const, label: 'File Sharing', desc: 'Allow PDF, DOC, and zip file attachments.' },
-                    { key: 'allowMediaSharing' as const, label: 'Media Sharing', desc: 'Allow photo and video gallery uploads.' },
-                    { key: 'allowReactions' as const, label: 'Message Reactions', desc: 'Allow emoji reactions on messages.' },
-                    { key: 'allowStories' as const, label: 'Status / Stories', desc: 'Permit 24h disappearing status stories.' },
+                    { key: 'allowMessaging' as const, label: 'Instant Messaging', desc: 'Permit direct and group chat messages.', category: 'Messaging' },
+                    { key: 'allowVoiceNotes' as const, label: 'Voice Notes & Audio Recording', desc: 'Permit users to record and send audio voice notes.', category: 'Messaging' },
+                    { key: 'allowCalls' as const, label: 'Voice Calling', desc: 'Enable 1-to-1 WebRTC encrypted voice calls.', category: 'Calling' },
+                    { key: 'allowVideoCalls' as const, label: 'Video Calling', desc: 'Enable camera streaming and video calls.', category: 'Calling' },
+                    { key: 'allowGroupCalls' as const, label: 'Group Calls & Rooms', desc: 'Allow multi-participant audio/video rooms.', category: 'Calling' },
+                    { key: 'allowRegistration' as const, label: 'New User Registration', desc: 'Allow new accounts to sign up on ChatTime.', category: 'Access' },
+                    { key: 'allowGroups' as const, label: 'Group Chat Creation', desc: 'Allow users to create new group conversations.', category: 'Social' },
+                    { key: 'allowCommunities' as const, label: 'Communities & Channels', desc: 'Allow public channels and broadcast communities.', category: 'Social' },
+                    { key: 'allowStories' as const, label: 'Status & Stories', desc: 'Permit 24-hour encrypted status updates.', category: 'Social' },
+                    { key: 'allowFileSharing' as const, label: 'File Sharing', desc: 'Allow PDF, DOC, and zip file attachments.', category: 'Media' },
+                    { key: 'allowMediaSharing' as const, label: 'Media Sharing', desc: 'Allow photo and video gallery uploads.', category: 'Media' },
+                    { key: 'allowVoiceChanger' as const, label: 'Voice Modifier AI', desc: 'Allow audio voice modulation and accents.', category: 'Media' },
+                    { key: 'allowReactions' as const, label: 'Message Reactions', desc: 'Allow emoji reactions on messages.', category: 'Messaging' },
+                    { key: 'allowNotifications' as const, label: 'Push Notifications', desc: 'Deliver instant web push alerts and notifications.', category: 'Access' },
                   ].map((f) => {
                     const isEnabled = Boolean(platformFeatures[f.key]);
                     return (
                       <div
                         key={f.key}
-                        className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3"
+                        className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3 hover:border-slate-700 transition-colors"
                       >
                         <div className="min-w-0">
-                          <div className="text-xs font-bold text-white">{f.label}</div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-white">{f.label}</span>
+                            <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
+                              {f.category}
+                            </span>
+                          </div>
                           <div className="text-[11px] text-slate-400 mt-0.5">{f.desc}</div>
                         </div>
 
                         <button
                           type="button"
                           onClick={() => handleToggleFeature(f.key)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${
                             isEnabled
-                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                              : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+                              : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30'
                           }`}
                         >
                           {isEnabled ? 'Enabled' : 'Disabled'}

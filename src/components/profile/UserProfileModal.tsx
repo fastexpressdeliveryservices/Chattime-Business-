@@ -27,6 +27,7 @@ import { formatLastSeen } from '../../utils/formatters';
 import { maskPhoneNumber } from '../../utils/numberGenerator';
 import { isSharedAppUrl } from '../../utils/sharedUrl';
 import { VerifiedBadge } from '../common/VerifiedBadge';
+import { buildApiUrl } from '../../utils/apiConfig';
 import type { User } from '../../types';
 
 interface UserProfileModalProps {
@@ -67,54 +68,100 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
     !inspectedUserId ||
     inspectedUserId === 'me' ||
     inspectedUserId === 'self' ||
-    inspectedUserId === currentUser?.id;
+    Boolean(currentUser?.id && inspectedUserId === currentUser.id);
 
-  // Resolve target user safely
-  const targetUser: User =
-    (isTargetSelf ? currentUser : null) ||
-    (inspectedUserId ? users[inspectedUserId] : null) ||
-    fetchedUser ||
-    currentUser;
+  // Synchronously resolve target user without blocking or spinning
+  const targetUser: User | null = useMemo(() => {
+    if (isTargetSelf && currentUser) return currentUser;
+    if (inspectedUserId && users[inspectedUserId]) return users[inspectedUserId];
+    if (fetchedUser) return fetchedUser;
+    if (inspectedUserId) {
+      const match = Object.values(users).find(
+        (u) =>
+          u &&
+          (u.id === inspectedUserId ||
+            (u.username && u.username.toLowerCase() === inspectedUserId.toLowerCase().replace(/^@/, '')) ||
+            u.phoneNumber === inspectedUserId ||
+            u.chatTimeNumber === inspectedUserId)
+      );
+      if (match) return match;
+    }
+    return currentUser || null;
+  }, [isTargetSelf, inspectedUserId, users, fetchedUser, currentUser]);
 
-  // Fetch target user if not currently in context users state
+  // Fast background lookup without causing endless spinning loops
   useEffect(() => {
     if (!inspectedUserId || isTargetSelf) {
       setFetchedUser(null);
       return;
     }
-    const existing = users[inspectedUserId];
-    if (existing) {
-      setFetchedUser(null);
+    if (users[inspectedUserId]) {
       return;
     }
 
     let isMounted = true;
-    fetch(`/api/users/lookup?q=${encodeURIComponent(inspectedUserId)}`)
+    const timeout = setTimeout(() => {
+      if (isMounted && !fetchedUser && currentUser) {
+        setFetchedUser(currentUser);
+      }
+    }, 1500);
+
+    fetch(buildApiUrl(`/api/users/lookup?q=${encodeURIComponent(inspectedUserId)}`))
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (isMounted) {
-          if (data?.user) setFetchedUser(data.user);
+        if (isMounted && data?.user) {
+          setFetchedUser(data.user);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        clearTimeout(timeout);
+      });
 
     return () => {
       isMounted = false;
+      clearTimeout(timeout);
     };
   }, [inspectedUserId, isTargetSelf]);
 
   // Initialize self edit form only when switching target user ID
   useEffect(() => {
-    if (targetUser && targetUser.id === currentUser?.id) {
+    if (targetUser && currentUser?.id && targetUser.id === currentUser.id) {
       setEditName(targetUser.name || '');
       setEditUsername(targetUser.username || '');
       setEditBio(targetUser.bio || '');
     }
-  }, [targetUser?.id]);
+  }, [targetUser?.id, currentUser?.id]);
+
+  const handleClose = () => {
+    setInspectedUserId(null);
+    onClose?.();
+  };
 
   if (!inspectedUserId) return null;
 
-  const isSelf = targetUser.id === currentUser?.id;
+  if (!targetUser) {
+    return (
+      <div
+        onClick={handleClose}
+        className="fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150 select-none"
+      >
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center space-y-4 shadow-2xl">
+          <div className="w-10 h-10 rounded-full border-2 border-teal-500/20 border-t-teal-400 animate-spin mx-auto" />
+          <p className="text-sm font-semibold text-slate-200">{t('loadingProfile', 'Opening Profile...')}</p>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all cursor-pointer"
+          >
+            {t('close', 'Close')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const isSelf = Boolean(currentUser?.id && targetUser.id === currentUser.id);
   const isAdminViewer = currentUser?.role === 'admin' && !isSharedAppUrl();
   const isContact = (currentUser?.contacts || []).includes(targetUser.id);
   const isFollowing = (currentUser?.following || []).includes(targetUser.id);
@@ -133,13 +180,13 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
   const rawNumber = targetUser.phoneNumber || targetUser.chatTimeNumber || '';
   const displayedNumber = canSeeFullNumber ? rawNumber : maskPhoneNumber(rawNumber);
 
-  // Respect privacy settings for last seen visibility
+  // Respect privacy settings for last seen visibility safely
   const lastSeenVis = targetUser.privacySettings?.lastSeenVisibility || 'everyone';
   const canSeePresence =
     isSelf ||
     isAdminViewer ||
-    (lastSeenVis === 'everyone' && currentUser.privacySettings?.lastSeenVisibility !== 'nobody') ||
-    (lastSeenVis === 'contacts' && isContact && currentUser.privacySettings?.lastSeenVisibility !== 'nobody');
+    (lastSeenVis === 'everyone' && currentUser?.privacySettings?.lastSeenVisibility !== 'nobody') ||
+    (lastSeenVis === 'contacts' && isContact && currentUser?.privacySettings?.lastSeenVisibility !== 'nobody');
 
   // Country & Member Since privacy
   const countryVis = targetUser.privacySettings?.countryVisibility || 'everyone';
@@ -220,11 +267,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
     } finally {
       setEditSaving(false);
     }
-  };
-
-  const handleClose = () => {
-    setInspectedUserId(null);
-    onClose();
   };
 
   const isLight = theme === 'light';

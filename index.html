@@ -4,26 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
     <script>
-      /* Android and iOS keyboard jump prevention: Lock overscroll behavior cleanly */
+      /* Android and iOS keyboard jump prevention & native app viewport height */
       if (typeof document !== 'undefined') {
         document.documentElement.style.overscrollBehavior = 'none';
-      }
-
-      /* Disable pinch zoom and double-tap zoom on iOS Safari and Android browsers */
-      document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
-      document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
-      document.addEventListener('gestureend', function(e) { e.preventDefault(); }, { passive: false });
-      var lastTouchEnd = 0;
-      document.addEventListener('touchend', function(event) {
-        var now = Date.now();
-        if (now - lastTouchEnd <= 300) {
-          var target = event.target;
-          if (target && !['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
-            event.preventDefault();
-          }
+        
+        function setAppHeight() {
+          var doc = document.documentElement;
+          doc.style.setProperty('--app-height', window.innerHeight + 'px');
         }
-        lastTouchEnd = now;
-      }, false);
+        window.addEventListener('resize', setAppHeight);
+        window.addEventListener('orientationchange', setAppHeight);
+        setAppHeight();
+      }
 
       /* Suppress dev HMR WebSocket disconnection errors in iframe preview */
       window.addEventListener('unhandledrejection', function(event) {
@@ -42,23 +34,59 @@
         }
       });
     </script>
-    <meta name="theme-color" content="#ef4444" />
+    <meta name="theme-color" content="#090d16" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Chat Time Business" />
+    <meta name="apple-mobile-web-app-title" content="Chat Time" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href="https://chattimeapp.name.ng/" />
+
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/pwa-512x512.png" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
-    <title>Chat Time Business</title>
-    <meta name="description" content="A secure, all-in-one messaging platform featuring private chats, group calls, and discoverable communities with enhanced user privacy." />
-    <meta property="og:title" content="Chat Time Business" />
-    <meta property="og:description" content="A secure, all-in-one messaging platform featuring private chats, group calls, and discoverable communities with enhanced user privacy." />
+
+    <title>Chat Time Business – Secure Private Messaging & Calling</title>
+    <meta name="description" content="Chat Time Business is a modern, end-to-end encrypted messaging, voice, and video calling application with 24-hour status stories, private channels, and global communities." />
+
+    <!-- OpenGraph Social Cards -->
     <meta property="og:type" content="website" />
+    <meta property="og:title" content="Chat Time Business – Secure Private Messaging & Calling" />
+    <meta property="og:description" content="Chat Time Business is a modern, end-to-end encrypted messaging, voice, and video calling application with 24-hour status stories, private channels, and global communities." />
+    <meta property="og:site_name" content="Chat Time" />
+    <meta property="og:url" content="https://chattimeapp.name.ng/" />
+    <meta property="og:image" content="/pwa-512x512.png" />
+    <meta property="og:image:alt" content="Chat Time Business Application" />
+
+    <!-- Twitter / X Cards -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Chat Time Business – Secure Private Messaging & Calling" />
+    <meta name="twitter:description" content="Chat Time Business is a modern, end-to-end encrypted messaging, voice, and video calling application with 24-hour status stories, private channels, and global communities." />
+    <meta name="twitter:image" content="/pwa-512x512.png" />
+
+    <!-- Schema.org Structured Data for Google Search -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Chat Time Business",
+      "url": "https://chattimeapp.name.ng/",
+      "description": "Chat Time Business is a modern, end-to-end encrypted messaging, voice, and video calling application with 24-hour status stories, private channels, and global communities.",
+      "applicationCategory": "CommunicationApplication",
+      "operatingSystem": "Android, iOS, Windows, macOS, Linux, Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "screenshot": "https://chattimeapp.name.ng/pwa-512x512.png"
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
