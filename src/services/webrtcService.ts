@@ -136,14 +136,21 @@ export class WebRTCCallEngine {
       throw err;
     }
 
-    // 1. Try high-definition audio & video constraints with noise suppression & echo cancellation
+    // 1. Try high-definition audio & video constraints with hardware noise suppression & echo cancellation
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
+          echoCancellation: { ideal: true },
+          noiseSuppression: { ideal: true },
+          autoGainControl: { ideal: true },
+          channelCount: { ideal: 1 },
+          sampleRate: { ideal: 48000 },
+          googEchoCancellation: true,
+          googAutoGainControl: true,
+          googNoiseSuppression: true,
+          googHighpassFilter: true,
+          googTypingNoiseDetection: true,
+        } as any,
         video: isVideo
           ? {
               facingMode,
@@ -172,13 +179,15 @@ export class WebRTCCallEngine {
       console.warn('[WebRTC] High-def media request failed, attempting standard media:', hdErr?.message || hdErr);
     }
 
-    // 2. Try standard / permissive media constraints
+    // 2. Try standard / permissive media constraints with strict echo cancellation
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-        },
+          autoGainControl: true,
+          channelCount: 1,
+        } as any,
         video: isVideo ? { facingMode } : false,
       });
 
@@ -416,6 +425,26 @@ export class WebRTCCallEngine {
   }
 
   /**
+   * Optimizes Opus audio SDP to strictly enforce hardware Acoustic Echo Cancellation (AEC),
+   * Noise Suppression, and Mono mode to prevent screeching feedback loops when two phones are together.
+   */
+  private optimizeAudioSDP(sdp: string): string {
+    if (!sdp) return sdp;
+    return sdp.replace(/a=fmtp:(\d+) (.*)/g, (match, pt, params) => {
+      if (params.includes('minptime') || params.includes('useinbandfec') || params.includes('opus')) {
+        let updated = params
+          .replace(/stereo=1/g, 'stereo=0')
+          .replace(/sprop-stereo=1/g, 'sprop-stereo=0');
+        if (!updated.includes('stereo=0')) updated += ';stereo=0';
+        if (!updated.includes('sprop-stereo=0')) updated += ';sprop-stereo=0';
+        if (!updated.includes('useinbandfec=1')) updated += ';useinbandfec=1';
+        return `a=fmtp:${pt} ${updated}`;
+      }
+      return match;
+    });
+  }
+
+  /**
    * Generates SDP offer for peer
    */
   async createOffer(): Promise<RTCSessionDescriptionInit> {
@@ -426,6 +455,9 @@ export class WebRTCCallEngine {
       offerToReceiveAudio: true,
       offerToReceiveVideo: true,
     });
+    if (offer.sdp) {
+      offer.sdp = this.optimizeAudioSDP(offer.sdp);
+    }
     await this.peerConnection!.setLocalDescription(offer);
     return offer;
   }
@@ -437,9 +469,16 @@ export class WebRTCCallEngine {
     if (!this.peerConnection) {
       await this.createPeerConnection();
     }
-    await this.peerConnection!.setRemoteDescription(new RTCSessionDescription(offer));
+    const sanitizedOffer: RTCSessionDescriptionInit = {
+      ...offer,
+      sdp: offer.sdp ? this.optimizeAudioSDP(offer.sdp) : offer.sdp,
+    };
+    await this.peerConnection!.setRemoteDescription(new RTCSessionDescription(sanitizedOffer));
     await this.drainPendingCandidates();
     const answer = await this.peerConnection!.createAnswer();
+    if (answer.sdp) {
+      answer.sdp = this.optimizeAudioSDP(answer.sdp);
+    }
     await this.peerConnection!.setLocalDescription(answer);
     return answer;
   }

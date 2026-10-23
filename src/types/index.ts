@@ -225,7 +225,7 @@ export interface Message {
   deletedFor?: string[];
 }
 
-export type ChatType = 'direct' | 'group' | 'channel';
+export type ChatType = 'direct' | 'group' | 'channel' | 'announcement';
 export type ChatFolder = 'all' | 'direct' | 'groups' | 'channels' | 'unread';
 
 export interface GroupPermissions {

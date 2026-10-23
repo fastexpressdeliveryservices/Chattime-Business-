@@ -85,9 +85,33 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
             u.chatTimeNumber === inspectedUserId)
       );
       if (match) return match;
+
+      // Extract from chats / messages participant info if available
+      const chatWithPeer = chats.find(
+        (c) => c && c.type === 'direct' && Array.isArray(c.participants) && c.participants.includes(inspectedUserId)
+      );
+      if (chatWithPeer) {
+        return {
+          id: inspectedUserId,
+          name: chatWithPeer.name || 'ChatTime User',
+          username: (chatWithPeer.name || 'user').toLowerCase().replace(/\s+/g, ''),
+          avatar: chatWithPeer.avatar || '/icon.svg',
+          role: 'user',
+          phoneNumber: '',
+          chatTimeNumber: '',
+          createdAt: chatWithPeer.createdAt || Date.now(),
+          lastSeen: Date.now(),
+          isOnline: false,
+          phonePrivate: true,
+          bio: 'ChatTime User',
+          contacts: [],
+          followers: [],
+          following: [],
+        } as unknown as User;
+      }
     }
     return currentUser || null;
-  }, [isTargetSelf, inspectedUserId, users, fetchedUser, currentUser]);
+  }, [isTargetSelf, inspectedUserId, users, fetchedUser, currentUser, chats]);
 
   // Fast background lookup without causing endless spinning loops
   useEffect(() => {
@@ -133,7 +157,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
     }
   }, [targetUser?.id, currentUser?.id]);
 
-  const handleClose = () => {
+  const handleClose = (e?: React.SyntheticEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
     setInspectedUserId(null);
     onClose?.();
   };
@@ -317,6 +344,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
           <div className="flex items-center gap-3">
             <button
               onClick={handleClose}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handleClose(e);
+              }}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer shadow-md select-none shrink-0 min-h-[44px]"
               title={t('back', 'Go Back')}
             >
@@ -332,6 +363,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
           </div>
           <button
             onClick={handleClose}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              handleClose(e);
+            }}
             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer border shrink-0 ${
               isLight
                 ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
@@ -343,14 +378,17 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
           </button>
         </div>
 
-        {/* Profile Content with iOS Safe Area Bottom Padding */}
+        {/* Profile Content with iOS Safe Area Bottom Padding & Smooth Mobile Scrolling */}
         <div
           style={{
             paddingBottom: 'calc(max(env(safe-area-inset-bottom, 0px), 24px) + 6rem)',
             paddingLeft: 'max(env(safe-area-inset-left, 0px), 16px)',
             paddingRight: 'max(env(safe-area-inset-right, 0px), 16px)',
+            touchAction: 'pan-y',
+            overscrollBehaviorY: 'contain',
+            WebkitOverflowScrolling: 'touch',
           }}
-          className="flex-1 overflow-y-auto pt-4 sm:pt-6 grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-start [-webkit-overflow-scrolling:touch]"
+          className="flex-1 overflow-y-auto pt-4 sm:pt-6 grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-start"
         >
           {/* Left Column: Avatar, Follow Handles & Actions */}
           <div className={`md:col-span-5 flex flex-col items-center text-center p-5 sm:p-6 rounded-2xl border space-y-4 ${cardBgClass}`}>

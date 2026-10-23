@@ -7,7 +7,8 @@ import {
   Plus,
   Search,
   MessageSquarePlus,
-  Radio,
+  Megaphone,
+  WifiOff,
   Users,
   UserPlus,
   Mic,
@@ -37,6 +38,7 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
     setActiveTab,
     setInspectedUserId,
     statuses,
+    wsConnected,
     t,
   } = useChatTime();
 
@@ -44,7 +46,6 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
     { id: 'all', label: t('all', 'All') },
     { id: 'direct', label: t('direct', 'Direct') },
     { id: 'groups', label: t('groups', 'Groups') },
-    { id: 'channels', label: t('communities', 'Communities') },
     { id: 'unread', label: t('unread', 'Unread') },
   ];
 
@@ -105,6 +106,14 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
 
   return (
     <div className="w-full md:w-80 lg:w-96 min-h-0 bg-slate-900 border-r border-slate-800/80 flex flex-col h-full shrink-0">
+      {/* WhatsApp-Style Subtle Connecting Banner when offline / waiting for network */}
+      {!wsConnected && (
+        <div className="px-3 py-1.5 bg-amber-500/10 border-b border-amber-500/20 text-amber-300 text-[11px] font-semibold flex items-center justify-center gap-2 shrink-0 select-none">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+          <span>Connecting...</span>
+        </div>
+      )}
+
       {/* Header & Action Row */}
       <div className="p-4 border-b border-slate-800/70 space-y-3">
         <div className="flex items-center justify-between gap-2">
@@ -257,9 +266,9 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
                       <Users className="w-2.5 h-2.5 text-white" />
                     </span>
                   )}
-                  {chat.type === 'channel' && (
-                    <span className="w-5 h-5 rounded-full bg-teal-500/90 border-2 border-slate-900 absolute -bottom-1 -right-1 flex items-center justify-center">
-                      <Radio className="w-2.5 h-2.5 text-slate-950" />
+                  {(chat.id === 'chat_chattime_announcements' || chat.type === 'announcement' || chat.type === 'channel') && (
+                    <span className="w-5 h-5 rounded-full bg-emerald-500 border-2 border-slate-900 absolute -bottom-1 -right-1 flex items-center justify-center shadow">
+                      <Megaphone className="w-2.5 h-2.5 text-slate-950" />
                     </span>
                   )}
                 </div>
@@ -272,7 +281,7 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
                         {displayName}
                       </span>
                       {peerUser && <VerifiedBadge user={peerUser} size="xs" />}
-                      {!peerUser && (chat.isVerified || chat.id === 'chat_chattime_support') && (
+                      {!peerUser && (chat.isVerified || chat.id === 'chat_chattime_support' || chat.id === 'chat_chattime_announcements') && (
                         <VerifiedBadge type="red" size="xs" />
                       )}
                       {chat.isMuted && (

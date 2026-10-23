@@ -367,6 +367,66 @@ class DatabaseManager {
         supportChat.participants.push(supportUserId);
       }
     }
+
+    // 5. Ensure official ChatTime Announcements announcement chat exists
+    const announcementChatId = 'chat_chattime_announcements';
+    let announcementChat = database.chats.find((c) => c.id === announcementChatId);
+    if (!announcementChat) {
+      const newAnnouncementChat: Chat = {
+        id: announcementChatId,
+        type: 'direct',
+        name: 'ChatTime Announcements',
+        avatar: '/icon.svg',
+        folder: 'direct',
+        participants: [supportUserId],
+        isPinned: true,
+        isVerified: true,
+        unreadCount: 0,
+        createdAt: Date.now(),
+        lastMessage: {
+          id: 'msg_announcement_welcome',
+          chatId: announcementChatId,
+          senderId: supportUserId,
+          senderName: 'ChatTime Announcements',
+          senderAvatar: '/icon.svg',
+          type: 'text',
+          content: '📢 Welcome to ChatTime! Official announcements, features, and system updates are published here.',
+          timestamp: Date.now(),
+          reactions: {},
+          status: 'delivered',
+        },
+      };
+      database.chats.unshift(newAnnouncementChat);
+      if (!database.messages[announcementChatId]) {
+        database.messages[announcementChatId] = [
+          {
+            id: 'msg_announcement_welcome',
+            chatId: announcementChatId,
+            senderId: supportUserId,
+            senderName: 'ChatTime Announcements',
+            senderAvatar: '/icon.svg',
+            type: 'text',
+            content: '📢 Welcome to ChatTime! Official announcements, features, and system updates are published here.',
+            timestamp: Date.now(),
+            reactions: {},
+            status: 'delivered',
+          },
+        ];
+      }
+    } else {
+      announcementChat.name = 'ChatTime Announcements';
+      announcementChat.avatar = '/icon.svg';
+      announcementChat.isVerified = true;
+      announcementChat.type = 'direct';
+      if (!announcementChat.participants.includes(supportUserId)) {
+        announcementChat.participants.push(supportUserId);
+      }
+    }
+
+    // 6. Remove channel chan_global if it has the welcome message so welcome is an announcement only
+    database.channels = (database.channels || []).filter(
+      (ch) => ch.id !== 'chan_global'
+    );
   }
 
   private persist(dbToSave: ChatTimeDatabase) {

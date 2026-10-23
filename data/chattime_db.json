@@ -14,7 +14,7 @@
       "isOnline": true,
       "lastSeen": 1792590654605,
       "createdAt": 1792042436110,
-      "role": "super_admin",
+      "role": "admin",
       "isVerified": true,
       "contacts": [],
       "privacySettings": {
@@ -212,7 +212,7 @@
       "isOnline": true,
       "lastSeen": 1792051505549,
       "createdAt": 1792051505509,
-      "role": "user",
+      "role": "admin",
       "isVerified": true,
       "contacts": [],
       "privacySettings": {
@@ -321,7 +321,7 @@
       "isOnline": false,
       "lastSeen": 1792051557115,
       "createdAt": 1792051556914,
-      "role": "user",
+      "role": "admin",
       "isVerified": true,
       "contacts": [
         "user_1792051556935_gzs8"
@@ -434,7 +434,7 @@
       "isOnline": false,
       "lastSeen": 1792051600497,
       "createdAt": 1792051600303,
-      "role": "user",
+      "role": "admin",
       "isVerified": true,
       "contacts": [
         "user_1792051600327_8wcj"
@@ -547,7 +547,7 @@
       "isOnline": true,
       "lastSeen": 1792051656440,
       "createdAt": 1792051656247,
-      "role": "user",
+      "role": "admin",
       "isVerified": true,
       "contacts": [
         "user_1792051656290_zsyz"
@@ -660,7 +660,7 @@
       "isOnline": true,
       "lastSeen": 1792055232591,
       "createdAt": 1792055232458,
-      "role": "user",
+      "role": "admin",
       "isVerified": true,
       "contacts": [
         "user_1792055232478_nmve"
@@ -769,7 +769,7 @@
       "isOnline": true,
       "lastSeen": 1792161052464,
       "createdAt": 1792161052464,
-      "role": "user",
+      "role": "admin",
       "isVerified": true,
       "isRedVerified": true,
       "verificationBadge": "red",
@@ -800,6 +800,32 @@
     }
   ],
   "chats": [
+    {
+      "id": "chat_chattime_announcements",
+      "type": "direct",
+      "name": "ChatTime Announcements",
+      "avatar": "/icon.svg",
+      "folder": "direct",
+      "participants": [
+        "user_chattime_support"
+      ],
+      "isPinned": true,
+      "isVerified": true,
+      "unreadCount": 0,
+      "createdAt": 1792716390780,
+      "lastMessage": {
+        "id": "msg_announcement_welcome",
+        "chatId": "chat_chattime_announcements",
+        "senderId": "user_chattime_support",
+        "senderName": "ChatTime Announcements",
+        "senderAvatar": "/icon.svg",
+        "type": "text",
+        "content": "📢 Welcome to ChatTime! Official announcements, features, and system updates are published here.",
+        "timestamp": 1792716390780,
+        "reactions": {},
+        "status": "delivered"
+      }
+    },
     {
       "id": "c_direct_user_1792055232458_1p90_user_1792055232478_nmve",
       "type": "direct",
@@ -1087,43 +1113,26 @@
         "status": "delivered",
         "reactions": {}
       }
+    ],
+    "chat_chattime_announcements": [
+      {
+        "id": "msg_announcement_welcome",
+        "chatId": "chat_chattime_announcements",
+        "senderId": "user_chattime_support",
+        "senderName": "ChatTime Announcements",
+        "senderAvatar": "/icon.svg",
+        "type": "text",
+        "content": "📢 Welcome to ChatTime! Official announcements, features, and system updates are published here.",
+        "timestamp": 1792716390780,
+        "reactions": {},
+        "status": "delivered"
+      }
     ]
   },
   "calls": [],
   "stories": [],
   "statusHistory": [],
-  "channels": [
-    {
-      "id": "chan_global",
-      "name": "ChatTime Global Community",
-      "handle": "global",
-      "description": "The official international hub for ChatTime users. News, product updates, and discussions.",
-      "category": "Community",
-      "avatar": "/src/assets/images/chattime_brand_logo_1790475904458.jpg",
-      "bannerUrl": "/src/assets/images/chattime_community_banner_1790475940372.jpg",
-      "creatorId": "system",
-      "subscriberCount": 1,
-      "isSubscribed": false,
-      "isVerified": true,
-      "chatId": "chat_global_community",
-      "members": [],
-      "memberRoles": {},
-      "announcements": [
-        {
-          "id": "cann_welcome",
-          "communityId": "chan_global",
-          "title": "Welcome to ChatTime",
-          "content": "End-to-end encrypted messaging, peer-to-peer WebRTC calling, and PWA offline support are now live.",
-          "authorId": "system",
-          "authorName": "ChatTime",
-          "authorAvatar": "/src/assets/images/chattime_brand_logo_1790475904458.jpg",
-          "priority": "important",
-          "timestamp": 1790637000000
-        }
-      ],
-      "posts": []
-    }
-  ],
+  "channels": [],
   "reports": [],
   "announcements": [],
   "otpCodes": {

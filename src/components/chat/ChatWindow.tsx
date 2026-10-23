@@ -40,6 +40,7 @@ import {
   BadgeCheck,
   Sparkles,
   ChevronDown,
+  Megaphone,
 } from 'lucide-react';
 import { useChatTime } from '../../context/ChatTimeContext';
 import { Message, LocationData, PollData, User } from '../../types';
@@ -870,6 +871,11 @@ export const ChatWindow: React.FC = () => {
                         </span>
                       )}
                     </>
+                  ) : activeChat.id === 'chat_chattime_announcements' || activeChat.name?.toLowerCase().includes('announcement') ? (
+                    <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                      <Megaphone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      Official ChatTime Announcements
+                    </span>
                   ) : activeChat.id === 'chat_chattime_support' || activeChat.name === 'ChatTime Support' ? (
                     <span className="text-rose-400 font-semibold flex items-center gap-1">
                       <VerifiedBadge type="red" size="xs" />
@@ -878,7 +884,7 @@ export const ChatWindow: React.FC = () => {
                   ) : activeChat.type === 'channel' ? (
                     <span className="text-teal-400 font-semibold flex items-center gap-1">
                       <BadgeCheck className="w-3.5 h-3.5 text-teal-400 shrink-0" />
-                      Broadcast Channel
+                      Official Community
                     </span>
                   ) : activeChat.participants.length <= 1 ? (
                     <span className="text-slate-400">

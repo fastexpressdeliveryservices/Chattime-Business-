@@ -26,6 +26,7 @@ import {
   Smile,
   Check,
   UserPlus,
+  ChevronDown,
 } from 'lucide-react';
 import { useChatTime } from '../../context/ChatTimeContext';
 import { formatCallDuration } from '../../utils/formatters';
@@ -277,7 +278,7 @@ export const CallOverlay: React.FC = () => {
         if (remoteVideoRef.current.srcObject !== rStream) {
           remoteVideoRef.current.srcObject = rStream;
         }
-        // Keep video element muted so autoplay never blocks video rendering; audio is played by remoteAudioRef
+        // Keep video element strictly muted at all times so it never produces dual-audio out-of-phase howling
         remoteVideoRef.current.muted = true;
         remoteVideoRef.current.play().catch(() => {});
       }
@@ -285,15 +286,10 @@ export const CallOverlay: React.FC = () => {
         if (remoteAudioRef.current.srcObject !== rStream) {
           remoteAudioRef.current.srcObject = rStream;
         }
-        remoteAudioRef.current.muted = false;
-        remoteAudioRef.current.volume = 1.0;
-        remoteAudioRef.current.play().catch(() => {
-          // If audio element blocked by autoplay policy, try to unmute video element as fallback
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.muted = false;
-            remoteVideoRef.current.volume = 1.0;
-          }
-        });
+        remoteAudioRef.current.muted = !activeCall.isSpeakerOn;
+        // 0.82 calibrated volume prevents speaker driver saturation and acoustic leakage into adjacent microphones
+        remoteAudioRef.current.volume = 0.82;
+        remoteAudioRef.current.play().catch(() => {});
       }
     };
 
@@ -307,14 +303,9 @@ export const CallOverlay: React.FC = () => {
       }
       if (remoteAudioRef.current) {
         remoteAudioRef.current.srcObject = stream;
-        remoteAudioRef.current.muted = false;
-        remoteAudioRef.current.volume = 1.0;
-        remoteAudioRef.current.play().catch(() => {
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.muted = false;
-            remoteVideoRef.current.volume = 1.0;
-          }
-        });
+        remoteAudioRef.current.muted = !activeCall.isSpeakerOn;
+        remoteAudioRef.current.volume = 0.82;
+        remoteAudioRef.current.play().catch(() => {});
       }
     });
 
@@ -404,17 +395,23 @@ export const CallOverlay: React.FC = () => {
   // 1. Incoming Call Screen
   if (activeCall.status === 'incoming') {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-200">
-        <div className="relative w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col items-center text-center shadow-2xl overflow-hidden">
-          <div className="absolute -top-24 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed inset-0 z-50 w-full h-[100dvh] bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 flex flex-col justify-between pt-[max(env(safe-area-inset-top,0px),1.5rem)] pb-[max(env(safe-area-inset-bottom,0px),2rem)] px-6 sm:px-10 select-none overflow-hidden animate-in fade-in duration-200">
+        {/* Ambient Glow */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Top Right Silence Ringtone Button */}
+        {/* Top Header Row with E2EE & Silence Ringtone */}
+        <div className="w-full flex items-center justify-between z-10">
+          <div className="flex items-center gap-1.5 text-xs text-slate-300 font-medium">
+            <ShieldCheck className="w-4 h-4 text-teal-400" />
+            <span>ChatTime {activeCall.type === 'video' ? 'Video' : 'Voice'} Call</span>
+          </div>
+
           <button
             onClick={toggleMuteRingtone}
-            className={`absolute top-4 right-4 px-3 py-1.5 rounded-xl text-[11px] font-bold flex items-center gap-1.5 border transition-colors ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 border transition-colors ${
               activeCall.isRingtoneMuted
                 ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                : 'bg-slate-800/90 text-slate-300 hover:text-white border-slate-700'
+                : 'bg-slate-800/80 text-slate-300 hover:text-white border-slate-700'
             }`}
             title="Silence Ringtone"
           >
@@ -430,11 +427,13 @@ export const CallOverlay: React.FC = () => {
               </>
             )}
           </button>
+        </div>
 
-          {/* Caller Avatar with Animated Wave Ring */}
-          <div className="relative mb-6 mt-4">
-            <div className="absolute inset-0 rounded-full bg-teal-400/20 animate-ping" />
-            <div className="relative w-28 h-28 rounded-full overflow-hidden border-2 border-teal-400 p-1 bg-slate-950">
+        {/* Center Caller Profile & Details */}
+        <div className="flex flex-col items-center text-center my-auto z-10 space-y-4">
+          <div className="relative mb-2">
+            <div className="absolute -inset-3 rounded-full bg-teal-400/20 animate-ping pointer-events-none" />
+            <div className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden border-4 border-teal-400 p-1 bg-slate-900 shadow-2xl">
               <img
                 src={activeCall.caller.avatar}
                 alt={activeCall.caller.name}
@@ -442,41 +441,42 @@ export const CallOverlay: React.FC = () => {
                 referrerPolicy="no-referrer"
               />
             </div>
-            <div className="absolute -bottom-1 -right-1 p-2 rounded-full bg-teal-500 text-slate-950 shadow-md">
+            <div className="absolute bottom-1 right-1 p-2.5 rounded-full bg-teal-500 text-slate-950 shadow-lg">
               {activeCall.type === 'video' ? (
-                <Video className="w-4 h-4" />
+                <Video className="w-5 h-5" />
               ) : (
-                <Phone className="w-4 h-4" />
+                <Phone className="w-5 h-5" />
               )}
             </div>
           </div>
 
-          <h2 className="text-xl font-bold text-slate-100 font-display">{peerDisplayName}</h2>
-          <p className="text-xs text-teal-400 font-mono mt-1 font-medium">
-            {rawPeerNumber}
-          </p>
+          <div className="space-y-1">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white font-display tracking-tight">
+              {peerDisplayName}
+            </h2>
+            <p className="text-sm text-teal-400 font-mono font-medium">
+              {rawPeerNumber}
+            </p>
+          </div>
+
           {!isOtherContact && otherUserId && !isOtherSelf && (
             <button
               type="button"
               onClick={() => toggleContact(otherUserId)}
-              className="mt-2.5 px-3 py-1 rounded-full bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+              className="px-3.5 py-1.5 rounded-full bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>+ Save Number to Contacts</span>
             </button>
           )}
-          <div className="text-xs text-slate-400 mt-2 flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
-            <span>End-to-end encrypted call</span>
-          </div>
 
-          {/* Video Call Controls Before Answering: Pause Camera / Turn Camera */}
+          {/* Pre-Call Camera Controls (Video Call) */}
           {activeCall.type === 'video' && (
-            <div className="mt-4 flex items-center justify-center gap-2 p-1.5 bg-slate-950/80 border border-slate-800 rounded-2xl w-full max-w-[280px]">
+            <div className="mt-4 flex items-center justify-center gap-2 p-1.5 bg-slate-900/80 border border-slate-800 rounded-2xl w-full max-w-[280px]">
               <button
                 type="button"
                 onClick={() => setIsPreCallCameraPaused(!isPreCallCameraPaused)}
-                className={`flex-1 py-1.5 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   isPreCallCameraPaused
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                     : 'bg-teal-500/20 text-teal-300 border border-teal-500/40'
@@ -501,7 +501,7 @@ export const CallOverlay: React.FC = () => {
                 onClick={() =>
                   setPreCallFacingMode((m) => (m === 'user' ? 'environment' : 'user'))
                 }
-                className="py-1.5 px-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-[11px] font-semibold text-slate-300 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+                className="py-1.5 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
                 title="Turn Camera (Front or Back)"
               >
                 <RefreshCw className="w-3.5 h-3.5 text-teal-400" />
@@ -509,64 +509,66 @@ export const CallOverlay: React.FC = () => {
               </button>
             </div>
           )}
+        </div>
 
-          {/* Answer / Reject Actions */}
-          <div className="flex items-center justify-center gap-6 sm:gap-8 mt-6">
-            <div className="flex flex-col items-center gap-2">
-              <button
-                onClick={endActiveCall}
-                className="w-14 h-14 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer"
-                title="Decline"
-              >
-                <PhoneOff className="w-6 h-6" />
-              </button>
-              <span className="text-[11px] font-medium text-slate-400">Decline</span>
-            </div>
+        {/* WhatsApp-Style Bottom Answer / Decline Action Dock */}
+        <div className="flex items-center justify-around w-full max-w-sm mx-auto z-10 pt-4">
+          {/* Decline Button */}
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={endActiveCall}
+              className="w-16 h-16 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-2xl shadow-rose-600/40 active:scale-90 transition-transform cursor-pointer"
+              title="Decline"
+            >
+              <PhoneOff className="w-7 h-7" />
+            </button>
+            <span className="text-xs font-semibold text-slate-300">Decline</span>
+          </div>
 
-            {activeCall.type === 'video' && (
-              <div className="flex flex-col items-center gap-2">
-                <button
-                  onClick={() =>
-                    acceptIncomingCall({ isVideoOff: true, facingMode: preCallFacingMode })
-                  }
-                  className="w-14 h-14 rounded-full bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer"
-                  title="Pick with Audio Only (Privacy)"
-                >
-                  <Phone className="w-6 h-6 text-teal-400" />
-                </button>
-                <span className="text-[11px] font-medium text-slate-400">Audio Only</span>
-              </div>
-            )}
-
+          {activeCall.type === 'video' && (
             <div className="flex flex-col items-center gap-2">
               <button
                 onClick={() =>
-                  acceptIncomingCall({
-                    isVideoOff: isPreCallCameraPaused,
-                    facingMode: preCallFacingMode,
-                  })
+                  acceptIncomingCall({ isVideoOff: true, facingMode: preCallFacingMode })
                 }
-                className={`w-14 h-14 rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all cursor-pointer animate-bounce ${
-                  isPreCallCameraPaused
-                    ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-amber-400/30'
-                    : 'bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-teal-500/30'
-                }`}
-                title={isPreCallCameraPaused ? 'Answer with Camera Paused' : 'Answer Call'}
+                className="w-16 h-16 rounded-full bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 flex items-center justify-center shadow-xl active:scale-90 transition-transform cursor-pointer"
+                title="Pick with Audio Only (Privacy)"
               >
-                {activeCall.type === 'video' ? (
-                  isPreCallCameraPaused ? (
-                    <VideoOff className="w-6 h-6" />
-                  ) : (
-                    <Video className="w-6 h-6" />
-                  )
-                ) : (
-                  <Phone className="w-6 h-6" />
-                )}
+                <Phone className="w-7 h-7 text-teal-400" />
               </button>
-              <span className="text-[11px] font-bold text-teal-300">
-                {isPreCallCameraPaused ? 'Pick (Paused)' : 'Answer'}
-              </span>
+              <span className="text-xs font-medium text-slate-300">Audio Only</span>
             </div>
+          )}
+
+          {/* Answer Button */}
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={() =>
+                acceptIncomingCall({
+                  isVideoOff: isPreCallCameraPaused,
+                  facingMode: preCallFacingMode,
+                })
+              }
+              className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl active:scale-90 transition-transform cursor-pointer ${
+                isPreCallCameraPaused
+                  ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-amber-400/40 animate-pulse'
+                  : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/40 animate-bounce'
+              }`}
+              title={isPreCallCameraPaused ? 'Answer with Camera Paused' : 'Answer Call'}
+            >
+              {activeCall.type === 'video' ? (
+                isPreCallCameraPaused ? (
+                  <VideoOff className="w-7 h-7" />
+                ) : (
+                  <Video className="w-7 h-7" />
+                )
+              ) : (
+                <Phone className="w-7 h-7" />
+              )}
+            </button>
+            <span className="text-xs font-bold text-emerald-400">
+              {isPreCallCameraPaused ? 'Pick (Paused)' : 'Answer'}
+            </span>
           </div>
         </div>
       </div>
@@ -645,21 +647,28 @@ export const CallOverlay: React.FC = () => {
 
   // 3. Fullscreen Active WebRTC Call Window
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/95 backdrop-blur-md animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 w-full h-[100dvh] bg-slate-950 flex flex-col justify-between overflow-hidden select-none animate-in fade-in duration-150">
       {remoteAudioTag}
 
-      <div className="relative w-full max-w-4xl h-[92vh] max-h-[720px] bg-slate-900 border border-slate-800 rounded-3xl flex flex-col overflow-hidden shadow-2xl">
-        {/* Top Header Bar */}
-        <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between p-4 sm:p-5 bg-gradient-to-b from-slate-950/90 via-slate-950/60 to-transparent">
-          <div className="flex items-center gap-3">
-            <div className="text-left">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base sm:text-lg font-bold text-slate-100 font-display">
+      <div className="relative w-full h-full flex flex-col justify-between overflow-hidden">
+        {/* Top Header Bar - WhatsApp Fullscreen Floating Header */}
+        <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between pt-[max(env(safe-area-inset-top,0px),0.75rem)] px-3 sm:px-6 pb-4 bg-gradient-to-b from-black/90 via-black/50 to-transparent">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <button
+              onClick={toggleCallMinimize}
+              className="w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md text-white flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+              title="Minimize to Floating Bar"
+            >
+              <ChevronDown className="w-6 h-6" />
+            </button>
+            <div className="text-left min-w-0">
+              <div className="flex items-center gap-2 flex-wrap min-w-0">
+                <h3 className="text-base sm:text-lg font-bold text-white truncate max-w-[150px] sm:max-w-xs font-display">
                   {peerDisplayName}
                 </h3>
-                <span className="flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/20 font-mono">
+                <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30 font-mono">
                   <ShieldCheck className="w-3 h-3 text-teal-400" />
-                  DTLS/SRTP E2EE
+                  E2EE
                 </span>
                 {!isOtherContact && otherUserId && !isOtherSelf && (
                   <button
@@ -668,23 +677,23 @@ export const CallOverlay: React.FC = () => {
                     className="px-2.5 py-0.5 rounded-full bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow-sm"
                   >
                     <UserPlus className="w-3 h-3" />
-                    <span>+ Save Number</span>
+                    <span className="hidden sm:inline">+ Save Number</span>
                   </button>
                 )}
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5 font-mono">
+              <div className="flex items-center gap-2 text-xs text-slate-300 mt-0.5 font-mono">
                 {activeCall.status === 'calling' ? (
-                  <span>Ringing recipient...</span>
+                  <span className="text-teal-300">Ringing recipient...</span>
                 ) : activeCall.status === 'connecting' ? (
-                  <span>Connecting secure line...</span>
+                  <span className="text-amber-300">Connecting secure line...</span>
                 ) : (
                   <>
-                    <span className="px-2 py-0.5 rounded-md bg-teal-500/15 text-teal-300 font-bold border border-teal-500/30 flex items-center gap-1.5 shadow-sm">
-                      <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+                    <span className="px-2 py-0.5 rounded-md bg-teal-500/20 text-teal-300 font-bold border border-teal-500/30 flex items-center gap-1.5 shadow-sm">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                       <span>{formatCallDuration(callDuration)}</span>
                     </span>
-                    <span>·</span>
-                    <span>{rawPeerNumber}</span>
+                    <span className="text-slate-400 hidden sm:inline">·</span>
+                    <span className="text-slate-400 hidden sm:inline">{rawPeerNumber}</span>
                   </>
                 )}
               </div>
@@ -1069,50 +1078,50 @@ export const CallOverlay: React.FC = () => {
           )}
         </div>
 
-        {/* Bottom Call Controls Dock */}
-        <div className="p-3.5 sm:p-5 pb-[max(env(safe-area-inset-bottom,0px),0.875rem)] bg-slate-900/95 border-t border-slate-800 flex items-center justify-center gap-2.5 sm:gap-4 z-30 flex-wrap">
+        {/* Bottom Call Controls Dock - WhatsApp Circular Floating Bar */}
+        <div className="pb-[max(env(safe-area-inset-bottom,0px),1.25rem)] pt-4 px-4 bg-gradient-to-t from-black/95 via-black/75 to-transparent flex items-center justify-center gap-3 sm:gap-5 z-30 flex-wrap">
           {/* Microphone Mute */}
           <button
             onClick={toggleCallMute}
-            className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl flex items-center justify-center transition-all ${
+            className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-lg ${
               isMuted
-                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
-                : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                ? 'bg-rose-600 text-white shadow-rose-600/30 ring-2 ring-rose-400'
+                : 'bg-slate-800/90 text-white hover:bg-slate-700/90'
             }`}
             title={isMuted ? 'Unmute Microphone' : 'Mute Microphone'}
           >
-            {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+            {isMuted ? <MicOff className="w-5 h-5 sm:w-6 sm:h-6" /> : <Mic className="w-5 h-5 sm:w-6 sm:h-6" />}
           </button>
 
           {/* Video Camera On/Off */}
           {activeCall.type === 'video' && (
             <button
               onClick={toggleCallVideo}
-              className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl flex items-center justify-center transition-all ${
+              className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-lg ${
                 isVideoOff
-                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
-                  : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                  ? 'bg-rose-600 text-white shadow-rose-600/30 ring-2 ring-rose-400'
+                  : 'bg-slate-800/90 text-white hover:bg-slate-700/90'
               }`}
               title={isVideoOff ? 'Turn Camera On' : 'Turn Camera Off'}
             >
-              {isVideoOff ? <VideoOff className="w-5 h-5" /> : <Video className="w-5 h-5" />}
+              {isVideoOff ? <VideoOff className="w-5 h-5 sm:w-6 sm:h-6" /> : <Video className="w-5 h-5 sm:w-6 sm:h-6" />}
             </button>
           )}
 
           {/* Speakerphone Toggle */}
           <button
             onClick={toggleCallSpeaker}
-            className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl flex items-center justify-center transition-all ${
+            className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-lg ${
               activeCall.isSpeakerOn
-                ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40'
-                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                ? 'bg-emerald-500 text-slate-950 shadow-emerald-500/30'
+                : 'bg-slate-800/90 text-slate-400 hover:bg-slate-700/90'
             }`}
             title={activeCall.isSpeakerOn ? 'Speaker On' : 'Speaker Muted'}
           >
             {activeCall.isSpeakerOn ? (
-              <Volume2 className="w-5 h-5" />
+              <Volume2 className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : (
-              <VolumeX className="w-5 h-5" />
+              <VolumeX className="w-5 h-5 sm:w-6 sm:h-6" />
             )}
           </button>
 
@@ -1122,17 +1131,17 @@ export const CallOverlay: React.FC = () => {
               setIsVoiceChangerOpen(!isVoiceChangerOpen);
               setIsFiltersOpen(false);
             }}
-            className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
+            className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-lg ${
               isVoiceChangerOpen || activeVoiceEffect !== 'original'
-                ? 'bg-gradient-to-tr from-amber-400 to-teal-400 text-slate-950 font-bold shadow-lg shadow-teal-500/25 ring-2 ring-teal-400'
-                : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                ? 'bg-gradient-to-tr from-amber-400 to-teal-400 text-slate-950 font-bold shadow-teal-500/30 ring-2 ring-teal-400'
+                : 'bg-slate-800/90 text-white hover:bg-slate-700/90'
             }`}
             title="Real-Time Voice Changer Effects"
           >
-            <Wand2 className="w-5 h-5" />
+            <Wand2 className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
 
-          {/* Flip Camera, Filters & Screen Share */}
+          {/* Flip Camera & Filters */}
           {activeCall.type === 'video' && (
             <>
               <button
@@ -1140,60 +1149,46 @@ export const CallOverlay: React.FC = () => {
                   setIsFiltersOpen(!isFiltersOpen);
                   setIsVoiceChangerOpen(false);
                 }}
-                className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl flex items-center justify-center transition-all ${
+                className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-lg ${
                   isFiltersOpen || selectedFilter !== 'normal'
                     ? 'bg-gradient-to-r from-teal-500 to-indigo-500 text-slate-950 font-bold ring-2 ring-teal-400'
-                    : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                    : 'bg-slate-800/90 text-white hover:bg-slate-700/90'
                 }`}
                 title="Camera Beauty & Filters"
               >
-                <Sparkles className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setIsSwappedVideos(!isSwappedVideos)}
-                className="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-slate-800 text-slate-200 hover:bg-slate-700 flex items-center justify-center transition-all"
-                title="Swap Full & Mini Camera View"
-              >
-                <ArrowLeftRight className="w-5 h-5" />
+                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
               <button
                 onClick={handleCameraFlip}
-                className="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-slate-800 text-slate-200 hover:bg-slate-700 flex items-center justify-center transition-all"
+                className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-slate-800/90 text-white hover:bg-slate-700/90 flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-lg"
                 title={`Switch Camera (${currentFacingMode === 'user' ? 'Front' : 'Back'})`}
               >
-                <RefreshCw className="w-5 h-5" />
+                <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
               {currentFacingMode === 'environment' && (
                 <button
                   type="button"
                   onClick={handleToggleTorch}
-                  className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl flex items-center justify-center transition-all ${
+                  className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-lg ${
                     isTorchOn
-                      ? 'bg-amber-400 text-slate-950 shadow-lg shadow-amber-400/40 ring-2 ring-amber-300 font-bold'
-                      : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                      ? 'bg-amber-400 text-slate-950 shadow-amber-400/40 font-bold'
+                      : 'bg-slate-800/90 text-white hover:bg-slate-700/90'
                   }`}
                   title={isTorchOn ? 'Turn Flash Off' : 'Turn Flash On (Back Camera)'}
                 >
-                  <Sun className={`w-5 h-5 ${isTorchOn ? 'fill-current animate-pulse' : ''}`} />
+                  <Sun className={`w-5 h-5 sm:w-6 sm:h-6 ${isTorchOn ? 'fill-current animate-pulse' : ''}`} />
                 </button>
               )}
-              <button
-                onClick={toggleCallScreenShare}
-                className="hidden sm:flex w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-slate-800 text-slate-200 hover:bg-slate-700 items-center justify-center transition-all"
-                title="Share Screen"
-              >
-                <MonitorUp className="w-5 h-5" />
-              </button>
             </>
           )}
 
-          {/* End Call */}
+          {/* WhatsApp-Style Prominent Red End Call Button */}
           <button
             onClick={endActiveCall}
-            className="px-5 sm:px-6 h-12 sm:h-13 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs flex items-center gap-2 shadow-xl shadow-rose-500/25 active:scale-95 transition-all"
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-2xl shadow-rose-600/40 active:scale-90 transition-transform cursor-pointer shrink-0"
+            title="End Call"
           >
-            <PhoneOff className="w-5 h-5" />
-            <span>End Call</span>
+            <PhoneOff className="w-7 h-7" />
           </button>
         </div>
 
