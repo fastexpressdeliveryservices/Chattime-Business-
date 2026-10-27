@@ -1,7 +1,9 @@
-/**
- * ChatTime WebRTC Calling Engine
- * Production-grade Real-Time Audio & Video Calling over RTCPeerConnection
- */
+import {
+  globalVoiceProcessor,
+  CHATTIME_VOICE_STYLES,
+} from './voiceProcessingEngine';
+import type { UserVoiceSettings, VoicePresentation } from '../types/index.ts';
+import { krispRTCAdapter } from './krispService';
 
 export type CallType = 'voice' | 'video';
 
@@ -29,17 +31,20 @@ export interface VoiceEffectPreset {
 
 export const CALL_VOICE_EFFECTS: VoiceEffectPreset[] = [
   { id: 'original', name: 'Original 🎙️', tag: 'Natural', icon: '🎙️', description: 'Clean HD unmodified microphone audio' },
-  { id: 'american', name: 'American 🇺🇸', tag: 'Presence', icon: '🇺🇸', description: 'Warm broadcast presence with crisp high-end' },
-  { id: 'british', name: 'British 🇬🇧', tag: 'Clarity', icon: '🇬🇧', description: 'Punchy articulate mid-range and treble definition' },
-  { id: 'indian', name: 'Indian 🇮🇳', tag: 'Melodic', icon: '🇮🇳', description: 'Rich acoustic resonance with warm vocal body' },
-  { id: 'asian', name: 'Asian 🌏', tag: 'Bright', icon: '🌏', description: 'Crystal bright treble emphasis and airiness' },
-  { id: 'australian', name: 'Australian 🇦🇺', tag: 'Punchy', icon: '🇦🇺', description: 'Forward high-mid vocal projection' },
-  { id: 'jamaican', name: 'Jamaican 🇯🇲', tag: 'Bass', icon: '🇯🇲', description: 'Deep dub warm low-end boost and smooth roll-off' },
-  { id: 'robot', name: 'Robot Vocoder 🤖', tag: 'Sci-Fi', icon: '🤖', description: 'Metallic synthesized robotic vocoder modulation' },
-  { id: 'deep', name: 'Deep Tone 🎙️', tag: 'Baritone', icon: '📻', description: 'Resonant deep baritone bass vocal boost' },
-  { id: 'chipmunk', name: 'High Pitch 🐿️', tag: 'Fun', icon: '🐿️', description: 'Bright elevated high-frequency formant shift' },
-  { id: 'echo', name: 'Cosmic Echo 🌌', tag: 'Spatial', icon: '🌌', description: 'Spacious ambient audio repeat and stereo delay' },
-  { id: 'walkie', name: 'Walkie-Talkie 📟', tag: 'Radio', icon: '📟', description: 'Authentic 300Hz-3.4kHz military radio filter' },
+  { id: 'american', name: 'American 🇺🇸', tag: 'Presence', icon: '🇺🇸', description: 'Crisp presence, natural conversational cadence' },
+  { id: 'british', name: 'British 🇬🇧', tag: 'Clarity', icon: '🇬🇧', description: 'Received Pronunciation with punchy mid-band articulation' },
+  { id: 'scottish', name: 'Scottish 🏴󠁧󠁢󠁳󠁣󠁴󠁿', tag: 'Lilt', icon: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', description: 'Authentic rhotic resonance and deep throat warmth' },
+  { id: 'australian', name: 'Australian 🇦🇺', tag: 'Vibrant', icon: '🇦🇺', description: 'Broad open-vowel formant glide and crisp treble' },
+  { id: 'canadian', name: 'Canadian 🇨🇦', tag: 'Balanced', icon: '🇨🇦', description: 'Neutral North American raising with balanced harmonics' },
+  { id: 'nigerian', name: 'Nigerian 🇳🇬', tag: 'Warmth', icon: '🇳🇬', description: 'Rich chest harmonics, rhythmic cadence and vibrant warmth' },
+  { id: 'ghanaian', name: 'Ghanaian 🇬🇭', tag: 'Melodic', icon: '🇬🇭', description: 'Bright forward acoustic projection and polite cadence' },
+  { id: 'south_african', name: 'South African 🇿🇦', tag: 'Rhythmic', icon: '🇿🇦', description: 'Distinctive close-vowel formant contour and tight plosives' },
+  { id: 'indian', name: 'Indian 🇮🇳', tag: 'Resonant', icon: '🇮🇳', description: 'Warm retroflex harmonic transitions and melodic intonation' },
+  { id: 'spanish_spain', name: 'Spanish (Spain) 🇪🇸', tag: 'Articulate', icon: '🇪🇸', description: 'Castilian apical articulation and rhythmic syllabic clarity' },
+  { id: 'spanish_latam', name: 'Spanish (LatAm) 🇲🇽', tag: 'Smooth', icon: '🇲🇽', description: 'Warm harmonic glide and expressive open cadence' },
+  { id: 'jamaican', name: 'Jamaican 🇯🇲', tag: 'Bass', icon: '🇯🇲', description: 'Deep resonant bass foundation and smooth roll-off' },
+  { id: 'deep', name: 'Deep Baritone 📻', tag: 'Baritone', icon: '📻', description: 'Resonant deep baritone vocal presence' },
+  { id: 'chipmunk', name: 'High Pitch 🐿️', tag: 'Elevated', icon: '🐿️', description: 'Bright elevated high-frequency formant shift' },
 ];
 
 const ICE_SERVERS: RTCConfiguration = {
@@ -721,13 +726,17 @@ export class WebRTCCallEngine {
   /**
    * Real-time Voice Changer on active call
    */
-  async setVoiceEffect(effectId: string): Promise<boolean> {
+  async setVoiceEffect(
+    effectId: string,
+    options?: Partial<UserVoiceSettings>
+  ): Promise<boolean> {
     this.activeVoiceEffect = effectId || 'original';
     const sourceTrack = this.rawAudioTrack || this.localStream?.getAudioTracks()[0];
     if (!sourceTrack) return false;
     if (!this.rawAudioTrack) this.rawAudioTrack = sourceTrack;
 
     if (this.activeVoiceEffect === 'original' || this.activeVoiceEffect === 'none') {
+      globalVoiceProcessor.setMonitor(false);
       this.clearAudioProcessor();
       await this.replaceOutgoingAudioTrack(this.rawAudioTrack);
       return true;
@@ -735,205 +744,82 @@ export class WebRTCCallEngine {
 
     try {
       this.clearAudioProcessor();
-      const AudioCtx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!AudioCtx) return false;
 
-      if (!this.audioContext || this.audioContext.state === 'closed') {
-        this.audioContext = new AudioCtx();
-      }
-      if (this.audioContext.state === 'suspended') {
-        await this.audioContext.resume();
-      }
+      // Configure Voice Engine with selected accent style & presentation parameters
+      globalVoiceProcessor.updateSettings({
+        voiceStyleId: effectId,
+        ...(options || {}),
+      });
 
-      const mediaStreamSource = this.audioContext.createMediaStreamSource(new MediaStream([this.rawAudioTrack]));
-      const destination = this.audioContext.createMediaStreamDestination();
-
-      let currentOut: AudioNode = mediaStreamSource;
-      const nodes: AudioNode[] = [];
-
-      switch (this.activeVoiceEffect.toLowerCase()) {
-        case 'deep': {
-          const bassFilter = this.audioContext.createBiquadFilter();
-          bassFilter.type = 'lowshelf';
-          bassFilter.frequency.value = 220;
-          bassFilter.gain.value = 11;
-          const lowpass = this.audioContext.createBiquadFilter();
-          lowpass.type = 'lowpass';
-          lowpass.frequency.value = 3200;
-          currentOut.connect(bassFilter);
-          bassFilter.connect(lowpass);
-          currentOut = lowpass;
-          nodes.push(bassFilter, lowpass);
-          break;
-        }
-        case 'chipmunk': {
-          const highpass = this.audioContext.createBiquadFilter();
-          highpass.type = 'highpass';
-          highpass.frequency.value = 650;
-          const trebleBoost = this.audioContext.createBiquadFilter();
-          trebleBoost.type = 'highshelf';
-          trebleBoost.frequency.value = 2800;
-          trebleBoost.gain.value = 12;
-          currentOut.connect(highpass);
-          highpass.connect(trebleBoost);
-          currentOut = trebleBoost;
-          nodes.push(highpass, trebleBoost);
-          break;
-        }
-        case 'robot': {
-          const osc = this.audioContext.createOscillator();
-          osc.type = 'sawtooth';
-          osc.frequency.value = 85;
-          const ringModGain = this.audioContext.createGain();
-          ringModGain.gain.value = 0;
-          osc.connect(ringModGain.gain);
-          osc.start();
-
-          const bandpass = this.audioContext.createBiquadFilter();
-          bandpass.type = 'bandpass';
-          bandpass.frequency.value = 1200;
-          bandpass.Q.value = 2.5;
-
-          currentOut.connect(ringModGain);
-          ringModGain.connect(bandpass);
-          currentOut = bandpass;
-          nodes.push(osc, ringModGain, bandpass);
-          break;
-        }
-        case 'echo': {
-          const delay = this.audioContext.createDelay();
-          delay.delayTime.value = 0.22;
-          const feedback = this.audioContext.createGain();
-          feedback.gain.value = 0.42;
-          const dryGain = this.audioContext.createGain();
-          dryGain.gain.value = 0.8;
-          const wetGain = this.audioContext.createGain();
-          wetGain.gain.value = 0.55;
-
-          currentOut.connect(dryGain);
-          dryGain.connect(destination);
-
-          currentOut.connect(delay);
-          delay.connect(feedback);
-          feedback.connect(delay);
-          delay.connect(wetGain);
-          wetGain.connect(destination);
-
-          currentOut = dryGain;
-          nodes.push(delay, feedback, dryGain, wetGain);
-          break;
-        }
-        case 'walkie': {
-          const highpass = this.audioContext.createBiquadFilter();
-          highpass.type = 'highpass';
-          highpass.frequency.value = 450;
-          const lowpass = this.audioContext.createBiquadFilter();
-          lowpass.type = 'lowpass';
-          lowpass.frequency.value = 2900;
-          const gain = this.audioContext.createGain();
-          gain.gain.value = 1.3;
-          currentOut.connect(highpass);
-          highpass.connect(lowpass);
-          lowpass.connect(gain);
-          currentOut = gain;
-          nodes.push(highpass, lowpass, gain);
-          break;
-        }
-        case 'american': {
-          const highshelf = this.audioContext.createBiquadFilter();
-          highshelf.type = 'highshelf';
-          highshelf.frequency.value = 3500;
-          highshelf.gain.value = 5;
-          const lowshelf = this.audioContext.createBiquadFilter();
-          lowshelf.type = 'lowshelf';
-          lowshelf.frequency.value = 180;
-          lowshelf.gain.value = 3;
-          currentOut.connect(highshelf);
-          highshelf.connect(lowshelf);
-          currentOut = lowshelf;
-          nodes.push(highshelf, lowshelf);
-          break;
-        }
-        case 'british': {
-          const peaking = this.audioContext.createBiquadFilter();
-          peaking.type = 'peaking';
-          peaking.frequency.value = 2400;
-          peaking.gain.value = 6;
-          peaking.Q.value = 1.5;
-          currentOut.connect(peaking);
-          currentOut = peaking;
-          nodes.push(peaking);
-          break;
-        }
-        case 'indian': {
-          const lowshelf = this.audioContext.createBiquadFilter();
-          lowshelf.type = 'lowshelf';
-          lowshelf.frequency.value = 240;
-          lowshelf.gain.value = 4.5;
-          const midPeak = this.audioContext.createBiquadFilter();
-          midPeak.type = 'peaking';
-          midPeak.frequency.value = 1500;
-          midPeak.gain.value = 4;
-          currentOut.connect(lowshelf);
-          lowshelf.connect(midPeak);
-          currentOut = midPeak;
-          nodes.push(lowshelf, midPeak);
-          break;
-        }
-        case 'asian': {
-          const highPeak = this.audioContext.createBiquadFilter();
-          highPeak.type = 'highshelf';
-          highPeak.frequency.value = 4200;
-          highPeak.gain.value = 6;
-          currentOut.connect(highPeak);
-          currentOut = highPeak;
-          nodes.push(highPeak);
-          break;
-        }
-        case 'australian': {
-          const midPeak = this.audioContext.createBiquadFilter();
-          midPeak.type = 'peaking';
-          midPeak.frequency.value = 1900;
-          midPeak.gain.value = 5;
-          currentOut.connect(midPeak);
-          currentOut = midPeak;
-          nodes.push(midPeak);
-          break;
-        }
-        case 'jamaican': {
-          const subBass = this.audioContext.createBiquadFilter();
-          subBass.type = 'lowshelf';
-          subBass.frequency.value = 160;
-          subBass.gain.value = 9;
-          currentOut.connect(subBass);
-          currentOut = subBass;
-          nodes.push(subBass);
-          break;
-        }
-        default: {
-          currentOut.connect(destination);
-          break;
-        }
+      const processedTrack = await globalVoiceProcessor.attachMicrophoneTrack(this.rawAudioTrack);
+      if (processedTrack) {
+        processedTrack.enabled = !this.isMuted;
+        this.processedAudioTrack = processedTrack;
+        await this.replaceOutgoingAudioTrack(processedTrack);
+        return true;
       }
 
-      if (this.activeVoiceEffect.toLowerCase() !== 'echo') {
-        currentOut.connect(destination);
-      }
-
-      const outTrack = destination.stream.getAudioTracks()[0];
-      if (outTrack) {
-        outTrack.enabled = !this.isMuted;
-        this.processedAudioTrack = outTrack;
-        this.voiceEffectNodes = nodes;
-        await this.replaceOutgoingAudioTrack(outTrack);
-      }
-      return true;
+      // Graceful fallback to raw microphone if Web Audio fails
+      await this.replaceOutgoingAudioTrack(this.rawAudioTrack);
+      return false;
     } catch (err) {
       console.warn('[WebRTC] Error setting voice effect:', err);
+      if (this.rawAudioTrack) {
+        await this.replaceOutgoingAudioTrack(this.rawAudioTrack);
+      }
       return false;
     }
+  }
+
+  toggleVoiceMonitor(enable?: boolean): boolean {
+    return globalVoiceProcessor.setMonitor(
+      enable !== undefined ? enable : !globalVoiceProcessor.isMonitorEnabled()
+    );
+  }
+
+  isVoiceMonitorEnabled(): boolean {
+    return globalVoiceProcessor.isMonitorEnabled();
+  }
+
+  getVoiceProcessorStatus(): 'idle' | 'connecting' | 'active' | 'error' {
+    return globalVoiceProcessor.getStatus();
+  }
+
+  getVoiceProcessorAudioLevel(): number {
+    return globalVoiceProcessor.getAudioLevel();
+  }
+
+  // Krisp Audio & RTC Integration Pipeline
+  getKrispStatus() {
+    return {
+      isInitialized: krispRTCAdapter.isInitialized(),
+      statusMessage: krispRTCAdapter.getStatusMessage(),
+      isOutboundActive: krispRTCAdapter.isOutboundActive(),
+      isInboundActive: krispRTCAdapter.isInboundActive(),
+      isVoiceIsolationActive: krispRTCAdapter.isVoiceIsolationActive(),
+      isAccentConversionActive: krispRTCAdapter.isAccentConversionActive(),
+      currentAccent: krispRTCAdapter.getCurrentAccent(),
+    };
+  }
+
+  setKrispOutboundNoiseCancellation(enabled: boolean): boolean {
+    const active = krispRTCAdapter.setOutboundNoiseCancellation(enabled);
+    return active;
+  }
+
+  setKrispInboundNoiseCancellation(enabled: boolean): boolean {
+    const active = krispRTCAdapter.setInboundNoiseCancellation(enabled);
+    return active;
+  }
+
+  setKrispVoiceIsolation(enabled: boolean): boolean {
+    const active = krispRTCAdapter.setVoiceIsolation(enabled);
+    return active;
+  }
+
+  setKrispAccentConversion(enabled: boolean, accentId?: string): boolean {
+    const active = krispRTCAdapter.setAccentConversion(enabled, accentId);
+    return active;
   }
 
   private clearVideoProcessor(): void {

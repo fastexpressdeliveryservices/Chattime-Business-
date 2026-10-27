@@ -6,7 +6,6 @@ import {
   MessageSquare,
   ShieldCheck,
   Lock,
-  Globe,
   Copy,
   Check,
   UserPlus,
@@ -15,12 +14,12 @@ import {
   Calendar,
   Edit3,
   Users,
-  Radio,
   ArrowLeft,
   Settings,
   LogOut,
   Save,
   AtSign,
+  Mail,
 } from 'lucide-react';
 import { useChatTime } from '../../context/ChatTimeContext';
 import { formatLastSeen } from '../../utils/formatters';
@@ -71,8 +70,40 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
     Boolean(currentUser?.id && inspectedUserId === currentUser.id);
 
   // Synchronously resolve target user without blocking or spinning
-  const targetUser: User | null = useMemo(() => {
+  const targetUser: User = useMemo(() => {
     if (isTargetSelf && currentUser) return currentUser;
+
+    // Direct match for ChatTime Official Support Account
+    if (
+      inspectedUserId === 'user_chattime_support' ||
+      inspectedUserId === 'support' ||
+      inspectedUserId === 'chattimesupport'
+    ) {
+      return {
+        id: 'user_chattime_support',
+        name: 'ChatTime Support',
+        username: 'support',
+        email: 'support@chattime.com',
+        phoneNumber: '+18002428846',
+        chatTimeNumber: '+1 (800) 242-8846',
+        avatar: '/icon.svg',
+        role: 'admin',
+        isVerified: true,
+        isRedVerified: true,
+        verificationBadge: 'red',
+        verificationBadgeType: 'red',
+        bio: 'Official ChatTime 24/7 Support Desk. Dedicated assistance for account security, calls, messaging, audio AI features, and inquiries.',
+        statusFeeling: '🔴 Official Support Desk',
+        phonePrivate: false,
+        isOnline: true,
+        lastSeen: Date.now(),
+        createdAt: Date.now() - 365 * 24 * 3600 * 1000,
+        contacts: [],
+        followers: [],
+        following: [],
+      } as unknown as User;
+    }
+
     if (inspectedUserId && users[inspectedUserId]) return users[inspectedUserId];
     if (fetchedUser) return fetchedUser;
     if (inspectedUserId) {
@@ -103,14 +134,48 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
           lastSeen: Date.now(),
           isOnline: false,
           phonePrivate: true,
-          bio: 'ChatTime User',
+          bio: 'Available on ChatTime',
           contacts: [],
           followers: [],
           following: [],
         } as unknown as User;
       }
+      // Immediate non-blocking fallback so it NEVER hooks or shows a blank screen
+      return {
+        id: inspectedUserId,
+        name: inspectedUserId.startsWith('+') ? inspectedUserId : 'ChatTime User',
+        username: inspectedUserId.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase() || 'user',
+        avatar: '/icon.svg',
+        role: 'user',
+        phoneNumber: inspectedUserId.startsWith('+') ? inspectedUserId : '',
+        chatTimeNumber: inspectedUserId.startsWith('+') ? inspectedUserId : '',
+        createdAt: Date.now(),
+        lastSeen: Date.now(),
+        isOnline: false,
+        phonePrivate: true,
+        bio: 'Available on ChatTime',
+        contacts: [],
+        followers: [],
+        following: [],
+      } as unknown as User;
     }
-    return currentUser || null;
+    return currentUser || ({
+      id: 'me',
+      name: 'ChatTime User',
+      username: 'user',
+      avatar: '/icon.svg',
+      role: 'user',
+      phoneNumber: '',
+      chatTimeNumber: '',
+      createdAt: Date.now(),
+      lastSeen: Date.now(),
+      isOnline: false,
+      phonePrivate: true,
+      bio: 'Available on ChatTime',
+      contacts: [],
+      followers: [],
+      following: [],
+    } as unknown as User);
   }, [isTargetSelf, inspectedUserId, users, fetchedUser, currentUser, chats]);
 
   // Fast background lookup without causing endless spinning loops
@@ -124,12 +189,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
     }
 
     let isMounted = true;
-    const timeout = setTimeout(() => {
-      if (isMounted && !fetchedUser && currentUser) {
-        setFetchedUser(currentUser);
-      }
-    }, 1500);
-
     fetch(buildApiUrl(`/api/users/lookup?q=${encodeURIComponent(inspectedUserId)}`))
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -137,14 +196,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
           setFetchedUser(data.user);
         }
       })
-      .catch(() => {})
-      .finally(() => {
-        clearTimeout(timeout);
-      });
+      .catch(() => {});
 
     return () => {
       isMounted = false;
-      clearTimeout(timeout);
     };
   }, [inspectedUserId, isTargetSelf]);
 
@@ -166,27 +221,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
   };
 
   if (!inspectedUserId) return null;
-
-  if (!targetUser) {
-    return (
-      <div
-        onClick={handleClose}
-        className="fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150 select-none"
-      >
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center space-y-4 shadow-2xl">
-          <div className="w-10 h-10 rounded-full border-2 border-teal-500/20 border-t-teal-400 animate-spin mx-auto" />
-          <p className="text-sm font-semibold text-slate-200">{t('loadingProfile', 'Opening Profile...')}</p>
-          <button
-            type="button"
-            onClick={handleClose}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all cursor-pointer"
-          >
-            {t('close', 'Close')}
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const isSelf = Boolean(currentUser?.id && targetUser.id === currentUser.id);
   const isAdminViewer = currentUser?.role === 'admin' && !isSharedAppUrl();
@@ -319,10 +353,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose();
       }}
-      className="fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-0 md:p-6 overflow-hidden animate-in fade-in duration-150"
+      className="fixed inset-0 z-[100] bg-slate-950/90 flex items-center justify-center p-0 md:p-6 overflow-hidden select-none animate-in fade-in duration-150"
     >
       <div
-        className={`border-0 md:border rounded-none md:rounded-3xl max-w-4xl w-full h-[100dvh] md:h-auto md:max-h-[92dvh] overflow-hidden shadow-2xl flex flex-col transition-colors ${
+        className={`border-0 md:border rounded-none md:rounded-3xl max-w-4xl w-full h-[100dvh] md:h-[88vh] md:max-h-[850px] min-h-[500px] overflow-hidden shadow-2xl flex flex-col transition-colors ${
           isLight
             ? 'bg-slate-50 border-slate-200 text-slate-900'
             : 'bg-slate-900 border-slate-800 text-slate-100'
@@ -357,7 +391,11 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
             <div className="flex items-center gap-1.5 min-w-0">
               <ShieldCheck className="w-4 h-4 text-teal-500 shrink-0" />
               <span className={`text-xs sm:text-sm font-bold tracking-wide truncate ${headingClass}`}>
-                {isSelf ? t('myProfile', 'Your Profile') : t('contactInfo', 'Contact Info')}
+                {targetUser.id === 'user_chattime_support' || targetUser.username === 'support'
+                  ? 'Official Support Account'
+                  : isSelf
+                  ? t('myProfile', 'Your Profile')
+                  : t('contactInfo', 'Contact Info')}
               </span>
             </div>
           </div>
@@ -378,212 +416,252 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
           </button>
         </div>
 
-        {/* Profile Content with iOS Safe Area Bottom Padding & Smooth Mobile Scrolling */}
+        {/* Dedicated Smooth Scroll Container with min-h-0 for Mobile Flexbox */}
         <div
+          className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain select-auto"
           style={{
-            paddingBottom: 'calc(max(env(safe-area-inset-bottom, 0px), 24px) + 6rem)',
-            paddingLeft: 'max(env(safe-area-inset-left, 0px), 16px)',
-            paddingRight: 'max(env(safe-area-inset-right, 0px), 16px)',
             touchAction: 'pan-y',
             overscrollBehaviorY: 'contain',
             WebkitOverflowScrolling: 'touch',
           }}
-          className="flex-1 overflow-y-auto pt-4 sm:pt-6 grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-start"
         >
-          {/* Left Column: Avatar, Follow Handles & Actions */}
+          {/* Inner Content Grid */}
+          <div
+            style={{
+              paddingBottom: 'calc(max(env(safe-area-inset-bottom, 0px), 24px) + 6rem)',
+              paddingLeft: 'max(env(safe-area-inset-left, 0px), 16px)',
+              paddingRight: 'max(env(safe-area-inset-right, 0px), 16px)',
+            }}
+            className="pt-4 sm:pt-6 grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-start"
+          >
+          {/* Left Column */}
           <div className={`md:col-span-5 flex flex-col items-center text-center p-5 sm:p-6 rounded-2xl border space-y-4 ${cardBgClass}`}>
-            <div className="relative">
-              <img
-                src={targetUser.avatar || '/icon.svg'}
-                alt={targetUser.name}
-                className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover bg-slate-800 border-2 border-teal-500/40 shadow-xl"
-              />
-              {canSeePresence && (
-                <span
-                  className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-4 ${
-                    isLight ? 'border-white' : 'border-slate-950'
-                  } ${targetUser.isOnline ? 'bg-emerald-500' : 'bg-slate-500'}`}
-                  title={targetUser.isOnline ? t('online', 'Online') : t('offline', 'Offline')}
-                />
-              )}
-            </div>
+            {targetUser.id === 'user_chattime_support' || targetUser.username === 'support' ? (
+              /* Official WhatsApp Support Profile */
+              <div className="w-full flex flex-col items-center text-center space-y-4">
+                <div className="relative">
+                  <img
+                    src={targetUser.avatar || '/icon.svg'}
+                    alt="ChatTime Support"
+                    className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover bg-slate-800 border-2 border-rose-500/60 shadow-xl"
+                  />
+                  <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-4 border-slate-900 bg-emerald-500" title="24/7 Active" />
+                </div>
 
-            <div className="space-y-1.5 max-w-full">
-              <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                <h2 className={`text-xl font-bold truncate ${headingClass}`}>{targetUser.name}</h2>
-                <VerifiedBadge user={targetUser} size="md" />
-                {targetUser.role === 'admin' && (
-                  <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-amber-500/20 text-amber-500 dark:text-amber-300 border border-amber-500/30">
-                    {t('admin', 'Admin')}
+                <div className="space-y-1.5 max-w-full">
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    <h2 className={`text-xl font-bold truncate ${headingClass}`}>ChatTime Support</h2>
+                    <VerifiedBadge type="red" size="md" />
+                  </div>
+                  <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                    Official Support Account
                   </span>
-                )}
-              </div>
-
-              {/* Follow Handle */}
-              <div className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-teal-600 dark:text-teal-400 font-mono text-xs font-semibold ${innerCardBgClass}`}>
-                <AtSign className="w-3 h-3 text-teal-500" />
-                <span>{targetUser.username}</span>
-              </div>
-
-              {canSeePresence ? (
-                <p className={`text-xs ${textMutedClass}`}>
-                  {targetUser.isOnline
-                    ? t('activeNow', 'Active Now on ChatTime')
-                    : formatLastSeen(targetUser.lastSeen)}
-                </p>
-              ) : targetUser.bio ? (
-                <p className={`text-xs truncate max-w-xs ${textMutedClass}`}>
-                  {targetUser.bio}
-                </p>
-              ) : null}
-
-              {/* Follower / Following Stats */}
-              <div className="flex items-center justify-center gap-4 pt-2">
-                <div className={`text-center px-3 py-1.5 rounded-xl border ${innerCardBgClass}`}>
-                  <div className={`text-sm font-bold font-mono ${headingClass}`}>{followersCount}</div>
-                  <div className={`text-[10px] uppercase tracking-wider font-semibold ${textMutedClass}`}>
-                    {t('followers', 'Followers')}
-                  </div>
                 </div>
-                <div className={`text-center px-3 py-1.5 rounded-xl border ${innerCardBgClass}`}>
-                  <div className={`text-sm font-bold font-mono ${headingClass}`}>{followingCount}</div>
-                  <div className={`text-[10px] uppercase tracking-wider font-semibold ${textMutedClass}`}>
-                    {t('following', 'Following')}
+
+                {/* Human Support Concierge Card */}
+                <div className={`w-full p-4 rounded-xl border text-left space-y-2.5 ${innerCardBgClass}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-teal-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5" /> Human Support Email
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-bold">24/7 Monitored</span>
                   </div>
+                  <div className="text-sm font-mono font-bold text-white flex items-center justify-between">
+                    <span>support@chattime.com</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText('support@chattime.com');
+                        addToast(t('copied', 'Copied'), 'support@chattime.com copied to clipboard.', 'info');
+                      }}
+                      className="p-1 rounded text-slate-400 hover:text-white"
+                      title="Copy email"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <a
+                    href="mailto:support@chattime.com?subject=ChatTime%20Support%20Inquiry"
+                    className="w-full py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors shadow-sm"
+                  >
+                    <Mail className="w-4 h-4" /> Email Human Support Concierge
+                  </a>
                 </div>
-              </div>
-            </div>
 
-            {targetUser.statusFeeling && (
-              <div className={`px-3.5 py-1.5 rounded-xl border text-xs flex items-center gap-1.5 ${innerCardBgClass}`}>
-                <Sparkles className="w-3.5 h-3.5 text-teal-500 shrink-0" />
-                <span className="truncate">{targetUser.statusFeeling}</span>
-              </div>
-            )}
+                {/* Bio / Mission */}
+                <div className={`w-full p-3.5 rounded-xl border text-left ${innerCardBgClass}`}>
+                  <span className={`text-[10px] uppercase tracking-wider font-bold block mb-1 ${textMutedClass}`}>
+                    About Support
+                  </span>
+                  <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-700' : 'text-slate-200'}`}>
+                    Official 24/7 customer care and technical support desk for ChatTime. Here to assist with account recovery, Krisp voice AI features, calls, and security.
+                  </p>
+                </div>
 
-            {/* Bio */}
-            <div className={`w-full p-3.5 rounded-xl border text-left ${innerCardBgClass}`}>
-              <span className={`text-[10px] uppercase tracking-wider font-bold block mb-1 ${textMutedClass}`}>
-                {t('aboutBio', 'About / Bio')}
-              </span>
-              <p className={`text-xs leading-relaxed whitespace-pre-wrap ${isLight ? 'text-slate-700' : 'text-slate-200'}`}>
-                {targetUser.bio || t('availableOnChatTime', 'Available on ChatTime')}
-              </p>
-            </div>
-
-            {/* Self Edit Profile or Target User Action Buttons */}
-            {isSelf ? (
-              <div className="w-full space-y-2 pt-1">
+                {/* Action button to message support */}
                 <button
                   type="button"
-                  onClick={() => setIsEditingSelf(!isEditingSelf)}
+                  onClick={handleMessage}
                   className="w-full py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors shadow-lg shadow-teal-500/20 active:scale-95 cursor-pointer"
                 >
-                  <Edit3 className="w-4 h-4" />
-                  <span>{isEditingSelf ? t('closeEditForm', 'Close Edit Form') : t('editProfile', 'Edit Profile & Handle')}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleClose();
-                    setActiveTab('settings');
-                  }}
-                  className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 transition-colors active:scale-95 cursor-pointer"
-                >
-                  <Settings className="w-4 h-4 text-teal-400" /> {t('settings', 'Full Settings & Privacy')}
-                </button>
-
-                {onOpenRegister && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleClose();
-                      onOpenRegister();
-                    }}
-                    className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 transition-colors active:scale-95 cursor-pointer"
-                  >
-                    <UserPlus className="w-4 h-4 text-teal-400" /> {t('addSwitchAccount', 'Add / Switch Account')}
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleClose();
-                    logoutUser();
-                  }}
-                  className="w-full py-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 font-bold text-xs flex items-center justify-center gap-2 transition-colors active:scale-95 cursor-pointer"
-                >
-                  <LogOut className="w-4 h-4" /> {t('signOut', 'Sign Out')}
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Message 24/7 Support Desk</span>
                 </button>
               </div>
             ) : (
-              <div className="w-full space-y-2.5 pt-1">
-                {/* Follow Button */}
-                <button
-                  type="button"
-                  onClick={() => toggleFollowUser(targetUser.id)}
-                  className={`w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm ${
-                    isFollowing
-                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
-                      : 'bg-gradient-to-r from-teal-500 to-emerald-500 hover:opacity-90 text-slate-950 font-extrabold shadow-teal-500/20'
-                  }`}
-                >
-                  {isFollowing ? (
-                    <>
-                      <UserCheck className="w-4 h-4 text-teal-400" /> {t('following', 'Following')} @{targetUser.username}
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="w-4 h-4" /> {t('follow', 'Follow')} @{targetUser.username}
-                    </>
+              /* Standard User Profile */
+              <>
+                <div className="relative">
+                  <img
+                    src={targetUser.avatar || '/icon.svg'}
+                    alt={targetUser.name}
+                    className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover bg-slate-800 border-2 border-teal-500/40 shadow-xl"
+                  />
+                  {targetUser.isOnline && canSeePresence && (
+                    <span
+                      className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-4 ${
+                        isLight ? 'border-white' : 'border-slate-950'
+                      } bg-emerald-500`}
+                      title={t('online', 'Online')}
+                    />
                   )}
-                </button>
-
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={handleMessage}
-                    className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer"
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    {t('message', 'Message')}
-                  </button>
-                  <button
-                    onClick={() => handleCall('voice')}
-                    className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-teal-400 border border-slate-800 font-bold text-xs transition-colors cursor-pointer"
-                  >
-                    <Phone className="w-4 h-4" />
-                    {t('voiceCall', 'Voice Call')}
-                  </button>
-                  <button
-                    onClick={() => handleCall('video')}
-                    className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-indigo-400 border border-slate-800 font-bold text-xs transition-colors cursor-pointer"
-                  >
-                    <Video className="w-4 h-4" />
-                    {t('videoCall', 'Video Call')}
-                  </button>
                 </div>
 
-                <button
-                  onClick={() => toggleContact(targetUser.id)}
-                  className={`w-full py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
-                    isContact
-                      ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
-                      : 'bg-teal-500/10 border-teal-500/30 text-teal-300 hover:bg-teal-500/20'
-                  }`}
-                >
-                  {isContact ? (
-                    <>
-                      <UserCheck className="w-4 h-4 text-teal-400" /> {t('inContacts', 'In Your Contacts (Remove)')}
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="w-4 h-4" /> {t('saveToContacts', 'Save Number to Contacts')}
-                    </>
+                <div className="space-y-1.5 max-w-full">
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    <h2 className={`text-xl font-bold truncate ${headingClass}`}>{targetUser.name}</h2>
+                    <VerifiedBadge user={targetUser} size="md" />
+                    {targetUser.role === 'admin' && (
+                      <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-amber-500/20 text-amber-500 dark:text-amber-300 border border-amber-500/30">
+                        {t('admin', 'Admin')}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Handle */}
+                  <div className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-teal-600 dark:text-teal-400 font-mono text-xs font-semibold ${innerCardBgClass}`}>
+                    <AtSign className="w-3 h-3 text-teal-500" />
+                    <span>{targetUser.username}</span>
+                  </div>
+
+                  {targetUser.isOnline && canSeePresence && (
+                    <p className="text-xs text-emerald-400 font-medium">
+                      {t('online', 'online')}
+                    </p>
                   )}
-                </button>
-              </div>
+                </div>
+
+                {targetUser.statusFeeling && (
+                  <div className={`px-3.5 py-1.5 rounded-xl border text-xs flex items-center gap-1.5 ${innerCardBgClass}`}>
+                    <Sparkles className="w-3.5 h-3.5 text-teal-500 shrink-0" />
+                    <span className="truncate">{targetUser.statusFeeling}</span>
+                  </div>
+                )}
+
+                {/* Bio */}
+                <div className={`w-full p-3.5 rounded-xl border text-left ${innerCardBgClass}`}>
+                  <span className={`text-[10px] uppercase tracking-wider font-bold block mb-1 ${textMutedClass}`}>
+                    {t('aboutBio', 'About / Bio')}
+                  </span>
+                  <p className={`text-xs leading-relaxed whitespace-pre-wrap ${isLight ? 'text-slate-700' : 'text-slate-200'}`}>
+                    {targetUser.bio || t('availableOnChatTime', 'Available on ChatTime')}
+                  </p>
+                </div>
+
+                {/* Self Edit Profile or Target User Action Buttons */}
+                {isSelf ? (
+                  <div className="w-full space-y-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingSelf(!isEditingSelf)}
+                      className="w-full py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors shadow-lg shadow-teal-500/20 active:scale-95 cursor-pointer"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      <span>{isEditingSelf ? t('closeEditForm', 'Close Edit Form') : t('editProfile', 'Edit Profile & Handle')}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleClose();
+                        setActiveTab('settings');
+                      }}
+                      className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 transition-colors active:scale-95 cursor-pointer"
+                    >
+                      <Settings className="w-4 h-4 text-teal-400" /> {t('settings', 'Full Settings & Privacy')}
+                    </button>
+
+                    {onOpenRegister && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleClose();
+                          onOpenRegister();
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 transition-colors active:scale-95 cursor-pointer"
+                      >
+                        <UserPlus className="w-4 h-4 text-teal-400" /> {t('addSwitchAccount', 'Add / Switch Account')}
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleClose();
+                        logoutUser();
+                      }}
+                      className="w-full py-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 font-bold text-xs flex items-center justify-center gap-2 transition-colors active:scale-95 cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4" /> {t('signOut', 'Sign Out')}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-full space-y-2.5 pt-1">
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={handleMessage}
+                        className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        {t('message', 'Message')}
+                      </button>
+                      <button
+                        onClick={() => handleCall('voice')}
+                        className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-teal-400 border border-slate-800 font-bold text-xs transition-colors cursor-pointer"
+                      >
+                        <Phone className="w-4 h-4" />
+                        {t('voiceCall', 'Voice Call')}
+                      </button>
+                      <button
+                        onClick={() => handleCall('video')}
+                        className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-indigo-400 border border-slate-800 font-bold text-xs transition-colors cursor-pointer"
+                      >
+                        <Video className="w-4 h-4" />
+                        {t('videoCall', 'Video Call')}
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={() => toggleContact(targetUser.id)}
+                      className={`w-full py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+                        isContact
+                          ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+                          : 'bg-teal-500/10 border-teal-500/30 text-teal-300 hover:bg-teal-500/20'
+                      }`}
+                    >
+                      {isContact ? (
+                        <>
+                          <UserCheck className="w-4 h-4 text-teal-400" /> {t('inContacts', 'In Your Contacts (Remove)')}
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="w-4 h-4" /> {t('saveToContacts', 'Save Number to Contacts')}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -766,36 +844,22 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
               </div>
             </div>
 
-            {/* Account Metadata Grid (Respects Country & Member Since privacy) */}
-            {(canSeeCountry || canSeeJoinDate) && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {canSeeCountry && (
-                  <div className={`p-4 rounded-2xl border ${cardBgClass}`}>
-                    <div className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1 ${textMutedClass}`}>
-                      <Globe className="w-3.5 h-3.5 text-teal-500" /> {t('countryRegion', 'Country / Region')}
-                    </div>
-                    <div className={`text-sm font-semibold ${headingClass}`}>
-                      {targetUser.countryName || 'Global'} ({targetUser.countryCode || '+1'})
-                    </div>
-                  </div>
-                )}
-
-                {canSeeJoinDate && (
-                  <div className={`p-4 rounded-2xl border ${cardBgClass}`}>
-                    <div className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1 ${textMutedClass}`}>
-                      <Calendar className="w-3.5 h-3.5 text-teal-500" /> {t('memberSince', 'Member Since')}
-                    </div>
-                    <div className={`text-sm font-semibold ${headingClass}`}>
-                      {new Date(targetUser.createdAt || Date.now()).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </div>
-                  </div>
-                )}
+            {/* WhatsApp-Style End-to-End Encryption Notice Card */}
+            <div className={`p-4 rounded-2xl border flex items-start gap-3 ${cardBgClass}`}>
+              <div className="p-2 rounded-xl bg-teal-500/15 text-teal-400 shrink-0 mt-0.5">
+                <Lock className="w-4 h-4" />
               </div>
-            )}
+              <div className="space-y-0.5 min-w-0">
+                <div className={`text-xs font-bold ${headingClass}`}>
+                  {t('encryption', 'Encryption')}
+                </div>
+                <p className={`text-[11px] leading-relaxed ${textMutedClass}`}>
+                  {targetUser.id === 'user_chattime_support' || targetUser.username === 'support'
+                    ? 'Messages and calls with ChatTime Official Support are end-to-end encrypted. ChatTime will never ask for your password, PIN, or verification code.'
+                    : 'Messages and calls are end-to-end encrypted. No one outside of this chat, not even ChatTime, can read or listen to them.'}
+                </p>
+              </div>
+            </div>
 
             {/* Mutual Groups & Joined Communities */}
             <div className={`p-5 rounded-2xl border space-y-3 ${cardBgClass}`}>
@@ -840,7 +904,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
                       />
                       <div className="min-w-0">
                         <div className="text-xs font-bold text-white truncate flex items-center gap-1">
-                          <Radio className="w-3 h-3 text-teal-400 shrink-0" />
+                          <Users className="w-3 h-3 text-teal-400 shrink-0" />
                           {ch.name}
                         </div>
                         <div className="text-[10px] text-slate-400">{ch.category} {t('community', 'Community')}</div>
@@ -850,6 +914,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
                 </div>
               )}
             </div>
+          </div>
           </div>
         </div>
       </div>

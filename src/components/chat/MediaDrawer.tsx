@@ -24,9 +24,13 @@ import {
   Eraser,
   Ghost,
   ArrowLeft,
+  Mail,
+  Star,
+  Bookmark,
 } from 'lucide-react';
 import { useChatTime } from '../../context/ChatTimeContext';
 import { maskPhoneNumber } from '../../utils/numberGenerator';
+import { VerifiedBadge } from '../common/VerifiedBadge';
 import { User } from '../../types';
 
 export const MediaDrawer: React.FC = () => {
@@ -39,6 +43,9 @@ export const MediaDrawer: React.FC = () => {
     isInfoDrawerOpen,
     setIsInfoDrawerOpen,
     setInspectedUserId,
+    togglePinChat,
+    toggleFavoriteChat,
+    toggleImportantChat,
     toggleMuteChat,
     clearChatHistory,
     deleteChat,
@@ -157,70 +164,197 @@ export const MediaDrawer: React.FC = () => {
       {/* Scrollable Body */}
       <div className="flex-1 overflow-y-auto p-5 space-y-6">
         {/* Identity Summary */}
-        <div className="flex flex-col items-center text-center">
-          <div className="relative">
-            <img
-              src={displayAvatar}
-              alt={displayName}
-              className="w-24 h-24 rounded-3xl object-cover bg-slate-800 border-2 border-slate-700 shadow-lg"
-            />
-            {peerUser && (
-              <span
-                className={`w-4 h-4 rounded-full border-2 border-slate-900 absolute -bottom-1 -right-1 ${
-                  peerUser.isOnline ? 'bg-emerald-500' : 'bg-slate-500'
-                }`}
+        {chat.id === 'chat_chattime_support' || peerUser?.id === 'user_chattime_support' || chat.participants.includes('user_chattime_support') || chat.name === 'ChatTime Support' ? (
+          /* Official WhatsApp Support Account Style Profile */
+          <div className="flex flex-col items-center text-center space-y-3.5">
+            <div className="relative">
+              <img
+                src={displayAvatar || '/icon.svg'}
+                alt="ChatTime Support"
+                className="w-24 h-24 rounded-3xl object-cover bg-slate-800 border-2 border-rose-500/60 shadow-xl"
               />
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 mt-3">
-            <h4 className="text-base font-bold text-white">{displayName}</h4>
-            {peerUser?.isVerified && (
-              <ShieldCheck className="w-4 h-4 text-teal-400" />
-            )}
-          </div>
+              <span className="w-4 h-4 rounded-full border-2 border-slate-900 absolute -bottom-1 -right-1 bg-emerald-500" title="24/7 Active" />
+            </div>
 
-          {peerUser && (
-            <p className="text-xs font-medium text-teal-400 mt-0.5">@{peerUser.username}</p>
-          )}
+            <div>
+              <div className="flex items-center justify-center gap-1.5">
+                <h4 className="text-base font-bold text-white">ChatTime Support</h4>
+                <VerifiedBadge type="red" size="sm" />
+              </div>
+              <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                Official Support Account
+              </span>
+            </div>
 
-          {peerPhone ? (
-            <div className="mt-2 flex items-center gap-1.5 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl">
-              <Phone className="w-3.5 h-3.5 text-teal-400" />
-              <span className="text-xs font-mono font-semibold text-slate-200">{peerPhone}</span>
-              {!canSeePhone && (
-                <span className="text-[10px] bg-amber-500/15 text-amber-300 px-1.5 py-0.5 rounded ml-1">
-                  Private
+            {/* Human Concierge Email Card */}
+            <div className="w-full p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-2 text-left">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-teal-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-teal-400" /> Human Support Email
                 </span>
+                <span className="text-[10px] text-emerald-400 font-semibold">24/7 Monitored</span>
+              </div>
+              <div className="text-xs font-mono font-bold text-slate-100 flex items-center justify-between">
+                <span>support@chattime.com</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText('support@chattime.com');
+                    addToast('Copied', 'support@chattime.com copied to clipboard.', 'info');
+                  }}
+                  className="p-1 rounded text-slate-400 hover:text-white"
+                  title="Copy email"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <a
+                href="mailto:support@chattime.com?subject=ChatTime%20Support%20Inquiry"
+                className="w-full py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+              >
+                <Mail className="w-3.5 h-3.5" /> Email Support Concierge
+              </a>
+            </div>
+
+            {/* Phone Hotline */}
+            <div className="w-full flex items-center justify-between bg-slate-950 border border-slate-800 px-3.5 py-2.5 rounded-2xl text-left">
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block">Toll-Free Helpline</span>
+                <span className="text-xs font-mono font-bold text-slate-200">+1 (800) 242-8846</span>
+              </div>
+              <Phone className="w-4 h-4 text-teal-400" />
+            </div>
+
+            {/* Quick Chat Actions: Favorite & Important */}
+            <div className="grid grid-cols-2 gap-2 w-full pt-1">
+              <button
+                type="button"
+                onClick={() => toggleFavoriteChat(chat.id)}
+                className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all ${
+                  chat.isFavorite
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                    : 'bg-slate-950 hover:bg-slate-800 text-slate-300 border-slate-800'
+                }`}
+              >
+                <Star className={`w-3.5 h-3.5 ${chat.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-400'}`} />
+                <span>{chat.isFavorite ? 'Favorited' : 'Add Favorite'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleImportantChat(chat.id)}
+                className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all ${
+                  chat.isImportant
+                    ? 'bg-teal-500/20 text-teal-300 border-teal-500/40'
+                    : 'bg-slate-950 hover:bg-slate-800 text-slate-300 border-slate-800'
+                }`}
+              >
+                <Bookmark className={`w-3.5 h-3.5 ${chat.isImportant ? 'fill-teal-400 text-teal-400' : 'text-slate-400'}`} />
+                <span>{chat.isImportant ? 'Important' : 'Mark Important'}</span>
+              </button>
+            </div>
+
+            {/* Security Verification Notice */}
+            <div className="p-3 rounded-2xl bg-teal-500/10 border border-teal-500/30 text-left space-y-1">
+              <div className="flex items-center gap-1.5 text-teal-300 text-xs font-bold">
+                <Lock className="w-3.5 h-3.5 text-teal-400 shrink-0" /> End-to-End Encrypted Desk
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                ChatTime Support will never ask for your password, PIN, or verification code.
+              </p>
+            </div>
+          </div>
+        ) : (
+          /* Standard Contact / Group Profile */
+          <div className="flex flex-col items-center text-center">
+            <div className="relative">
+              <img
+                src={displayAvatar}
+                alt={displayName}
+                className="w-24 h-24 rounded-3xl object-cover bg-slate-800 border-2 border-slate-700 shadow-lg"
+              />
+              {peerUser && peerUser.isOnline && (
+                <span className="w-4 h-4 rounded-full border-2 border-slate-900 absolute -bottom-1 -right-1 bg-emerald-500" />
               )}
             </div>
-          ) : (
-            <p className="text-xs text-slate-400 mt-1">
-              {chat.participants.length} members
-            </p>
-          )}
-
-          {peerUser && (
-            <button
-              onClick={() => setInspectedUserId(peerUser.id)}
-              className="mt-3 px-3.5 py-1.5 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
-            >
-              <ExternalLink className="w-3.5 h-3.5" /> Open Full Profile View
-            </button>
-          )}
-
-          {peerUser?.statusFeeling && (
-            <div className="mt-2.5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/80 text-xs text-slate-300">
-              <Sparkles className="w-3 h-3 text-teal-400" />
-              <span>{peerUser.statusFeeling}</span>
+            <div className="flex items-center gap-1.5 mt-3">
+              <h4 className="text-base font-bold text-white">{displayName}</h4>
+              {peerUser?.isVerified && (
+                <ShieldCheck className="w-4 h-4 text-teal-400" />
+              )}
             </div>
-          )}
 
-          {(peerUser?.bio || chat.description) && (
-            <p className="text-xs text-slate-300 mt-3 bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 w-full">
-              {peerUser?.bio || chat.description}
-            </p>
-          )}
-        </div>
+            {peerUser && (
+              <p className="text-xs font-medium text-teal-400 mt-0.5">@{peerUser.username}</p>
+            )}
+
+            {peerPhone ? (
+              <div className="mt-2 flex items-center gap-1.5 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl">
+                <Phone className="w-3.5 h-3.5 text-teal-400" />
+                <span className="text-xs font-mono font-semibold text-slate-200">{peerPhone}</span>
+                {!canSeePhone && (
+                  <span className="text-[10px] bg-amber-500/15 text-amber-300 px-1.5 py-0.5 rounded ml-1">
+                    Private
+                  </span>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 mt-1">
+                {chat.participants.length} members
+              </p>
+            )}
+
+            {/* Quick Chat Actions: Favorite & Important */}
+            <div className="grid grid-cols-2 gap-2 w-full pt-3">
+              <button
+                type="button"
+                onClick={() => toggleFavoriteChat(chat.id)}
+                className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all ${
+                  chat.isFavorite
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                    : 'bg-slate-950 hover:bg-slate-800 text-slate-300 border-slate-800'
+                }`}
+              >
+                <Star className={`w-3.5 h-3.5 ${chat.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-400'}`} />
+                <span>{chat.isFavorite ? 'Favorited' : 'Favorite'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleImportantChat(chat.id)}
+                className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all ${
+                  chat.isImportant
+                    ? 'bg-teal-500/20 text-teal-300 border-teal-500/40'
+                    : 'bg-slate-950 hover:bg-slate-800 text-slate-300 border-slate-800'
+                }`}
+              >
+                <Bookmark className={`w-3.5 h-3.5 ${chat.isImportant ? 'fill-teal-400 text-teal-400' : 'text-slate-400'}`} />
+                <span>{chat.isImportant ? 'Important' : 'Important'}</span>
+              </button>
+            </div>
+
+            {peerUser && (
+              <button
+                onClick={() => setInspectedUserId(peerUser.id)}
+                className="mt-3 px-3.5 py-1.5 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> Open Full Profile View
+              </button>
+            )}
+
+            {peerUser?.statusFeeling && (
+              <div className="mt-2.5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/80 text-xs text-slate-300">
+                <Sparkles className="w-3 h-3 text-teal-400" />
+                <span>{peerUser.statusFeeling}</span>
+              </div>
+            )}
+
+            {(peerUser?.bio || chat.description) && (
+              <p className="text-xs text-slate-300 mt-3 bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 w-full text-left leading-relaxed">
+                {peerUser?.bio || chat.description}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Navigation Sub-Tabs */}
         <div className="grid grid-cols-4 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">

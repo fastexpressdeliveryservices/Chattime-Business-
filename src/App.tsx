@@ -17,6 +17,8 @@ import { AccountBoundedScreen } from './components/auth/AccountBoundedScreen';
 import { AppBackground } from './components/layout/AppBackground';
 import { NewGroupModal } from './components/chat/NewGroupModal';
 import { UserProfileModal } from './components/profile/UserProfileModal';
+import { VoiceStudioModal } from './components/voice/VoiceStudioModal';
+import { TextToSpeechModal } from './components/voice/TextToSpeechModal';
 import { BrandLogo } from './components/common/BrandLogo';
 import { isSharedAppUrl } from './utils/sharedUrl';
 import { AdminApp } from './admin/AdminApp';
@@ -84,6 +86,10 @@ const ChatTimeMain: React.FC = () => {
     toasts,
     removeToast,
     setInspectedUserId,
+    isVoiceStudioOpen,
+    setIsVoiceStudioOpen,
+    isTTSOpen,
+    setIsTTSOpen,
   } = useChatTime();
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isNewGroupOpen, setIsNewGroupOpen] = useState(false);
@@ -267,6 +273,26 @@ const ChatTimeMain: React.FC = () => {
         </>
         )
       )}
+
+      {/* AI Voice Studio & Regional Accent Effects Modal */}
+      <VoiceStudioModal
+        isOpen={isVoiceStudioOpen}
+        onClose={() => setIsVoiceStudioOpen(false)}
+        onOpenTTS={() => {
+          setIsVoiceStudioOpen(false);
+          setIsTTSOpen(true);
+        }}
+      />
+
+      {/* AI Text-To-Speech Studio Modal */}
+      <TextToSpeechModal
+        isOpen={isTTSOpen}
+        onClose={() => setIsTTSOpen(false)}
+        onOpenVoiceStudio={() => {
+          setIsTTSOpen(false);
+          setIsVoiceStudioOpen(true);
+        }}
+      />
     </div>
   );
 };

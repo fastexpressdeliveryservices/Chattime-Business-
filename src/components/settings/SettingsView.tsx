@@ -38,6 +38,7 @@ import {
   FileText,
   ChevronRight,
   Info,
+  Wand2,
 } from 'lucide-react';
 import { useChatTime } from '../../context/ChatTimeContext';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
@@ -49,6 +50,7 @@ import { SUPPORTED_LANGUAGES } from '../../utils/languages';
 import { RegisterModal } from '../auth/RegisterModal';
 import { openInExternalBrowser } from '../../utils/linkHandler';
 import { VerifiedBadge } from '../common/VerifiedBadge';
+import { VoiceAISettingsSection } from '../voice/VoiceAISettingsSection';
 
 export const SettingsView: React.FC = () => {
   const {
@@ -81,10 +83,11 @@ export const SettingsView: React.FC = () => {
     startDirectChat,
     sendMessage,
     setVerificationBadgeByAdmin,
+    openVoiceStudio,
   } = useChatTime();
 
   const [activeSection, setActiveSection] = useState<
-    'profile' | 'appearance' | 'notifications' | 'language' | 'privacy' | 'security' | 'help' | 'app'
+    'profile' | 'appearance' | 'voice_ai' | 'notifications' | 'language' | 'privacy' | 'security' | 'help' | 'app'
   >('profile');
   const [langSearch, setLangSearch] = useState('');
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -341,6 +344,7 @@ export const SettingsView: React.FC = () => {
             {[
               { id: 'profile', label: t('myProfile', 'Profile & Phone'), icon: UserIcon },
               { id: 'appearance', label: t('appearance', 'Themes & Colours'), icon: Palette },
+              { id: 'voice_ai', label: t('voiceAi', 'Voice Changing & AI'), icon: Wand2 },
               { id: 'notifications', label: t('notifications', 'Ringtones & Alerts'), icon: Bell },
               { id: 'language', label: t('language', 'App Language'), icon: Globe },
               { id: 'privacy', label: t('privacy', 'Privacy Controls'), icon: Eye },
@@ -1019,6 +1023,9 @@ export const SettingsView: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* VOICE CHANGING & KRISP AUDIO PLATFORM (Immediately after Appearance) */}
+        {activeSection === 'voice_ai' && <VoiceAISettingsSection />}
 
         {/* 3. RINGTONES & NOTIFICATIONS */}
         {activeSection === 'notifications' && (

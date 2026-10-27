@@ -77,8 +77,104 @@ export interface PlatformFeatureSettings {
   allowNotifications: boolean;
   voiceEffectsEnabled: boolean;
   voiceModifiers: string[];
+  voiceChangerProvider?: 'webaudio' | 'krisp' | 'gemini_tts';
+  voicePremiumEnabled?: boolean;
   maintenanceMode?: boolean;
   maintenanceNotice?: string;
+}
+
+export type VoicePresentation = 'feminine' | 'masculine' | 'neutral';
+
+export interface VoiceStyleConfig {
+  id: string;
+  name: string;
+  country: string;
+  flag: string;
+  accentCode: string;
+  region: string;
+  description: string;
+  samplePhrase: string;
+  defaultPitch: number;      // semitones (-12 to +12)
+  defaultSpeed: number;      // 0.75 to 1.35
+  defaultIntensity: number;  // 0.5 to 1.5
+  isPremium: boolean;
+  providerVoiceId?: string;  // e.g. 'Kore' or 'Puck' for Gemini TTS
+  acousticProfile?: {
+    f1Hz: number;
+    f2Hz: number;
+    f3Hz: number;
+    resonanceGain: number;
+  };
+}
+
+export interface UserVoiceSettings {
+  voiceStyleId: string;
+  presentation: VoicePresentation;
+  pitch: number;        // -12 to +12 semitones
+  speed: number;        // 0.75 to 1.35
+  intensity: number;    // 0.5 to 1.5
+  monitorEnabled?: boolean;
+}
+
+export interface VoiceSubscription {
+  id: string;
+  userId: string;
+  plan: 'weekly' | 'monthly' | 'yearly';
+  status: 'active' | 'expired' | 'revoked';
+  amountNgn: number;
+  currency: 'NGN';
+  startDate: number;
+  expiresAt: number;
+  paymentReference: string;
+  createdAt: number;
+}
+
+export type KrispUsageType = 'stt' | 'tts' | 'vt' | 'viva';
+
+export interface KrispSessionTokenResponse {
+  success: boolean;
+  token?: string;
+  usage_type?: KrispUsageType;
+  expiresAt?: number;
+  streamingEndpoint?: string;
+  error?: string;
+  requiresCredentials?: boolean;
+  balanceExhausted?: boolean;
+  errorCode?: string;
+}
+
+export interface KrispTranscriptEvent {
+  text: string;
+  is_final: boolean;
+  speaker_id?: string;
+  confidence?: number;
+  timestamp?: number;
+}
+
+export interface KrispVoiceSettings {
+  noiseCancellationOutbound: boolean;
+  noiseCancellationInbound: boolean;
+  voiceIsolationEnabled: boolean;
+  liveAccentConversionEnabled: boolean;
+  selectedAccent: string;
+  voiceTranslationEnabled: boolean;
+  vtSourceLanguage: string;
+  vtTargetLanguage: string;
+  sttActive: boolean;
+  ttsVoiceId: string;
+}
+
+export interface VoiceAiPlatformConfig {
+  enabled: boolean;
+  provider: 'webaudio_neural' | 'krisp_rtc' | 'gemini_tts';
+  allowFreePreviews: boolean;
+  krispApiKeyConfigured?: boolean;
+  geminiTtsConfigured?: boolean;
+  plans: {
+    weekly: { priceNgn: number; days: number; label: string };
+    monthly: { priceNgn: number; days: number; label: string };
+    yearly: { priceNgn: number; days: number; label: string };
+  };
 }
 
 export interface NotificationSettings {
@@ -150,6 +246,9 @@ export interface User {
     }[];
   };
   notificationSettings?: NotificationSettings;
+  voiceSubscription?: VoiceSubscription;
+  voiceSettings?: UserVoiceSettings;
+  krispSettings?: Partial<KrispVoiceSettings>;
 }
 
 export type MessageType =
@@ -226,7 +325,7 @@ export interface Message {
 }
 
 export type ChatType = 'direct' | 'group' | 'channel' | 'announcement';
-export type ChatFolder = 'all' | 'direct' | 'groups' | 'channels' | 'unread';
+export type ChatFolder = 'all' | 'unread' | 'favorites' | 'direct' | 'groups' | 'important';
 
 export interface GroupPermissions {
   canSendMessages: boolean;
@@ -253,6 +352,8 @@ export interface Chat {
   lastMessage?: Message;
   unreadCount: number;
   isPinned?: boolean;
+  isFavorite?: boolean;
+  isImportant?: boolean;
   isMuted?: boolean;
   folder: ChatFolder;
   pinnedMessageId?: string;

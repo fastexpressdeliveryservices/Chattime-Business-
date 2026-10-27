@@ -19,6 +19,8 @@ import type {
   AdminRole,
   UserRole,
   AdminPermission,
+  VoiceSubscription,
+  VoiceAiPlatformConfig,
 } from '../types/index.ts';
 import {
   INITIAL_USERS,
@@ -71,6 +73,14 @@ export interface ChatTimeDatabase {
   pushSubscriptions: Record<string, StoredPushSubscription[]>;
   authSessions: Record<string, { userId: string; expiresAt: number }>;
   platformFeatures: PlatformFeatureSettings;
+  voiceSubscriptions?: Record<string, VoiceSubscription>;
+  voiceUsageStats?: {
+    totalTTSCalls: number;
+    totalTTSChars: number;
+    activeSubscriptions: number;
+    estimatedCostUsd: number;
+  };
+  voiceAdminConfig?: VoiceAiPlatformConfig;
   maintenanceMode?: boolean;
   welcomeSettings?: {
     enabled: boolean;
@@ -80,6 +90,17 @@ export interface ChatTimeDatabase {
     messageText: string;
   };
 }
+
+export const DEFAULT_VOICE_AI_CONFIG: VoiceAiPlatformConfig = {
+  enabled: true,
+  provider: 'webaudio_neural',
+  allowFreePreviews: true,
+  plans: {
+    weekly: { priceNgn: 1000, days: 7, label: 'Weekly Voice Pass (7 Days)' },
+    monthly: { priceNgn: 6000, days: 30, label: 'Monthly Voice Pro (30 Days)' },
+    yearly: { priceNgn: 20000, days: 365, label: 'Yearly Voice Unlimited (365 Days)' },
+  },
+};
 
 export const DEFAULT_WELCOME_SETTINGS = {
   enabled: true,
@@ -136,6 +157,9 @@ class DatabaseManager {
             pushSubscriptions: parsed.pushSubscriptions || {},
             authSessions: parsed.authSessions || {},
             platformFeatures: { ...DEFAULT_PLATFORM_FEATURES, ...(parsed.platformFeatures || {}) },
+            voiceSubscriptions: parsed.voiceSubscriptions || {},
+            voiceUsageStats: parsed.voiceUsageStats || { totalTTSCalls: 0, totalTTSChars: 0, activeSubscriptions: 0, estimatedCostUsd: 0 },
+            voiceAdminConfig: parsed.voiceAdminConfig || { ...DEFAULT_VOICE_AI_CONFIG },
             maintenanceMode: Boolean(parsed.maintenanceMode),
             welcomeSettings: parsed.welcomeSettings || { ...DEFAULT_WELCOME_SETTINGS },
           };
@@ -164,6 +188,9 @@ class DatabaseManager {
       pushSubscriptions: {},
       authSessions: {},
       platformFeatures: { ...DEFAULT_PLATFORM_FEATURES },
+      voiceSubscriptions: {},
+      voiceUsageStats: { totalTTSCalls: 0, totalTTSChars: 0, activeSubscriptions: 0, estimatedCostUsd: 0 },
+      voiceAdminConfig: { ...DEFAULT_VOICE_AI_CONFIG },
       maintenanceMode: false,
       welcomeSettings: { ...DEFAULT_WELCOME_SETTINGS },
     };
@@ -258,7 +285,7 @@ class DatabaseManager {
         id: supportUserId,
         name: 'ChatTime Support',
         username: 'support',
-        email: 'support@chattime.app',
+        email: 'support@chattime.com',
         phoneNumber: '+18002428846',
         chatTimeNumber: '+1 (800) 242-8846',
         avatar: '/icon.svg',
@@ -304,6 +331,7 @@ class DatabaseManager {
       supportUser.verificationBadge = 'red';
       supportUser.verificationBadgeType = 'red';
       supportUser.name = 'ChatTime Support';
+      supportUser.email = 'support@chattime.com';
       supportUser.avatar = '/icon.svg';
     }
 
@@ -1785,6 +1813,163 @@ class DatabaseManager {
         uptimeSeconds: process.uptime(),
       },
     };
+  }
+
+  // --- Voice AI & Voice Premium Subscriptions ---
+  getVoiceSubscription(userId: string): VoiceSubscription | null {
+    if (!this.db.voiceSubscriptions) this.db.voiceSubscriptions = {};
+    const sub = this.db.voiceSubscriptions[userId];
+    if (!sub) return null;
+    if (sub.status === 'active' && Date.now() > sub.expiresAt) {
+      sub.status = 'expired';
+      this.save();
+    }
+    return sub;
+  }
+
+  isUserVoicePremium(userId: string): { isPremium: boolean; subscription: VoiceSubscription | null; isAdminBypass: boolean } {
+    const user =
+      this.getUserById(userId) ||
+      this.db.users.find((u) => u.email?.toLowerCase().trim() === userId.toLowerCase().trim());
+    const ADMIN_EMAILS = [
+      'prosperikeokwu@gmail.com',
+      'fastexpressdeliveryservices00@gmail.com',
+      'ikeokwuprosper6@gmail.com',
+    ];
+    const isAdmin = Boolean(
+      (user &&
+        (user.role === 'admin' ||
+          user.role === 'super_admin' ||
+          (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase().trim())))) ||
+      ADMIN_EMAILS.includes(userId.toLowerCase().trim()) ||
+      userId === 'user_admin' ||
+      userId === 'admin' ||
+      userId === '0814'
+    );
+
+    if (isAdmin) {
+      return {
+        isPremium: true,
+        subscription: {
+          id: `admin_sub_${userId}`,
+          userId,
+          plan: 'yearly',
+          status: 'active',
+          amountNgn: 0,
+          currency: 'NGN',
+          startDate: Date.now() - 86400000,
+          expiresAt: Date.now() + 10 * 365 * 86400000, // 10 years
+          paymentReference: 'ADMIN_UNLIMITED_PRIVILEGE',
+          createdAt: Date.now(),
+        },
+        isAdminBypass: true,
+      };
+    }
+
+    const sub = this.getVoiceSubscription(userId);
+    const isPremium = Boolean(sub && sub.status === 'active' && sub.expiresAt > Date.now());
+    return { isPremium, subscription: sub, isAdminBypass: false };
+  }
+
+  createOrRenewVoiceSubscription(
+    userId: string,
+    plan: 'weekly' | 'monthly' | 'yearly',
+    paymentReference?: string
+  ): VoiceSubscription {
+    if (!this.db.voiceSubscriptions) this.db.voiceSubscriptions = {};
+    const now = Date.now();
+    const planConfig = {
+      weekly: { days: 7, amountNgn: 1000 },
+      monthly: { days: 30, amountNgn: 6000 },
+      yearly: { days: 365, amountNgn: 20000 },
+    }[plan];
+
+    const currentSub = this.db.voiceSubscriptions[userId];
+    let startDate = now;
+    let expiresAt = now + planConfig.days * 86400000;
+
+    // If currently active, extend expiry
+    if (currentSub && currentSub.status === 'active' && currentSub.expiresAt > now) {
+      startDate = currentSub.startDate;
+      expiresAt = currentSub.expiresAt + planConfig.days * 86400000;
+    }
+
+    const newSub: VoiceSubscription = {
+      id: `vsub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      userId,
+      plan,
+      status: 'active',
+      amountNgn: planConfig.amountNgn,
+      currency: 'NGN',
+      startDate,
+      expiresAt,
+      paymentReference: paymentReference || `PAY_NGN_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`,
+      createdAt: now,
+    };
+
+    this.db.voiceSubscriptions[userId] = newSub;
+    if (this.db.voiceUsageStats) {
+      this.db.voiceUsageStats.activeSubscriptions = Object.values(this.db.voiceSubscriptions).filter(
+        (s) => s.status === 'active' && s.expiresAt > now
+      ).length;
+    }
+    this.save();
+    return newSub;
+  }
+
+  revokeVoiceSubscription(userId: string): boolean {
+    if (!this.db.voiceSubscriptions || !this.db.voiceSubscriptions[userId]) return false;
+    this.db.voiceSubscriptions[userId].status = 'revoked';
+    this.save();
+    return true;
+  }
+
+  getAllVoiceSubscriptions(): VoiceSubscription[] {
+    if (!this.db.voiceSubscriptions) return [];
+    return Object.values(this.db.voiceSubscriptions);
+  }
+
+  recordTTSUsage(chars: number): void {
+    if (!this.db.voiceUsageStats) {
+      this.db.voiceUsageStats = { totalTTSCalls: 0, totalTTSChars: 0, activeSubscriptions: 0, estimatedCostUsd: 0 };
+    }
+    this.db.voiceUsageStats.totalTTSCalls += 1;
+    this.db.voiceUsageStats.totalTTSChars += chars;
+    // Estimated cost: ~0.000015 USD per char for neural TTS
+    this.db.voiceUsageStats.estimatedCostUsd += (chars * 0.000015);
+    this.save();
+  }
+
+  getVoiceAiStats() {
+    if (!this.db.voiceUsageStats) {
+      this.db.voiceUsageStats = { totalTTSCalls: 0, totalTTSChars: 0, activeSubscriptions: 0, estimatedCostUsd: 0 };
+    }
+    const now = Date.now();
+    const activeSubs = Object.values(this.db.voiceSubscriptions || {}).filter(
+      (s) => s.status === 'active' && s.expiresAt > now
+    ).length;
+    return {
+      ...this.db.voiceUsageStats,
+      activeSubscriptions: activeSubs,
+    };
+  }
+
+  getVoiceAdminConfig(): VoiceAiPlatformConfig {
+    return this.db.voiceAdminConfig || { ...DEFAULT_VOICE_AI_CONFIG };
+  }
+
+  updateVoiceAdminConfig(updates: Partial<VoiceAiPlatformConfig>): VoiceAiPlatformConfig {
+    const current = this.getVoiceAdminConfig();
+    this.db.voiceAdminConfig = {
+      ...current,
+      ...updates,
+      plans: {
+        ...current.plans,
+        ...(updates.plans || {}),
+      },
+    };
+    this.save();
+    return this.db.voiceAdminConfig;
   }
 
   // --- Admin Stats ---

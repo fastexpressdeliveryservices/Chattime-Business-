@@ -7,12 +7,13 @@ import {
   Compass,
   Settings,
   ShieldAlert,
+  Wand2,
 } from 'lucide-react';
 import { useChatTime, NavigationTab } from '../../context/ChatTimeContext';
 import { isSharedAppUrl } from '../../utils/sharedUrl';
 
 export const NavigationSidebar: React.FC = () => {
-  const { activeTab, activeChatId, setActiveTab, chats, calls, statuses, currentUser, t } = useChatTime();
+  const { activeTab, activeChatId, setActiveTab, chats, calls, statuses, currentUser, t, openVoiceStudio } = useChatTime();
   const isMobileChatOpen = activeTab === 'chats' && Boolean(activeChatId);
 
   const totalUnreadMessages = chats.reduce((sum, c) => {
@@ -103,6 +104,19 @@ export const NavigationSidebar: React.FC = () => {
         </div>
 
         <div className="flex flex-col gap-2 w-full px-2">
+          <button
+            type="button"
+            onClick={openVoiceStudio}
+            className="relative flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 active:scale-95 cursor-pointer group"
+            title="AI Voice Studio & Regional Accent Effects"
+          >
+            <div className="relative">
+              <Wand2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            </div>
+            <span className="text-[10px] mt-1 font-semibold text-center leading-tight">Voice AI</span>
+          </button>
+
           <button
             onClick={() => setActiveTab('settings')}
             className={`relative flex flex-col items-center justify-center py-2.5 px-1 rounded-2xl transition-all ${

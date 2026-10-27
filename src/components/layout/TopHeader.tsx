@@ -147,6 +147,11 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onOpenRegister: _onOpenReg
             e.stopPropagation();
             setInspectedUserId(currentUser?.id || 'me');
           }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setInspectedUserId(currentUser?.id || 'me');
+          }}
           aria-label="Open your profile"
           className="min-h-11 flex items-center gap-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl pl-1.5 pr-2.5 py-1 transition-all cursor-pointer active:scale-95 shadow-sm"
         >

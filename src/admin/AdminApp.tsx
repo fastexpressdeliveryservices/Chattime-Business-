@@ -91,8 +91,28 @@ export const AdminApp: React.FC = () => {
 
   // Dashboard Data State
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'users' | 'moderation' | 'calls' | 'features' | 'admins' | 'audit' | 'system' | 'support'
+    'overview' | 'users' | 'moderation' | 'calls' | 'voice_ai' | 'features' | 'admins' | 'audit' | 'system' | 'support'
   >('overview');
+
+  // Voice AI Admin Configuration & Subscription State
+  const [voiceAdminConfig, setVoiceAdminConfig] = useState<any>({
+    provider: 'web_audio_dsp_gemini_tts',
+    liveEngineEnabled: true,
+    ttsEngineEnabled: true,
+    weeklyPriceNgn: 1000,
+    monthlyPriceNgn: 6000,
+    yearlyPriceNgn: 20000,
+    freeTierAllowedEffects: ['original'],
+    krispRtcLicensingInfo: 'Integrated WebRTC Low-Latency Formant DSP with Krisp RTC audio pipeline compatibility. Zero-latency client-side Web Audio synthesis.',
+    regionalVoices: [],
+  });
+  const [voiceAiStats, setVoiceAiStats] = useState<any>(null);
+  const [voiceSubscriptionsList, setVoiceSubscriptionsList] = useState<any[]>([]);
+  const [isSavingVoiceConfig, setIsSavingVoiceConfig] = useState(false);
+  const [grantSubUserId, setGrantSubUserId] = useState('');
+  const [grantSubTier, setGrantSubTier] = useState<'weekly' | 'monthly' | 'yearly'>('monthly');
+  const [isGrantingSub, setIsGrantingSub] = useState(false);
+
   const [welcomeConfig, setWelcomeConfig] = useState({
     enabled: true,
     senderName: 'ChatTime Support',
@@ -209,8 +229,76 @@ export const AdminApp: React.FC = () => {
         const feat = await resFeatures.json();
         if (feat.features) setPlatformFeatures(feat.features);
       }
+
+      // Fetch Voice AI config & subscriptions
+      fetchVoiceAdminData();
     } catch (err) {
       console.error('[Admin] Error loading dashboard data:', err);
+    }
+  };
+
+  const fetchVoiceAdminData = async () => {
+    try {
+      const res = await adminFetch('/api/admin/voice-config');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.config) setVoiceAdminConfig(data.config);
+        if (data.stats) setVoiceAiStats(data.stats);
+        if (data.subscriptions) setVoiceSubscriptionsList(data.subscriptions);
+      }
+    } catch (err) {
+      console.error('[Admin] Error loading voice AI data:', err);
+    }
+  };
+
+  const handleSaveVoiceConfig = async (newConfig: any) => {
+    setIsSavingVoiceConfig(true);
+    try {
+      const res = await adminFetch('/api/admin/voice-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: newConfig }),
+      });
+      if (res.ok) {
+        setVoiceAdminConfig(newConfig);
+        showToast('Voice Settings Saved', 'Voice AI parameters and pricing updated successfully.', 'success');
+        fetchVoiceAdminData();
+      } else {
+        showToast('Save Failed', 'Could not update voice settings.', 'error');
+      }
+    } catch (e: any) {
+      showToast('Error', e.message || 'Failed to save configuration.', 'error');
+    } finally {
+      setIsSavingVoiceConfig(false);
+    }
+  };
+
+  const handleGrantVoiceSubscription = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!grantSubUserId.trim()) return;
+    setIsGrantingSub(true);
+    try {
+      const res = await adminFetch('/api/admin/voice-subscriptions/grant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userIdOrEmail: grantSubUserId.trim(),
+          plan: grantSubTier,
+          grantedBy: adminUser?.name || 'Administrator',
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('Subscription Granted', `Voice Premium activated for ${grantSubUserId}.`, 'success');
+        setGrantSubUserId('');
+        fetchVoiceAdminData();
+      } else {
+        showToast('Failed to Grant', data.error || 'User not found.', 'error');
+      }
+    } catch (e: any) {
+      showToast('Error', e.message || 'Operation failed.', 'error');
+    } finally {
+      setIsGrantingSub(false);
     }
   };
 
@@ -784,6 +872,23 @@ export const AdminApp: React.FC = () => {
             >
               <Phone className="w-4 h-4" />
               <span>Call Telemetry</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('voice_ai')}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'voice_ai'
+                  ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Volume2 className="w-4 h-4 text-amber-400" />
+                <span>Voice Studio & AI Engine</span>
+              </div>
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40">
+                DSP & TTS
+              </span>
             </button>
 
             <button
@@ -1694,6 +1799,351 @@ export const AdminApp: React.FC = () => {
                       )}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* TAB: VOICE STUDIO & AI ENGINE CONTROL CENTER */}
+          {/* ======================================================== */}
+          {activeTab === 'voice_ai' && (
+            <div className="space-y-6">
+              {/* Header Card */}
+              <div className="bg-gradient-to-r from-amber-500/15 via-slate-900 to-slate-900 border border-amber-500/30 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 shadow-lg shadow-amber-500/10">
+                    <Volume2 className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-bold text-white">Voice Studio & AI Engine Operations</h2>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold">
+                        Online
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5 max-w-xl">
+                      Configure real-time WebRTC audio DSP filters, Krisp RTC pipeline compatibility, Google GenAI Text-to-Speech synthesis, and Voice Premium subscription pricing.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={fetchVoiceAdminData}
+                    className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Refresh Stats</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Usage & Cost Telemetry Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">TTS Syntheses</div>
+                  <div className="text-2xl font-black text-white font-mono mt-1">
+                    {voiceAiStats?.totalSyntheses || 0}
+                  </div>
+                  <div className="text-[10px] text-teal-400 mt-1">Google GenAI Flash TTS</div>
+                </div>
+
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Chars Synthesized</div>
+                  <div className="text-2xl font-black text-amber-400 font-mono mt-1">
+                    {(voiceAiStats?.totalCharacters || 0).toLocaleString()}
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-1">Input text processed</div>
+                </div>
+
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Estimated Cost</div>
+                  <div className="text-2xl font-black text-emerald-400 font-mono mt-1">
+                    ₦{voiceAiStats?.estimatedCostNgn || 0}
+                  </div>
+                  <div className="text-[10px] text-emerald-300/80 mt-1">~${voiceAiStats?.estimatedCostUsd || '0.000'} USD</div>
+                </div>
+
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Subscribers</div>
+                  <div className="text-2xl font-black text-purple-400 font-mono mt-1">
+                    {voiceSubscriptionsList.length}
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-1">Voice Premium users</div>
+                </div>
+              </div>
+
+              {/* Engine Provider & Subscription Pricing Settings */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Engine Configuration */}
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+                    <Zap className="w-5 h-5 text-amber-400" />
+                    <h3 className="text-sm font-bold text-white">Audio Engine Architecture</h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950 border border-slate-800">
+                      <div>
+                        <div className="text-xs font-bold text-white">Live Call Voice Changer (DSP)</div>
+                        <div className="text-[11px] text-slate-400">Zero-latency Web Audio Formant Filters during calls</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleSaveVoiceConfig({
+                            ...voiceAdminConfig,
+                            liveEngineEnabled: !voiceAdminConfig.liveEngineEnabled,
+                          })
+                        }
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
+                          voiceAdminConfig.liveEngineEnabled
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                            : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                        }`}
+                      >
+                        {voiceAdminConfig.liveEngineEnabled ? 'Active' : 'Disabled'}
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950 border border-slate-800">
+                      <div>
+                        <div className="text-xs font-bold text-white">AI Speech Synthesis (TTS)</div>
+                        <div className="text-[11px] text-slate-400">Google GenAI 24kHz Studio Speech Engine</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleSaveVoiceConfig({
+                            ...voiceAdminConfig,
+                            ttsEngineEnabled: !voiceAdminConfig.ttsEngineEnabled,
+                          })
+                        }
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
+                          voiceAdminConfig.ttsEngineEnabled
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                            : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                        }`}
+                      >
+                        {voiceAdminConfig.ttsEngineEnabled ? 'Active' : 'Disabled'}
+                      </button>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400 space-y-1">
+                      <div className="text-xs font-bold text-slate-300">Krisp RTC SDK & Web Audio Compatibility:</div>
+                      <p className="leading-relaxed">
+                        Live audio processing operates client-side through high-order parametric biquad filters and phase-vocoder DSP nodes (&lt; 15ms latency), ensuring pristine microphone clarity without network delays. Asynchronous voice notes use backend Google GenAI synthesis.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Subscription Pricing Configuration */}
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+                    <Crown className="w-5 h-5 text-amber-400" />
+                    <h3 className="text-sm font-bold text-white">Voice Premium Pricing (NGN ₦)</h3>
+                  </div>
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSaveVoiceConfig(voiceAdminConfig);
+                    }}
+                    className="space-y-3"
+                  >
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                        Weekly Plan (7 Days)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-sm">₦</span>
+                        <input
+                          type="number"
+                          value={voiceAdminConfig.weeklyPriceNgn}
+                          onChange={(e) =>
+                            setVoiceAdminConfig({ ...voiceAdminConfig, weeklyPriceNgn: Number(e.target.value) })
+                          }
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-8 pr-4 py-2 text-sm text-white font-mono"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                        Monthly Plan (30 Days)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-sm">₦</span>
+                        <input
+                          type="number"
+                          value={voiceAdminConfig.monthlyPriceNgn}
+                          onChange={(e) =>
+                            setVoiceAdminConfig({ ...voiceAdminConfig, monthlyPriceNgn: Number(e.target.value) })
+                          }
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-8 pr-4 py-2 text-sm text-white font-mono"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                        Yearly Plan (365 Days)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-sm">₦</span>
+                        <input
+                          type="number"
+                          value={voiceAdminConfig.yearlyPriceNgn}
+                          onChange={(e) =>
+                            setVoiceAdminConfig({ ...voiceAdminConfig, yearlyPriceNgn: Number(e.target.value) })
+                          }
+                          className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-8 pr-4 py-2 text-sm text-white font-mono"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isSavingVoiceConfig}
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-teal-500 text-slate-950 font-bold text-xs uppercase tracking-wider cursor-pointer shadow-md hover:opacity-90 transition-opacity disabled:opacity-50"
+                    >
+                      {isSavingVoiceConfig ? 'Saving Pricing...' : 'Save Voice AI Pricing'}
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              {/* Grant Premium Subscription to User */}
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
+                <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+                  <UserPlus className="w-5 h-5 text-teal-400" />
+                  <h3 className="text-sm font-bold text-white">Grant VIP Voice Premium Subscription</h3>
+                </div>
+
+                <form onSubmit={handleGrantVoiceSubscription} className="flex flex-col sm:flex-row items-center gap-3">
+                  <div className="flex-1 w-full">
+                    <input
+                      type="text"
+                      value={grantSubUserId}
+                      onChange={(e) => setGrantSubUserId(e.target.value)}
+                      placeholder="Enter User ID, Email (e.g. user_xxx or name@gmail.com)"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 font-mono"
+                      required
+                    />
+                  </div>
+
+                  <div className="w-full sm:w-44">
+                    <select
+                      value={grantSubTier}
+                      onChange={(e) => setGrantSubTier(e.target.value as any)}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white font-mono focus:outline-none"
+                    >
+                      <option value="weekly">Weekly (7 Days)</option>
+                      <option value="monthly">Monthly (30 Days)</option>
+                      <option value="yearly">Yearly (365 Days)</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isGrantingSub || !grantSubUserId.trim()}
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider whitespace-nowrap cursor-pointer hover:opacity-90 disabled:opacity-50 transition-opacity"
+                  >
+                    {isGrantingSub ? 'Granting...' : 'Grant VIP Access'}
+                  </button>
+                </form>
+
+                {/* Subscriptions Table */}
+                <div className="border border-slate-800 rounded-2xl overflow-hidden mt-4">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-950 text-slate-400 uppercase font-mono text-[10px] tracking-wider border-b border-slate-800">
+                      <tr>
+                        <th className="py-2.5 px-3">Subscriber</th>
+                        <th className="py-2.5 px-3">Plan</th>
+                        <th className="py-2.5 px-3">Status</th>
+                        <th className="py-2.5 px-3">Expires At</th>
+                        <th className="py-2.5 px-3">Amount Paid</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
+                      {voiceSubscriptionsList.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-6 text-center text-slate-500">
+                            No custom subscribers registered yet. Administrators have permanent automatic VIP bypass.
+                          </td>
+                        </tr>
+                      ) : (
+                        voiceSubscriptionsList.map((sub: any) => (
+                          <tr key={sub.id} className="hover:bg-slate-800/40">
+                            <td className="py-2.5 px-3 font-bold text-white">{sub.userId}</td>
+                            <td className="py-2.5 px-3 capitalize text-amber-300">{sub.plan}</td>
+                            <td className="py-2.5 px-3">
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                                {sub.status}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 text-slate-300">
+                              {new Date(sub.expiresAt).toLocaleDateString()}
+                            </td>
+                            <td className="py-2.5 px-3 text-slate-400">₦{sub.amountPaidNgn}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Supported Regional Voice Styles Catalog */}
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-3 shadow-xl">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-amber-400" />
+                    <h3 className="text-sm font-bold text-white">Supported Regional Voice Styles (12 Accents)</h3>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono">Real-time Formant DSP + Gemini 3.8 Flash TTS</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {[
+                    { id: 'en-US', name: 'American English', flag: '🇺🇸', tier: 'Free', tts: 'Puck' },
+                    { id: 'en-GB', name: 'British English', flag: '🇬🇧', tier: 'Premium', tts: 'Charon' },
+                    { id: 'en-SCT', name: 'Scottish English', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', tier: 'Premium', tts: 'Fenrir' },
+                    { id: 'en-AU', name: 'Australian English', flag: '🇦🇺', tier: 'Premium', tts: 'Kore' },
+                    { id: 'en-CA', name: 'Canadian English', flag: '🇨🇦', tier: 'Premium', tts: 'Aoede' },
+                    { id: 'en-NG', name: 'Nigerian English', flag: '🇳🇬', tier: 'Free', tts: 'Charon' },
+                    { id: 'en-GH', name: 'Ghanaian English', flag: '🇬🇭', tier: 'Premium', tts: 'Puck' },
+                    { id: 'en-ZA', name: 'South African English', flag: '🇿🇦', tier: 'Premium', tts: 'Fenrir' },
+                    { id: 'en-IN', name: 'Indian English', flag: '🇮🇳', tier: 'Free', tts: 'Kore' },
+                    { id: 'es-ES', name: 'Spanish (Spain)', flag: '🇪🇸', tier: 'Premium', tts: 'Aoede' },
+                    { id: 'es-419', name: 'Spanish (Latin America)', flag: '🇲🇽', tier: 'Premium', tts: 'Charon' },
+                    { id: 'en-JM', name: 'Jamaican Patois', flag: '🇯🇲', tier: 'Premium', tts: 'Puck' },
+                  ].map((accent) => (
+                    <div key={accent.id} className="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="text-xl">{accent.flag}</span>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-white truncate">{accent.name}</div>
+                          <div className="text-[10px] text-slate-400 font-mono">TTS: {accent.tts} • DSP Formants</div>
+                        </div>
+                      </div>
+                      <span
+                        className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                          accent.tier === 'Free'
+                            ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40'
+                            : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                        }`}
+                      >
+                        {accent.tier}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

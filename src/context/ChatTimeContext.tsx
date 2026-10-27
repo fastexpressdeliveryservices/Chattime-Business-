@@ -220,6 +220,8 @@ interface ChatTimeContextType {
     isPublic?: boolean
   ) => string;
   togglePinChat: (chatId: string) => void;
+  toggleFavoriteChat: (chatId: string) => void;
+  toggleImportantChat: (chatId: string) => void;
   toggleMuteChat: (chatId: string) => void;
   clearChatHistory: (chatId: string) => void;
   deleteChat: (chatId: string) => void;
@@ -347,6 +349,14 @@ interface ChatTimeContextType {
 
   // Background Ringtone & Notification Test
   triggerTestCallNotification: () => Promise<boolean>;
+
+  // AI Voice Studio & Text-to-Speech Engine
+  isVoiceStudioOpen: boolean;
+  setIsVoiceStudioOpen: (open: boolean) => void;
+  isTTSOpen: boolean;
+  setIsTTSOpen: (open: boolean) => void;
+  openVoiceStudio: () => void;
+  openTTSModal: () => void;
 }
 
 const ChatTimeContext = createContext<ChatTimeContextType | undefined>(undefined);
@@ -409,6 +419,11 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isInfoDrawerOpen, setIsInfoDrawerOpen] = useState(false);
   const [inspectedUserId, setInspectedUserId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
+  const [isVoiceStudioOpen, setIsVoiceStudioOpen] = useState(false);
+  const [isTTSOpen, setIsTTSOpen] = useState(false);
+
+  const openVoiceStudio = useCallback(() => setIsVoiceStudioOpen(true), []);
+  const openTTSModal = useCallback(() => setIsTTSOpen(true), []);
 
   const [theme, setThemeState] = useState<ThemeMode>(() => {
     const saved = localStorage.getItem('chattime_theme') as ThemeMode | null;
@@ -2996,6 +3011,36 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     );
   }, []);
 
+  const toggleFavoriteChat = useCallback((chatId: string) => {
+    setChats((prev) =>
+      prev.map((c) => {
+        if (c.id !== chatId) return c;
+        const nextFav = !c.isFavorite;
+        fetch(`/api/chats/${chatId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isFavorite: nextFav }),
+        }).catch(() => {});
+        return { ...c, isFavorite: nextFav };
+      })
+    );
+  }, []);
+
+  const toggleImportantChat = useCallback((chatId: string) => {
+    setChats((prev) =>
+      prev.map((c) => {
+        if (c.id !== chatId) return c;
+        const nextImp = !c.isImportant;
+        fetch(`/api/chats/${chatId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isImportant: nextImp }),
+        }).catch(() => {});
+        return { ...c, isImportant: nextImp };
+      })
+    );
+  }, []);
+
   const toggleMuteChat = useCallback((chatId: string) => {
     setChats((prev) =>
       prev.map((c) => {
@@ -4874,6 +4919,8 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         startDirectChat,
         createGroupChat,
         togglePinChat,
+        toggleFavoriteChat,
+        toggleImportantChat,
         toggleMuteChat,
         clearChatHistory,
         deleteChat,
@@ -4947,6 +4994,12 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         toggleMessageTranslation,
         isTranslatingApp,
         triggerTestCallNotification,
+        isVoiceStudioOpen,
+        setIsVoiceStudioOpen,
+        isTTSOpen,
+        setIsTTSOpen,
+        openVoiceStudio,
+        openTTSModal,
       }}
     >
       {children}

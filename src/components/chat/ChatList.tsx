@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Pin,
   VolumeX,
@@ -12,6 +11,8 @@ import {
   Users,
   UserPlus,
   Mic,
+  Star,
+  Bookmark,
 } from 'lucide-react';
 import { useChatTime } from '../../context/ChatTimeContext';
 import { ChatFolder, Chat } from '../../types';
@@ -44,9 +45,11 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
 
   const folders: { id: ChatFolder; label: string }[] = [
     { id: 'all', label: t('all', 'All') },
+    { id: 'unread', label: t('unread', 'Unread') },
+    { id: 'favorites', label: t('favorites', 'Favorites') },
     { id: 'direct', label: t('direct', 'Direct') },
     { id: 'groups', label: t('groups', 'Groups') },
-    { id: 'unread', label: t('unread', 'Unread') },
+    { id: 'important', label: t('important', 'Important') },
   ];
 
   const getDirectPeer = (chat: Chat) => {
@@ -79,8 +82,9 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
       }
       if (activeFolder === 'direct' && chat.type !== 'direct') return false;
       if (activeFolder === 'groups' && chat.type !== 'group') return false;
-      if (activeFolder === 'channels' && chat.type !== 'channel' && !chat.communityId) return false;
-      if (activeFolder === 'unread' && chat.unreadCount === 0) return false;
+      if (activeFolder === 'unread' && (chat.unreadCount || 0) === 0) return false;
+      if (activeFolder === 'favorites' && !chat.isFavorite) return false;
+      if (activeFolder === 'important' && !chat.isImportant && !chat.isPinned) return false;
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -240,11 +244,17 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
                   tabIndex={0}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (chat.type === 'direct' && peerUser?.id) {
-                      setInspectedUserId(peerUser.id);
-                    } else {
-                      setActiveChatId(chat.id);
+                    if (chat.type === 'direct') {
+                      const peerId =
+                        peerUser?.id ||
+                        chat.participants.find((id) => id !== currentUser.id) ||
+                        chat.participants[0];
+                      if (peerId) {
+                        setInspectedUserId(peerId);
+                        return;
+                      }
                     }
+                    setActiveChatId(chat.id);
                   }}
                   className="relative shrink-0 cursor-pointer active:scale-95 transition-transform"
                   title={`View ${displayName} profile`}
@@ -360,10 +370,22 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
                       )}
                     </div>
 
-                    {/* Right Badges: Unread Count & Pin */}
+                    {/* Right Badges: Favorite, Important, Unread Count & Pin */}
                     <div className="flex items-center gap-1.5 shrink-0">
+                      {chat.isFavorite && (
+                        <span title="Favorite Chat" className="inline-flex items-center">
+                          <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" />
+                        </span>
+                      )}
+                      {chat.isImportant && (
+                        <span title="Important Chat" className="inline-flex items-center">
+                          <Bookmark className="w-3.5 h-3.5 text-teal-400 fill-teal-400 shrink-0" />
+                        </span>
+                      )}
                       {chat.isPinned && (
-                        <Pin className="w-3.5 h-3.5 text-slate-400 rotate-45" />
+                        <span title="Pinned Chat" className="inline-flex items-center">
+                          <Pin className="w-3.5 h-3.5 text-slate-400 rotate-45 shrink-0" />
+                        </span>
                       )}
                       {chat.unreadCount > 0 && (
                         <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-teal-500 text-slate-950 text-[11px] font-bold flex items-center justify-center">

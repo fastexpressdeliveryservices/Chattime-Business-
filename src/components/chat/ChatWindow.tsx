@@ -102,6 +102,7 @@ export const ChatWindow: React.FC = () => {
     isUserGhosted,
     addToast,
     platformFeatures,
+    openTTSModal,
     t,
   } = useChatTime();
 
@@ -807,8 +808,10 @@ export const ChatWindow: React.FC = () => {
             {/* Peer / Chat Avatar & Name (Click to view complete profile) */}
             <div
               onClick={() => {
-                if (peerUser) {
+                if (peerUser?.id) {
                   setInspectedUserId(peerUser.id);
+                } else if (peerUserId) {
+                  setInspectedUserId(peerUserId);
                 } else {
                   setIsInfoDrawerOpen(!isInfoDrawerOpen);
                 }
@@ -857,20 +860,25 @@ export const ChatWindow: React.FC = () => {
                       <span>{activeChat.typingUsers.join(', ')} {t('typing', 'typing...')}</span>
                     </span>
                   ) : peerUser ? (
-                    <>
-                      <span className={`truncate ${peerUser.isOnline && canSeePresence ? 'text-emerald-400 font-medium' : 'text-slate-400'}`}>
-                        {canSeePresence
-                          ? peerUser.isOnline
-                            ? t('online', 'online')
-                            : formatLastSeen(peerUser.lastSeen, peerUser.isOnline)
-                          : `@${peerUser.username}`}
+                    peerUser.id === 'user_chattime_support' ? (
+                      <span className="text-rose-400 font-semibold flex items-center gap-1">
+                        <VerifiedBadge type="red" size="xs" />
+                        Official 24/7 Support Desk • support@chattime.com
                       </span>
-                      {peerPhone && (
-                        <span className="hidden sm:inline font-mono text-teal-400/90">
-                          • {peerPhone}
-                        </span>
-                      )}
-                    </>
+                    ) : (
+                      <>
+                        {peerUser.isOnline && canSeePresence && (
+                          <span className="truncate text-emerald-400 font-medium">
+                            {t('online', 'online')}
+                          </span>
+                        )}
+                        {peerPhone && !peerUser.isOnline && (
+                          <span className="hidden sm:inline font-mono text-slate-400">
+                            {peerPhone}
+                          </span>
+                        )}
+                      </>
+                    )
                   ) : activeChat.id === 'chat_chattime_announcements' || activeChat.name?.toLowerCase().includes('announcement') ? (
                     <span className="text-emerald-400 font-semibold flex items-center gap-1">
                       <Megaphone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -879,7 +887,7 @@ export const ChatWindow: React.FC = () => {
                   ) : activeChat.id === 'chat_chattime_support' || activeChat.name === 'ChatTime Support' ? (
                     <span className="text-rose-400 font-semibold flex items-center gap-1">
                       <VerifiedBadge type="red" size="xs" />
-                      Official 24/7 Support Desk
+                      Official 24/7 Support Desk • support@chattime.com
                     </span>
                   ) : activeChat.type === 'channel' ? (
                     <span className="text-teal-400 font-semibold flex items-center gap-1">
@@ -1095,6 +1103,30 @@ export const ChatWindow: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* WhatsApp-style Official Verified Support Chat Card (Not a channel) */}
+          {(activeChat.id === 'chat_chattime_support' || activeChat.name === 'ChatTime Support') && (
+            <div className="flex justify-center my-2 select-none">
+              <div className="max-w-md w-full mx-auto p-3.5 rounded-2xl bg-gradient-to-r from-red-500/10 via-slate-900 to-slate-900 border border-red-500/30 text-left shadow-lg space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-red-600/20 border border-red-500/40 flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-3.5 h-3.5 text-red-400" />
+                  </div>
+                  <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span>ChatTime Official Support</span>
+                    <VerifiedBadge type="red" size="xs" />
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  This is your private 1-on-1 official support conversation. Real human operators and safety assistants are active. ChatTime staff will never ask for your 4-digit PIN, passwords, or authentication codes.
+                </p>
+                <div className="flex items-center gap-1.5 text-[10px] text-red-300/80 font-mono">
+                  <Lock className="w-3 h-3 text-red-400" />
+                  <span>Verified 1-on-1 Direct Support • End-to-End Encrypted</span>
+                </div>
+              </div>
+            </div>
+          )}
           {chatMessages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center py-12">
               <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mb-3">
@@ -1868,9 +1900,19 @@ export const ChatWindow: React.FC = () => {
                   setIsAttachMenuOpen(false);
                   setIsPollModalOpen(true);
                 }}
-                className="flex items-center gap-2 p-2.5 rounded-xl hover:bg-slate-800 text-xs font-semibold text-slate-200 transition-colors col-span-2"
+                className="flex items-center gap-2 p-2.5 rounded-xl hover:bg-slate-800 text-xs font-semibold text-slate-200 transition-colors"
               >
                 <BarChart2 className="w-4 h-4 text-amber-400 shrink-0" /> Create Poll
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAttachMenuOpen(false);
+                  openTTSModal();
+                }}
+                className="flex items-center gap-2 p-2.5 rounded-xl hover:bg-slate-800 text-xs font-bold text-amber-300 transition-colors bg-gradient-to-r from-amber-500/10 to-teal-500/10 border border-amber-500/30"
+              >
+                <Sparkles className="w-4 h-4 text-amber-400 shrink-0" /> AI Speech Note (TTS)
               </button>
             </div>
           )}
@@ -2026,6 +2068,16 @@ export const ChatWindow: React.FC = () => {
                 title="Add Emoji"
               >
                 <Smile className="w-4 h-4" />
+              </button>
+
+              {/* AI Voice Generator (TTS) Button */}
+              <button
+                type="button"
+                onClick={openTTSModal}
+                className="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-950 hover:bg-slate-800 text-amber-400 hover:text-amber-300 border border-slate-800 transition-colors shrink-0 cursor-pointer active:scale-95"
+                title="AI Speech Generator (TTS) - Speak typed text in regional human accents"
+              >
+                <Sparkles className="w-4 h-4" />
               </button>
 
               {/* Wide Text Input Field */}

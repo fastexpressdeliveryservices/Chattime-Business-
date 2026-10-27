@@ -1056,7 +1056,7 @@ export const AuthPage: React.FC = () => {
                 required
                 value={loginIdentifier}
                 onChange={(e) => setLoginIdentifier(e.target.value)}
-                placeholder={t('loginIdentifierPlaceholder', 'e.g. +1 415-892-3011, @username, or email')}
+                placeholder={t('loginIdentifierPlaceholder', 'e.g. +1 415-892-3011, @username, or 0814')}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors font-mono"
               />
             </div>
