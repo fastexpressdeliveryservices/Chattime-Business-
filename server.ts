@@ -1934,8 +1934,6 @@ app.post('/api/auth/register', (req, res) => {
 
   const ADMIN_EMAILS = [
     'prosperikeokwu@gmail.com',
-    'fastexpressdeliveryservices00@gmail.com',
-    'ikeokwuprosper6@gmail.com',
   ];
   const isTargetAdmin = Boolean(email && ADMIN_EMAILS.includes(String(email).toLowerCase().trim()));
 
@@ -2041,8 +2039,6 @@ app.post('/api/auth/login', (req, res) => {
 
   const ADMIN_EMAILS = [
     'prosperikeokwu@gmail.com',
-    'fastexpressdeliveryservices00@gmail.com',
-    'ikeokwuprosper6@gmail.com',
   ];
   const isAdminTarget =
     isCode0814 ||
@@ -2051,22 +2047,21 @@ app.post('/api/auth/login', (req, res) => {
     query.toLowerCase() === 'prosperikeokwu';
 
   if (!user && isAdminTarget) {
-    const isFastExpress = query.toLowerCase() === 'fastexpressdeliveryservices00@gmail.com';
     user = dbManager.addUser({
-      id: isFastExpress ? 'user_admin_fastexpress' : 'user_admin_prosper',
-      name: isFastExpress ? 'Fast Express Admin' : 'Prosper Ikeokwu',
-      username: isFastExpress ? 'fastexpress_admin' : 'prosperikeokwu',
-      email: query.toLowerCase().includes('@') ? query.toLowerCase() : 'prosperikeokwu@gmail.com',
-      phoneNumber: isFastExpress ? '+15550199001' : '+15550199000',
-      chatTimeNumber: isFastExpress ? '+1 (555) 019-9001' : '+1 (555) 019-9000',
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${isFastExpress ? 'fastexpress_admin' : 'prosperikeokwu'}&backgroundColor=b91c1c`,
+      id: 'user_admin_prosper',
+      name: 'Prosper Ikeokwu',
+      username: 'prosperikeokwu',
+      email: 'prosperikeokwu@gmail.com',
+      phoneNumber: '+15550199000',
+      chatTimeNumber: '+1 (555) 019-9000',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=prosperikeokwu&backgroundColor=b91c1c',
       bio: 'Chat Time Official Administrator',
-      statusFeeling: '🛡️ Platform Admin',
+      statusFeeling: '🛡️ Super Admin',
       phonePrivate: false,
       isOnline: true,
       lastSeen: Date.now(),
       createdAt: Date.now(),
-      role: 'admin',
+      role: 'super_admin',
       isVerified: true,
       isRedVerified: true,
       verificationBadge: 'red',
@@ -2989,35 +2984,25 @@ app.post('/api/admin/auth/login', (req, res) => {
 
   const ADMIN_EMAILS = [
     'prosperikeokwu@gmail.com',
-    'fastexpressdeliveryservices00@gmail.com',
-    'ikeokwuprosper6@gmail.com',
   ];
   const isCode0814 = cleanId === '0814' || cleanId === '814';
   const isKnownAdmin =
     isCode0814 ||
     ADMIN_EMAILS.includes(cleanId.toLowerCase()) ||
     Boolean(user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) ||
-    cleanId.toLowerCase() === 'prosperikeokwu' ||
-    cleanId.toLowerCase() === 'fastexpress_admin';
+    cleanId.toLowerCase() === 'prosperikeokwu';
 
   if (!user && isKnownAdmin) {
-    const isFastExpress =
-      cleanId.toLowerCase() === 'fastexpressdeliveryservices00@gmail.com' ||
-      cleanId.toLowerCase() === 'fastexpress_admin';
     user = dbManager.addUser({
-      id: isFastExpress ? 'user_admin_fastexpress' : 'user_admin_prosper',
-      name: isFastExpress ? 'Fast Express Admin' : 'Prosper Ikeokwu',
-      username: isFastExpress ? 'fastexpress_admin' : 'prosperikeokwu',
-      email: cleanId.includes('@')
-        ? cleanId.toLowerCase()
-        : isFastExpress
-        ? 'fastexpressdeliveryservices00@gmail.com'
-        : 'prosperikeokwu@gmail.com',
-      phoneNumber: isFastExpress ? '+15550199001' : '+15550199000',
-      chatTimeNumber: isFastExpress ? '+1 (555) 019-9001' : '+1 (555) 019-9000',
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${isFastExpress ? 'fastexpress_admin' : 'prosperikeokwu'}&backgroundColor=b91c1c`,
+      id: 'user_admin_prosper',
+      name: 'Prosper Ikeokwu',
+      username: 'prosperikeokwu',
+      email: 'prosperikeokwu@gmail.com',
+      phoneNumber: '+15550199000',
+      chatTimeNumber: '+1 (555) 019-9000',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=prosperikeokwu&backgroundColor=b91c1c',
       bio: 'Chat Time Official Administrator',
-      statusFeeling: '🛡️ Platform Admin',
+      statusFeeling: '🛡️ Super Admin',
       phonePrivate: false,
       isOnline: true,
       lastSeen: Date.now(),
@@ -3038,8 +3023,7 @@ app.post('/api/admin/auth/login', (req, res) => {
       },
       securitySettings: {
         twoFactorEnabled: false,
-        pinEnabled: true,
-        pinCode: '0814',
+        pinEnabled: false,
         biometricSupported: true,
         activeSessions: [],
       },

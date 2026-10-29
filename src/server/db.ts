@@ -203,21 +203,18 @@ class DatabaseManager {
   private ensureAdminAndOfficialChannel(database: ChatTimeDatabase) {
     const ADMIN_EMAILS = [
       'prosperikeokwu@gmail.com',
-      'fastexpressdeliveryservices00@gmail.com',
-      'ikeokwuprosper6@gmail.com',
     ];
     let adminFound = false;
 
-    // 1. Ensure admin accounts have role 'admin' and red verified badge
+    // 1. Ensure admin accounts have role 'super_admin' and red verified badge
     database.users = database.users.map((u) => {
       const isTargetAdmin = Boolean(
         u.email && ADMIN_EMAILS.includes(u.email.toLowerCase().trim())
       );
       if (isTargetAdmin) {
-        adminFound = true;
         return {
           ...u,
-          role: 'admin' as const,
+          role: 'super_admin' as const,
           isVerified: true,
           isRedVerified: true,
           verificationBadge: 'red',
@@ -227,13 +224,19 @@ class DatabaseManager {
       return u;
     });
 
-    // If main admin doesn't exist yet in DB, pre-seed account
-    if (!adminFound) {
-      const adminUser: User = {
+    // 1a. Ensure Prosper Ikeokwu super admin account exists
+    let prosperUser = database.users.find(
+      (u) =>
+        u.id === 'user_admin_prosper' ||
+        u.username === 'prosperikeokwu' ||
+        (u.email && u.email.toLowerCase() === 'prosperikeokwu@gmail.com')
+    );
+    if (!prosperUser) {
+      prosperUser = {
         id: 'user_admin_prosper',
         name: 'Prosper Ikeokwu',
         username: 'prosperikeokwu',
-        email: 'ikeokwuprosper6@gmail.com',
+        email: 'prosperikeokwu@gmail.com',
         phoneNumber: '+15550199000',
         chatTimeNumber: '+1 (555) 019-9000',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=prosperikeokwu&backgroundColor=b91c1c',
@@ -272,7 +275,74 @@ class DatabaseManager {
           communityAlerts: true,
         },
       };
-      database.users.unshift(adminUser);
+      database.users.unshift(prosperUser);
+    } else {
+      prosperUser.role = 'super_admin';
+      prosperUser.email = 'prosperikeokwu@gmail.com';
+      prosperUser.isVerified = true;
+      prosperUser.isRedVerified = true;
+      prosperUser.verificationBadge = 'red';
+      if (!prosperUser.chatTimeNumber) prosperUser.chatTimeNumber = '+1 (555) 019-9000';
+      if (!prosperUser.phoneNumber) prosperUser.phoneNumber = '+15550199000';
+    }
+
+    // 1b. Ensure Fast Express account exists as regular registered user (admins added by super admin)
+    let fastExpressUser = database.users.find(
+      (u) =>
+        u.id === 'user_fastexpress' ||
+        u.id === 'user_admin_fastexpress' ||
+        u.username === 'fastexpress' ||
+        u.username === 'fastexpress_admin' ||
+        (u.email && u.email.toLowerCase() === 'fastexpressdeliveryservices00@gmail.com')
+    );
+    if (!fastExpressUser) {
+      fastExpressUser = {
+        id: 'user_fastexpress',
+        name: 'Fast Express',
+        username: 'fastexpress',
+        email: 'fastexpressdeliveryservices00@gmail.com',
+        phoneNumber: '+15550199001',
+        chatTimeNumber: '+1 (555) 019-9001',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fastexpress&backgroundColor=0284c7',
+        bio: 'Fast Express Delivery Services',
+        statusFeeling: 'Available on ChatTime',
+        phonePrivate: false,
+        isOnline: true,
+        lastSeen: Date.now(),
+        createdAt: Date.now(),
+        role: 'user',
+        isVerified: false,
+        isRedVerified: false,
+        verificationBadge: 'none',
+        verificationBadgeType: 'none',
+        contacts: [],
+        privacySettings: {
+          lastSeenVisibility: 'everyone',
+          numberVisibility: 'everyone',
+          statusVisibility: 'everyone',
+          readReceipts: true,
+          discoverable: true,
+          whoCanCallMe: 'everyone',
+        },
+        securitySettings: {
+          twoFactorEnabled: false,
+          pinEnabled: false,
+          biometricSupported: true,
+          activeSessions: [],
+        },
+        notificationSettings: {
+          messagePreviews: true,
+          soundEffects: true,
+          callRingtone: true,
+          ringtoneStyle: 'harmonic',
+          ringtoneVolume: 90,
+          communityAlerts: true,
+        },
+      };
+      database.users.push(fastExpressUser);
+    } else {
+      if (!fastExpressUser.chatTimeNumber) fastExpressUser.chatTimeNumber = '+1 (555) 019-9001';
+      if (!fastExpressUser.phoneNumber) fastExpressUser.phoneNumber = '+15550199001';
     }
 
     // 2. Ensure Official ChatTime Support account exists with RED TICK
@@ -445,12 +515,20 @@ class DatabaseManager {
 
   getUserByNumber(num: string): User | undefined {
     const cleanNum = num.replace(/[\s\-()]/g, '');
-    if (!cleanNum) return undefined;
-    return this.db.users.find(
-      (u) =>
-        u.chatTimeNumber.replace(/[\s\-()]/g, '') === cleanNum ||
-        (u.phoneNumber && u.phoneNumber.replace(/[\s\-()]/g, '') === cleanNum)
-    );
+    const digitsOnly = num.replace(/[^0-9]/g, '');
+    if (!cleanNum && !digitsOnly) return undefined;
+    return this.db.users.find((u) => {
+      const uChat = (u.chatTimeNumber || '').replace(/[\s\-()]/g, '');
+      const uPhone = (u.phoneNumber || '').replace(/[\s\-()]/g, '');
+      const uChatDigits = (u.chatTimeNumber || '').replace(/[^0-9]/g, '');
+      const uPhoneDigits = (u.phoneNumber || '').replace(/[^0-9]/g, '');
+      return (
+        uChat === cleanNum ||
+        uPhone === cleanNum ||
+        (digitsOnly.length >= 3 && (uChatDigits.endsWith(digitsOnly) || digitsOnly.endsWith(uChatDigits))) ||
+        (digitsOnly.length >= 3 && (uPhoneDigits.endsWith(digitsOnly) || digitsOnly.endsWith(uPhoneDigits)))
+      );
+    });
   }
 
   getPushSubscriptions(userId: string): StoredPushSubscription[] {
@@ -519,30 +597,43 @@ class DatabaseManager {
     const cleanUser = clean.replace(/^@/, '').trim();
 
     return this.db.users.filter((u) => {
+      const uId = (u.id || '').toLowerCase();
       const uUser = (u.username || '').toLowerCase();
+      const uName = (u.name || '').toLowerCase();
+      const uEmail = (u.email || '').toLowerCase();
       const uChatDigits = (u.chatTimeNumber || '').replace(/[^0-9]/g, '');
       const uPhoneDigits = (u.phoneNumber || '').replace(/[^0-9]/g, '');
 
-      // 1. Exact username match (minimum 3 characters required)
-      if (cleanUser.length >= 3 && uUser === cleanUser) {
+      // 1. Direct ID match
+      if (uId === clean) return true;
+
+      // 2. Username match (exact or partial, min 2 chars)
+      if (cleanUser.length >= 2 && (uUser === cleanUser || uUser.startsWith(cleanUser) || uUser.includes(cleanUser))) {
         return true;
       }
 
-      // 2. Complete Phone / ChatTime Number match (minimum 7 digits required)
-      if (digitsOnly.length >= 7) {
+      // 3. Display name match (min 2 chars)
+      if (clean.length >= 2 && (uName === clean || uName.includes(clean))) {
+        return true;
+      }
+
+      // 4. Email match
+      if (clean.length >= 3 && uEmail.includes(clean)) {
+        return true;
+      }
+
+      // 5. Phone / ChatTime Number match (min 2 digits to support real-time keypad dialing)
+      if (digitsOnly.length >= 2) {
         if (
-          uChatDigits === digitsOnly ||
-          uPhoneDigits === digitsOnly ||
-          (uChatDigits.length >= digitsOnly.length && uChatDigits.endsWith(digitsOnly)) ||
-          (digitsOnly.length >= uChatDigits.length && digitsOnly.endsWith(uChatDigits)) ||
-          (uPhoneDigits && uPhoneDigits.endsWith(digitsOnly)) ||
-          (uPhoneDigits && digitsOnly.endsWith(uPhoneDigits))
+          uChatDigits.includes(digitsOnly) ||
+          uPhoneDigits.includes(digitsOnly) ||
+          digitsOnly.includes(uChatDigits) ||
+          digitsOnly.includes(uPhoneDigits)
         ) {
           return true;
         }
       }
 
-      // Never expose users on partial 1-2 character queries or generic name substrings
       return false;
     });
   }
@@ -550,8 +641,6 @@ class DatabaseManager {
   addUser(user: User): User {
     const ADMIN_EMAILS = [
       'prosperikeokwu@gmail.com',
-      'fastexpressdeliveryservices00@gmail.com',
-      'ikeokwuprosper6@gmail.com',
     ];
     const isTargetAdmin = Boolean(
       user.email && ADMIN_EMAILS.includes(user.email.toLowerCase().trim())
@@ -1785,8 +1874,6 @@ class DatabaseManager {
       this.db.users.find((u) => u.email?.toLowerCase().trim() === userId.toLowerCase().trim());
     const ADMIN_EMAILS = [
       'prosperikeokwu@gmail.com',
-      'fastexpressdeliveryservices00@gmail.com',
-      'ikeokwuprosper6@gmail.com',
     ];
     const isAdmin = Boolean(
       (user &&

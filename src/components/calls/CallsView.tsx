@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Phone,
   Video,
@@ -53,9 +53,33 @@ export const CallsView: React.FC = () => {
   const [showAddCustom, setShowAddCustom] = useState(false);
   const [dialNumber, setDialNumber] = useState('');
 
-  const allOtherUsers = (Object.values(users) as User[]).filter(
-    (u) => u.id !== currentUser.id && (currentUser.contacts || []).includes(u.id)
-  );
+  const allOtherUsers = useMemo(() => {
+    return (Object.values(users) as User[]).filter((u) => Boolean(u && u.id));
+  }, [users]);
+
+  const dialMatchingUsers = useMemo(() => {
+    const raw = dialNumber.trim();
+    if (!raw || raw.length < 2) return [];
+    const digits = raw.replace(/[^0-9]/g, '');
+    const cleanRaw = raw.toLowerCase().replace(/^@/, '');
+
+    const candidates = Object.values(users) as User[];
+    return candidates.filter((u) => {
+      if (!u) return false;
+      const uCt = (u.chatTimeNumber || '').replace(/[^0-9]/g, '');
+      const uPh = (u.phoneNumber || '').replace(/[^0-9]/g, '');
+      const uName = (u.name || '').toLowerCase();
+      const uUser = (u.username || '').toLowerCase();
+
+      if (digits.length >= 2 && (uCt.includes(digits) || uPh.includes(digits) || digits.includes(uCt) || digits.includes(uPh))) {
+        return true;
+      }
+      if (cleanRaw.length >= 2 && (uUser.includes(cleanRaw) || uName.includes(cleanRaw))) {
+        return true;
+      }
+      return false;
+    });
+  }, [dialNumber, users]);
 
   const myCalls = calls.filter(
     (c) => !c.callerId || c.callerId === currentUser.id || c.receiverId === currentUser.id
@@ -91,14 +115,14 @@ export const CallsView: React.FC = () => {
     const cleanInput = dialNumber.trim().replace(/[\s\-()]/g, '');
 
     let matchedUser = (Object.values(users) as User[]).find((u) => {
-      if (u.id === currentUser.id) return false;
-      const uCt = u.chatTimeNumber.replace(/[\s\-()]/g, '');
+      const uCt = (u.chatTimeNumber || '').replace(/[\s\-()]/g, '');
       const uPh = (u.phoneNumber || '').replace(/[\s\-()]/g, '');
+      const uCtDigits = (u.chatTimeNumber || '').replace(/[^0-9]/g, '');
+      const uPhDigits = (u.phoneNumber || '').replace(/[^0-9]/g, '');
       return (
         uCt === cleanFull ||
         uPh === cleanFull ||
-        uCt.endsWith(cleanInput) ||
-        (uPh && uPh.endsWith(cleanInput))
+        (cleanInput.length >= 3 && (uCtDigits.includes(cleanInput) || uPhDigits.includes(cleanInput) || cleanInput.includes(uCtDigits)))
       );
     });
 
@@ -195,7 +219,7 @@ export const CallsView: React.FC = () => {
                 Start a New Call
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {allOtherUsers.map((u) => (
+                {allOtherUsers.map((u: User) => (
                   <div
                     key={u.id}
                     className="p-3 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2"
@@ -596,6 +620,76 @@ export const CallsView: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Live Matching Registered Users Preview Card When Dialing */}
+          {dialMatchingUsers.length > 0 && (
+            <div className="mb-3 max-w-[280px] sm:max-w-xs mx-auto w-full p-2.5 rounded-2xl bg-slate-900 border border-teal-500/40 text-left space-y-2 max-h-44 overflow-y-auto shadow-lg animate-in fade-in duration-150">
+              <div className="flex items-center justify-between text-[10px] font-bold text-teal-400 uppercase tracking-wider px-1">
+                <span>Matching Users ({dialMatchingUsers.length})</span>
+                <span className="text-[9px] text-slate-400">Live Dial Result</span>
+              </div>
+              <div className="space-y-1.5">
+                {dialMatchingUsers.map((u: User) => {
+                  const isCurrent = u.id === currentUser.id;
+                  return (
+                    <div
+                      key={u.id}
+                      className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 transition-colors"
+                    >
+                      <div
+                        onClick={() => setInspectedUserId(u.id)}
+                        className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer"
+                        title="View profile"
+                      >
+                        <div className="relative shrink-0">
+                          <img
+                            src={u.avatar || '/icon.svg'}
+                            alt={u.name}
+                            className="w-8 h-8 rounded-xl object-cover bg-slate-800 border border-slate-700"
+                          />
+                          {u.isOnline && (
+                            <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 border border-slate-950" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs font-bold text-white truncate">{u.name}</span>
+                            <VerifiedBadge user={u} size="xs" />
+                            {isCurrent && (
+                              <span className="px-1 py-0.2 rounded bg-teal-500/20 text-teal-300 text-[9px] font-bold">
+                                You
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-teal-400 font-mono truncate">
+                            {u.chatTimeNumber || u.phoneNumber}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setInspectedUserId(u.id)}
+                          className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold cursor-pointer"
+                        >
+                          Profile
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCallUserDirect(u.id, 'voice')}
+                          className="p-1.5 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold cursor-pointer transition-transform active:scale-95"
+                          title="Call this user"
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Keypad Grid (3x4) */}
           <div className="grid grid-cols-3 gap-3 max-w-[260px] mx-auto">

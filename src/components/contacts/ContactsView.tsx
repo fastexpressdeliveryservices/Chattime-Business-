@@ -122,8 +122,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
     const isUsername = raw.startsWith('@') || /^[a-zA-Z]/.test(raw);
     const cleanUsername = raw.replace(/^@/, '').trim();
 
-    // Require complete contact information: at least 3 chars for username, or 7+ digits for phone
-    const isComplete = isUsername ? cleanUsername.length >= 3 : cleanDigits.length >= 7;
+    // Require complete contact information: at least 2 chars for username, or 3+ digits for phone
+    const isComplete = isUsername ? cleanUsername.length >= 2 : cleanDigits.length >= 3;
 
     if (!raw) {
       setLookupMatch(null);
@@ -136,8 +136,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
       setLookupMatch(null);
       setLookupError(
         isUsername
-          ? 'Enter complete @username (at least 3 characters)'
-          : 'Enter complete phone number (at least 7-10 digits)'
+          ? 'Enter username (at least 2 characters)'
+          : 'Enter phone number (at least 3 digits)'
       );
       setIsLookingUp(false);
       return;
@@ -152,11 +152,11 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
         const withCountry = selectedCountry.code ? `${selectedCountry.code} ${raw}` : raw;
 
         const results = await searchUsers(raw);
-        let match = results.find((u) => u.id !== currentUser.id);
+        let match = results[0];
 
         if (!match && cleanDigits) {
           const countryResults = await searchUsers(withCountry);
-          match = countryResults.find((u) => u.id !== currentUser.id);
+          match = countryResults[0];
         }
 
         if (match) {

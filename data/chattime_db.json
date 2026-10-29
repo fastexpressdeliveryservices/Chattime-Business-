@@ -12,7 +12,7 @@
       "statusFeeling": "🛡️ Platform Admin",
       "phonePrivate": false,
       "isOnline": true,
-      "lastSeen": 1792590654605,
+      "lastSeen": 1793276837561,
       "createdAt": 1792042436110,
       "role": "admin",
       "isVerified": true,
@@ -47,7 +47,7 @@
       "id": "user_chattime_support",
       "name": "ChatTime Support",
       "username": "support",
-      "email": "support@chattime.app",
+      "email": "support@chattime.com",
       "phoneNumber": "+18002428846",
       "chatTimeNumber": "+1 (800) 242-8846",
       "avatar": "/icon.svg",
@@ -212,7 +212,7 @@
       "isOnline": true,
       "lastSeen": 1792051505549,
       "createdAt": 1792051505509,
-      "role": "admin",
+      "role": "super_admin",
       "isVerified": true,
       "contacts": [],
       "privacySettings": {
@@ -321,7 +321,7 @@
       "isOnline": false,
       "lastSeen": 1792051557115,
       "createdAt": 1792051556914,
-      "role": "admin",
+      "role": "super_admin",
       "isVerified": true,
       "contacts": [
         "user_1792051556935_gzs8"
@@ -434,7 +434,7 @@
       "isOnline": false,
       "lastSeen": 1792051600497,
       "createdAt": 1792051600303,
-      "role": "admin",
+      "role": "super_admin",
       "isVerified": true,
       "contacts": [
         "user_1792051600327_8wcj"
@@ -547,7 +547,7 @@
       "isOnline": true,
       "lastSeen": 1792051656440,
       "createdAt": 1792051656247,
-      "role": "admin",
+      "role": "super_admin",
       "isVerified": true,
       "contacts": [
         "user_1792051656290_zsyz"
@@ -660,7 +660,7 @@
       "isOnline": true,
       "lastSeen": 1792055232591,
       "createdAt": 1792055232458,
-      "role": "admin",
+      "role": "super_admin",
       "isVerified": true,
       "contacts": [
         "user_1792055232478_nmve"
@@ -756,9 +756,9 @@
       "verificationBadgeType": "none"
     },
     {
-      "id": "user_admin_fastexpress",
-      "name": "Fast Express Admin",
-      "username": "fastexpress_admin",
+      "id": "user_fastexpress",
+      "name": "Fast Express",
+      "username": "fastexpress",
       "email": "fastexpressdeliveryservices00@gmail.com",
       "phoneNumber": "+15550199001",
       "chatTimeNumber": "+1 (555) 019-9001",
@@ -767,13 +767,13 @@
       "statusFeeling": "🛡️ Platform Admin",
       "phonePrivate": false,
       "isOnline": true,
-      "lastSeen": 1792161052464,
+      "lastSeen": 1793276842089,
       "createdAt": 1792161052464,
-      "role": "admin",
-      "isVerified": true,
-      "isRedVerified": true,
-      "verificationBadge": "red",
-      "verificationBadgeType": "red",
+      "role": "user",
+      "isVerified": false,
+      "isRedVerified": false,
+      "verificationBadge": "none",
+      "verificationBadgeType": "none",
       "contacts": [],
       "privacySettings": {
         "lastSeenVisibility": "everyone",
@@ -800,32 +800,6 @@
     }
   ],
   "chats": [
-    {
-      "id": "chat_chattime_announcements",
-      "type": "direct",
-      "name": "ChatTime Announcements",
-      "avatar": "/icon.svg",
-      "folder": "direct",
-      "participants": [
-        "user_chattime_support"
-      ],
-      "isPinned": true,
-      "isVerified": true,
-      "unreadCount": 0,
-      "createdAt": 1792716390780,
-      "lastMessage": {
-        "id": "msg_announcement_welcome",
-        "chatId": "chat_chattime_announcements",
-        "senderId": "user_chattime_support",
-        "senderName": "ChatTime Announcements",
-        "senderAvatar": "/icon.svg",
-        "type": "text",
-        "content": "📢 Welcome to ChatTime! Official announcements, features, and system updates are published here.",
-        "timestamp": 1792716390780,
-        "reactions": {},
-        "status": "delivered"
-      }
-    },
     {
       "id": "c_direct_user_1792055232458_1p90_user_1792055232478_nmve",
       "type": "direct",
@@ -1112,20 +1086,6 @@
         "id": "msg_1792055232608_rpjn",
         "status": "delivered",
         "reactions": {}
-      }
-    ],
-    "chat_chattime_announcements": [
-      {
-        "id": "msg_announcement_welcome",
-        "chatId": "chat_chattime_announcements",
-        "senderId": "user_chattime_support",
-        "senderName": "ChatTime Announcements",
-        "senderAvatar": "/icon.svg",
-        "type": "text",
-        "content": "📢 Welcome to ChatTime! Official announcements, features, and system updates are published here.",
-        "timestamp": 1792716390780,
-        "reactions": {},
-        "status": "delivered"
       }
     ]
   },
@@ -1847,6 +1807,22 @@
     "d188e9b01342ffe0fad78e040e1fb93e054affdacec6ae0d3909f9589498499a": {
       "userId": "user_admin_prosper",
       "expiresAt": 1795182662144
+    },
+    "7cc67a7acc5888a64ffc5cf450d9cf4863086a90f351fa217d0f834ec3035b3e": {
+      "userId": "user_admin_prosper",
+      "expiresAt": 1795865366641
+    },
+    "b4a9db68a35cd40bcba82ab8b93f942781618adadb84a28769fd2437bc90d516": {
+      "userId": "user_admin_fastexpress",
+      "expiresAt": 1795865370479
+    },
+    "b63dd8d0fdd996fb7c630392d37c8b2451da617ebe15739a2eaf55d95d92beaf": {
+      "userId": "user_admin_prosper",
+      "expiresAt": 1795868837562
+    },
+    "bcaaba594722de9ec692280418e0869c7afa22cbdcfd606ee151d6d31cfa4ccb": {
+      "userId": "user_fastexpress",
+      "expiresAt": 1795868842090
     }
   },
   "platformFeatures": {
@@ -1873,6 +1849,35 @@
       "Australian 🇦🇺",
       "Jamaican 🇯🇲"
     ]
+  },
+  "voiceSubscriptions": {},
+  "voiceUsageStats": {
+    "totalTTSCalls": 0,
+    "totalTTSChars": 0,
+    "activeSubscriptions": 0,
+    "estimatedCostUsd": 0
+  },
+  "voiceAdminConfig": {
+    "enabled": true,
+    "provider": "webaudio_neural",
+    "allowFreePreviews": true,
+    "plans": {
+      "weekly": {
+        "priceNgn": 1000,
+        "days": 7,
+        "label": "Weekly Voice Pass (7 Days)"
+      },
+      "monthly": {
+        "priceNgn": 6000,
+        "days": 30,
+        "label": "Monthly Voice Pro (30 Days)"
+      },
+      "yearly": {
+        "priceNgn": 20000,
+        "days": 365,
+        "label": "Yearly Voice Unlimited (365 Days)"
+      }
+    }
   },
   "maintenanceMode": false,
   "welcomeSettings": {

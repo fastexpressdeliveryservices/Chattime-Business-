@@ -490,24 +490,21 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const authenticatedUser = activeUserId ? users[activeUserId] || null : null;
   const isAuthenticated = Boolean(authenticatedUser && authenticatedUser.id);
   
-  // Patch: Force admin privileges
+  // Super Admin Configuration (Only prosperikeokwu@gmail.com is super admin; other admins added by super admin)
   const ADMIN_EMAILS = [
     'prosperikeokwu@gmail.com',
-    'fastexpressdeliveryservices00@gmail.com',
-    'ikeokwuprosper6@gmail.com',
   ];
   const baseUser = authenticatedUser || GUEST_FALLBACK_USER;
   const isMasterAdmin =
     (baseUser.email && ADMIN_EMAILS.includes(baseUser.email.toLowerCase().trim())) ||
     baseUser.username === 'prosperikeokwu' ||
-    baseUser.username === 'fastexpress_admin' ||
     baseUser.id === 'user_admin_prosper' ||
-    baseUser.id === 'user_admin_fastexpress' ||
+    baseUser.role === 'super_admin' ||
     baseUser.role === 'admin';
   const currentUser: User = isMasterAdmin
     ? {
         ...baseUser,
-        role: 'admin',
+        role: baseUser.role === 'admin' ? 'admin' : 'super_admin',
         isVerified: true,
         isRedVerified: true,
         verificationBadge: 'red',
@@ -4357,23 +4354,32 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const digitsOnly = cleaned.replace(/[^0-9]/g, '');
       const usernameClean = cleaned.replace(/^@/, '');
 
-      // 1. Check local state first with strict complete matching rules
+      // 1. Check local state first with flexible matching rules
       let found = (Object.values(users) as User[]).find((u) => {
-        if (u.id === currentUser.id) return false;
+        if (!u) return false;
         const uNumDigits = (u.chatTimeNumber || '').replace(/[^0-9]/g, '');
         const uPhoneDigits = (u.phoneNumber || '').replace(/[^0-9]/g, '');
         const uUsername = (u.username || '').toLowerCase();
+        const uName = (u.name || '').toLowerCase();
+        const uEmail = (u.email || '').toLowerCase();
 
-        // Exact username match (min 3 characters)
-        if (usernameClean.length >= 3 && uUsername === usernameClean) return true;
+        // Exact or prefix username match (min 2 characters)
+        if (usernameClean.length >= 2 && (uUsername === usernameClean || uUsername.startsWith(usernameClean) || uUsername.includes(usernameClean))) return true;
 
-        // Complete phone match (min 7 digits)
-        if (digitsOnly.length >= 7) {
+        // Display name or email match
+        if (cleaned.length >= 2 && (uName.includes(cleaned) || uEmail.includes(cleaned))) return true;
+
+        // Phone match (min 3 digits)
+        if (digitsOnly.length >= 3) {
           if (
             uNumDigits === digitsOnly ||
             uPhoneDigits === digitsOnly ||
             uNumDigits.endsWith(digitsOnly) ||
-            uPhoneDigits.endsWith(digitsOnly)
+            uPhoneDigits.endsWith(digitsOnly) ||
+            digitsOnly.endsWith(uNumDigits) ||
+            digitsOnly.endsWith(uPhoneDigits) ||
+            uNumDigits.includes(digitsOnly) ||
+            uPhoneDigits.includes(digitsOnly)
           ) {
             return true;
           }
@@ -4385,7 +4391,7 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (!found) {
         try {
           const serverResults = await searchUsers(query);
-          const candidate = serverResults.find((u) => u.id !== currentUser.id);
+          const candidate = serverResults[0];
           if (candidate) {
             found = candidate;
           }
@@ -4394,7 +4400,7 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       }
 
-      if (found) {
+      if (found && found.id && found.id !== currentUser.id) {
         const currentContacts = currentUser.contacts || [];
         if (!currentContacts.includes(found.id)) {
           const nextContacts = [...currentContacts, found.id];

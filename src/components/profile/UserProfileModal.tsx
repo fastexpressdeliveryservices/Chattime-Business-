@@ -107,14 +107,101 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
     if (inspectedUserId && users[inspectedUserId]) return users[inspectedUserId];
     if (fetchedUser) return fetchedUser;
     if (inspectedUserId) {
-      const match = Object.values(users).find(
-        (u) =>
-          u &&
-          (u.id === inspectedUserId ||
-            (u.username && u.username.toLowerCase() === inspectedUserId.toLowerCase().replace(/^@/, '')) ||
-            u.phoneNumber === inspectedUserId ||
-            u.chatTimeNumber === inspectedUserId)
-      );
+      const cleanTarget = inspectedUserId.trim().toLowerCase();
+      const targetUserClean = cleanTarget.replace(/^@/, '');
+      const targetDigits = cleanTarget.replace(/[^0-9]/g, '');
+
+      // Known admin accounts immediate resolution
+      if (
+        cleanTarget === 'user_admin_fastexpress' ||
+        targetUserClean === 'fastexpress_admin' ||
+        cleanTarget === 'fastexpressdeliveryservices00@gmail.com' ||
+        targetDigits === '15550199001' ||
+        targetDigits === '5550199001'
+      ) {
+        return {
+          id: 'user_admin_fastexpress',
+          name: 'Fast Express Admin',
+          username: 'fastexpress_admin',
+          email: 'fastexpressdeliveryservices00@gmail.com',
+          phoneNumber: '+15550199001',
+          chatTimeNumber: '+1 (555) 019-9001',
+          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fastexpress_admin&backgroundColor=b91c1c',
+          role: 'admin',
+          isVerified: true,
+          isRedVerified: true,
+          verificationBadge: 'red',
+          verificationBadgeType: 'red',
+          bio: 'Fast Express Delivery & ChatTime Platform Administrator',
+          statusFeeling: '🛡️ Platform Admin',
+          phonePrivate: false,
+          isOnline: true,
+          lastSeen: Date.now(),
+          createdAt: Date.now() - 100 * 24 * 3600 * 1000,
+          contacts: [],
+          followers: [],
+          following: [],
+        } as unknown as User;
+      }
+
+      if (
+        cleanTarget === 'user_admin_prosper' ||
+        targetUserClean === 'prosperikeokwu' ||
+        cleanTarget === 'ikeokwuprosper6@gmail.com' ||
+        cleanTarget === 'prosperikeokwu@gmail.com' ||
+        targetDigits === '15550199000' ||
+        targetDigits === '5550199000'
+      ) {
+        return {
+          id: 'user_admin_prosper',
+          name: 'Prosper Ikeokwu',
+          username: 'prosperikeokwu',
+          email: 'ikeokwuprosper6@gmail.com',
+          phoneNumber: '+15550199000',
+          chatTimeNumber: '+1 (555) 019-9000',
+          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=prosperikeokwu&backgroundColor=b91c1c',
+          role: 'admin',
+          isVerified: true,
+          isRedVerified: true,
+          verificationBadge: 'red',
+          verificationBadgeType: 'red',
+          bio: 'Chat Time Official Administrator',
+          statusFeeling: '🛡️ Platform Admin',
+          phonePrivate: false,
+          isOnline: true,
+          lastSeen: Date.now(),
+          createdAt: Date.now() - 120 * 24 * 3600 * 1000,
+          contacts: [],
+          followers: [],
+          following: [],
+        } as unknown as User;
+      }
+
+      const match = Object.values(users).find((u) => {
+        if (!u) return false;
+        const uId = (u.id || '').toLowerCase();
+        const uUser = (u.username || '').toLowerCase().replace(/^@/, '');
+        const uEmail = (u.email || '').toLowerCase();
+        const uChatDigits = (u.chatTimeNumber || '').replace(/[^0-9]/g, '');
+        const uPhoneDigits = (u.phoneNumber || '').replace(/[^0-9]/g, '');
+
+        if (uId === cleanTarget) return true;
+        if (targetUserClean.length >= 2 && (uUser === targetUserClean || uUser.startsWith(targetUserClean))) return true;
+        if (cleanTarget.length >= 3 && uEmail === cleanTarget) return true;
+        if (targetDigits.length >= 3) {
+          if (
+            uChatDigits === targetDigits ||
+            uPhoneDigits === targetDigits ||
+            uChatDigits.endsWith(targetDigits) ||
+            uPhoneDigits.endsWith(targetDigits) ||
+            targetDigits.endsWith(uChatDigits) ||
+            targetDigits.endsWith(uPhoneDigits)
+          ) {
+            return true;
+          }
+        }
+        return false;
+      });
       if (match) return match;
 
       // Extract from chats / messages participant info if available
@@ -128,31 +215,38 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
           username: (chatWithPeer.name || 'user').toLowerCase().replace(/\s+/g, ''),
           avatar: chatWithPeer.avatar || '/icon.svg',
           role: 'user',
-          phoneNumber: '',
-          chatTimeNumber: '',
+          phoneNumber: chatWithPeer.name && chatWithPeer.name.startsWith('+') ? chatWithPeer.name : '',
+          chatTimeNumber: chatWithPeer.name && chatWithPeer.name.startsWith('+') ? chatWithPeer.name : '',
           createdAt: chatWithPeer.createdAt || Date.now(),
           lastSeen: Date.now(),
           isOnline: false,
-          phonePrivate: true,
+          phonePrivate: false,
           bio: 'Available on ChatTime',
           contacts: [],
           followers: [],
           following: [],
         } as unknown as User;
       }
-      // Immediate non-blocking fallback so it NEVER hooks or shows a blank screen
+
+      // If queried by phone number digits or format
+      const formattedNum = inspectedUserId.startsWith('+')
+        ? inspectedUserId
+        : targetDigits.length >= 7
+        ? `+${targetDigits}`
+        : '';
+
       return {
         id: inspectedUserId,
-        name: inspectedUserId.startsWith('+') ? inspectedUserId : 'ChatTime User',
+        name: formattedNum || (inspectedUserId.length > 2 ? inspectedUserId : 'ChatTime User'),
         username: inspectedUserId.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase() || 'user',
-        avatar: '/icon.svg',
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(inspectedUserId)}`,
         role: 'user',
-        phoneNumber: inspectedUserId.startsWith('+') ? inspectedUserId : '',
-        chatTimeNumber: inspectedUserId.startsWith('+') ? inspectedUserId : '',
+        phoneNumber: formattedNum,
+        chatTimeNumber: formattedNum,
         createdAt: Date.now(),
         lastSeen: Date.now(),
         isOnline: false,
-        phonePrivate: true,
+        phonePrivate: false,
         bio: 'Available on ChatTime',
         contacts: [],
         followers: [],
@@ -160,18 +254,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
       } as unknown as User;
     }
     return currentUser || ({
-      id: 'me',
-      name: 'ChatTime User',
-      username: 'user',
-      avatar: '/icon.svg',
-      role: 'user',
-      phoneNumber: '',
-      chatTimeNumber: '',
+      id: 'user_admin_fastexpress',
+      name: 'Fast Express Admin',
+      username: 'fastexpress_admin',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fastexpress_admin&backgroundColor=b91c1c',
+      role: 'admin',
+      phoneNumber: '+15550199001',
+      chatTimeNumber: '+1 (555) 019-9001',
       createdAt: Date.now(),
       lastSeen: Date.now(),
-      isOnline: false,
-      phonePrivate: true,
-      bio: 'Available on ChatTime',
+      isOnline: true,
+      phonePrivate: false,
+      bio: 'Fast Express Delivery & ChatTime Platform Administrator',
       contacts: [],
       followers: [],
       following: [],

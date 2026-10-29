@@ -1,3 +1,4 @@
+import React, { useMemo } from 'react';
 import {
   Pin,
   VolumeX,
@@ -6,6 +7,7 @@ import {
   Plus,
   Search,
   MessageSquarePlus,
+  MessageSquare,
   Megaphone,
   WifiOff,
   Users,
@@ -15,7 +17,7 @@ import {
   Bookmark,
 } from 'lucide-react';
 import { useChatTime } from '../../context/ChatTimeContext';
-import { ChatFolder, Chat } from '../../types';
+import { ChatFolder, Chat, User } from '../../types';
 import { formatRelativeTime } from '../../utils/formatters';
 import { maskPhoneNumber } from '../../utils/numberGenerator';
 import { VerifiedBadge } from '../common/VerifiedBadge';
@@ -38,6 +40,7 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
     setSearchQuery,
     setActiveTab,
     setInspectedUserId,
+    startDirectChat,
     statuses,
     wsConnected,
     t,
@@ -112,6 +115,28 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
       return timeB - timeA;
     });
 
+  const matchingRegisteredUsers = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q || q.length < 2) return [];
+    const digits = q.replace(/[^0-9]/g, '');
+    const cleanUser = q.replace(/^@/, '');
+
+    const allUsers = Object.values(users) as User[];
+    return allUsers.filter((u) => {
+      if (!u) return false;
+      const uUser = (u.username || '').toLowerCase();
+      const uName = (u.name || '').toLowerCase();
+      const uEmail = (u.email || '').toLowerCase();
+      const uChatDigits = (u.chatTimeNumber || '').replace(/[^0-9]/g, '');
+      const uPhoneDigits = (u.phoneNumber || '').replace(/[^0-9]/g, '');
+
+      if (cleanUser.length >= 2 && (uUser.includes(cleanUser) || cleanUser.includes(uUser))) return true;
+      if (q.length >= 2 && (uName.includes(q) || uEmail.includes(q))) return true;
+      if (digits.length >= 2 && (uChatDigits.includes(digits) || uPhoneDigits.includes(digits) || digits.includes(uChatDigits) || digits.includes(uPhoneDigits))) return true;
+      return false;
+    });
+  }, [searchQuery, users]);
+
   return (
     <div className="w-full md:w-80 lg:w-96 min-h-0 bg-slate-900 border-r border-slate-800/80 flex flex-col h-full shrink-0">
       {/* WhatsApp-Style Subtle Connecting Banner when offline / waiting for network */}
@@ -181,6 +206,80 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
 
       {/* Scrollable Conversation List */}
       <div className="flex-1 overflow-y-auto divide-y divide-slate-800/40">
+        {/* Live Matching Registered Users Section when Searching */}
+        {matchingRegisteredUsers.length > 0 && searchQuery.trim().length >= 2 && (
+          <div className="p-3 bg-slate-950 border-b border-slate-800 space-y-2">
+            <div className="flex items-center justify-between text-[11px] font-bold text-teal-400 uppercase tracking-wider px-1">
+              <span>Matching Registered Accounts ({matchingRegisteredUsers.length})</span>
+            </div>
+            <div className="space-y-1.5">
+              {matchingRegisteredUsers.map((u: User) => {
+                const isCurrent = u.id === currentUser.id;
+                return (
+                  <div
+                    key={u.id}
+                    className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 transition-colors"
+                  >
+                    <div
+                      onClick={() => setInspectedUserId(u.id)}
+                      className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
+                    >
+                      <div className="relative shrink-0">
+                        <img
+                          src={u.avatar || '/icon.svg'}
+                          alt={u.name}
+                          className="w-9 h-9 rounded-xl object-cover bg-slate-800 border border-slate-700"
+                        />
+                        {u.isOnline && (
+                          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-slate-950" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs font-bold text-white truncate">{u.name}</span>
+                          <VerifiedBadge user={u} size="xs" />
+                          {isCurrent && (
+                            <span className="px-1.5 py-0.2 rounded bg-teal-500/20 text-teal-300 text-[9px] font-bold">
+                              You
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-teal-400 font-mono truncate">
+                          @{u.username} • {u.chatTimeNumber || u.phoneNumber}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setInspectedUserId(u.id)}
+                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold cursor-pointer"
+                        title="View Profile"
+                      >
+                        Profile
+                      </button>
+                      {!isCurrent && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            startDirectChat(u.id);
+                            setSearchQuery('');
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 text-[10px] font-bold cursor-pointer flex items-center gap-1"
+                        >
+                          <MessageSquare className="w-3 h-3" />
+                          <span>Chat</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {filteredChats.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-72 px-6 text-center">
             <MessageSquarePlus className="w-10 h-10 text-slate-600 mb-3" />
