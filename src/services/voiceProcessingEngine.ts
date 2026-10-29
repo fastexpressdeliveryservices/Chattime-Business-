@@ -284,16 +284,16 @@ export class RealTimeVoiceProcessor {
   private compressor: DynamicsCompressorNode | null = null;
   private presenceFilter: BiquadFilterNode | null = null;
   private intensityGain: GainNode | null = null;
+  private masterGain: GainNode | null = null;
+  private dryGain: GainNode | null = null;
+  private wetGain: GainNode | null = null;
   private destinationNode: MediaStreamAudioDestinationNode | null = null;
   private monitorGainNode: GainNode | null = null;
   private analyserNode: AnalyserNode | null = null;
 
   // Real-time pitch shifter delay nodes
   private pitchDelayA: DelayNode | null = null;
-  private pitchDelayB: DelayNode | null = null;
   private pitchGainA: GainNode | null = null;
-  private pitchGainB: GainNode | null = null;
-  private lfoOsc: OscillatorNode | null = null;
 
   private currentSettings: UserVoiceSettings = { ...DEFAULT_USER_VOICE_SETTINGS };
   private status: 'idle' | 'connecting' | 'active' | 'error' = 'idle';
@@ -366,13 +366,33 @@ export class RealTimeVoiceProcessor {
       const sourceStream = new MediaStream([track]);
       this.sourceNode = this.audioCtx.createMediaStreamSource(sourceStream);
 
-      // 1. Gentle rumble cut (80Hz highpass) to remove wind and table taps
+      // 1. Output destination for WebRTC PeerConnection
+      this.destinationNode = this.audioCtx.createMediaStreamDestination();
+
+      // 2. Audio Visualizer Analyser Node
+      this.analyserNode = this.audioCtx.createAnalyser();
+      this.analyserNode.fftSize = 256;
+      this.analyserNode.smoothingTimeConstant = 0.8;
+
+      // 3. Local Monitor Node for "Hear Myself" Live Preview
+      this.monitorGainNode = this.audioCtx.createGain();
+      this.monitorGainNode.gain.value = this.isMonitorActive ? 0.8 : 0;
+      this.monitorGainNode.connect(this.audioCtx.destination);
+
+      // 4. Master Output Gain
+      this.masterGain = this.audioCtx.createGain();
+      this.masterGain.gain.value = 1.0;
+      this.masterGain.connect(this.destinationNode);
+      this.masterGain.connect(this.analyserNode);
+      this.masterGain.connect(this.monitorGainNode);
+
+      // 5. Gentle rumble cut (80Hz highpass) to remove wind and table taps
       this.inputHighpass = this.audioCtx.createBiquadFilter();
       this.inputHighpass.type = 'highpass';
       this.inputHighpass.frequency.value = 80;
       this.inputHighpass.Q.value = 0.7;
 
-      // 2. 3-Stage Formant Equalizer (F1, F2, F3) for Accent & Vocal Tract Shaping
+      // 6. 3-Stage Formant Equalizer (F1, F2, F3) for Accent & Vocal Tract Shaping
       this.formantF1 = this.audioCtx.createBiquadFilter();
       this.formantF1.type = 'peaking';
 
@@ -382,38 +402,32 @@ export class RealTimeVoiceProcessor {
       this.formantF3 = this.audioCtx.createBiquadFilter();
       this.formantF3.type = 'peaking';
 
-      // 3. Presence & Air filter
+      // 7. Presence & Air filter
       this.presenceFilter = this.audioCtx.createBiquadFilter();
       this.presenceFilter.type = 'highshelf';
 
-      // 4. Intensity / Saturation Gain
+      // 8. Intensity / Saturation Gain
       this.intensityGain = this.audioCtx.createGain();
 
-      // 5. Broadcast Compressor (controls dynamics and avoids clipping)
+      // 9. Broadcast Compressor (controls dynamics, adds warmth, prevents clipping)
       this.compressor = this.audioCtx.createDynamicsCompressor();
       this.compressor.threshold.value = -24;
       this.compressor.knee.value = 8;
       this.compressor.ratio.value = 3.5;
       this.compressor.attack.value = 0.003;
-      this.compressor.release.value = 0.2;
+      this.compressor.release.value = 0.15;
 
-      // 6. Real-time Pitch Shifting Section
-      this.setupPitchShifter(this.audioCtx);
+      // 10. Split paths: Dry (clean acoustic voice) and Wet (pitch/timbre altered)
+      this.dryGain = this.audioCtx.createGain();
+      this.wetGain = this.audioCtx.createGain();
 
-      // 7. Output Destination for WebRTC PeerConnection
-      this.destinationNode = this.audioCtx.createMediaStreamDestination();
+      // Single smooth delay line (no dual comb-filter phase cancellation)
+      this.pitchDelayA = this.audioCtx.createDelay(0.1);
+      this.pitchDelayA.delayTime.value = 0.015;
+      this.pitchGainA = this.audioCtx.createGain();
+      this.pitchGainA.gain.value = 1.0;
 
-      // 8. Local Monitor Node for "Hear Myself" Live Preview
-      this.monitorGainNode = this.audioCtx.createGain();
-      this.monitorGainNode.gain.value = this.isMonitorActive ? 0.8 : 0;
-      this.monitorGainNode.connect(this.audioCtx.destination);
-
-      // 9. Audio Visualizer Analyser Node
-      this.analyserNode = this.audioCtx.createAnalyser();
-      this.analyserNode.fftSize = 256;
-      this.analyserNode.smoothingTimeConstant = 0.8;
-
-      // Connect standard chain
+      // Connect vocal tract chain:
       this.sourceNode.connect(this.inputHighpass);
       this.inputHighpass.connect(this.formantF1);
       this.formantF1.connect(this.formantF2);
@@ -422,15 +436,15 @@ export class RealTimeVoiceProcessor {
       this.presenceFilter.connect(this.intensityGain);
       this.intensityGain.connect(this.compressor);
 
-      // Connect to Pitch Shifter inputs
-      if (this.pitchDelayA && this.pitchDelayB) {
-        this.compressor.connect(this.pitchDelayA);
-        this.compressor.connect(this.pitchDelayB);
-      } else {
-        this.compressor.connect(this.destinationNode);
-        this.compressor.connect(this.analyserNode);
-        this.compressor.connect(this.monitorGainNode);
-      }
+      // Route dry directly to master
+      this.compressor.connect(this.dryGain);
+      this.dryGain.connect(this.masterGain);
+
+      // Route wet through smooth pitch delay
+      this.compressor.connect(this.pitchDelayA);
+      this.pitchDelayA.connect(this.pitchGainA);
+      this.pitchGainA.connect(this.wetGain);
+      this.wetGain.connect(this.masterGain);
 
       this.applyAcousticProfile();
 
@@ -447,41 +461,6 @@ export class RealTimeVoiceProcessor {
       console.error('[VoiceEngine] Failed to initialize voice processor:', err);
       this.status = 'error';
       return null;
-    }
-  }
-
-  /**
-   * Constructs a phase-compensated dual-delay pitch shifter
-   */
-  private setupPitchShifter(ctx: AudioContext): void {
-    try {
-      this.pitchDelayA = ctx.createDelay(0.1);
-      this.pitchDelayB = ctx.createDelay(0.1);
-
-      this.pitchGainA = ctx.createGain();
-      this.pitchGainB = ctx.createGain();
-
-      this.pitchDelayA.delayTime.value = 0.025;
-      this.pitchDelayB.delayTime.value = 0.025;
-
-      this.pitchGainA.gain.value = 0.5;
-      this.pitchGainB.gain.value = 0.5;
-
-      this.pitchDelayA.connect(this.pitchGainA);
-      this.pitchDelayB.connect(this.pitchGainB);
-
-      if (this.destinationNode && this.analyserNode && this.monitorGainNode) {
-        this.pitchGainA.connect(this.destinationNode);
-        this.pitchGainB.connect(this.destinationNode);
-
-        this.pitchGainA.connect(this.analyserNode);
-        this.pitchGainB.connect(this.analyserNode);
-
-        this.pitchGainA.connect(this.monitorGainNode);
-        this.pitchGainB.connect(this.monitorGainNode);
-      }
-    } catch (e) {
-      console.warn('[VoiceEngine] Pitch shifter setup notice:', e);
     }
   }
 
@@ -545,11 +524,20 @@ export class RealTimeVoiceProcessor {
       this.intensityGain.gain.setTargetAtTime(targetGain, this.audioCtx.currentTime, 0.05);
     }
 
-    // Pitch Shifter Modulation
-    if (this.pitchDelayA && this.pitchDelayB) {
-      const delayTime = Math.min(Math.max(0.025 - (totalPitchSemitones * 0.0012), 0.008), 0.05);
-      this.pitchDelayA.delayTime.setTargetAtTime(delayTime, this.audioCtx.currentTime, 0.05);
-      this.pitchDelayB.delayTime.setTargetAtTime(delayTime * 1.05, this.audioCtx.currentTime, 0.05);
+    // Dry / Wet and Pitch Blend for crystal clear, pop-free voice
+    if (this.dryGain && this.wetGain && this.pitchDelayA && this.pitchGainA) {
+      if (Math.abs(totalPitchSemitones) < 0.1) {
+        // Pure uncolored broadcast audio: zero delay, zero comb filtering, zero crackle
+        this.dryGain.gain.setTargetAtTime(1.0, this.audioCtx.currentTime, 0.05);
+        this.wetGain.gain.setTargetAtTime(0.0, this.audioCtx.currentTime, 0.05);
+      } else {
+        // Altered presentation (masculine body or feminine resonance)
+        const delayTime = Math.min(Math.max(0.016 - (totalPitchSemitones * 0.0008), 0.006), 0.030);
+        this.pitchDelayA.delayTime.setTargetAtTime(delayTime, this.audioCtx.currentTime, 0.05);
+        this.pitchGainA.gain.setTargetAtTime(1.0, this.audioCtx.currentTime, 0.05);
+        this.dryGain.gain.setTargetAtTime(0.35, this.audioCtx.currentTime, 0.05);
+        this.wetGain.gain.setTargetAtTime(0.8, this.audioCtx.currentTime, 0.05);
+      }
     }
   }
 
@@ -607,10 +595,11 @@ export class RealTimeVoiceProcessor {
       this.presenceFilter?.disconnect();
       this.intensityGain?.disconnect();
       this.compressor?.disconnect();
+      this.dryGain?.disconnect();
+      this.wetGain?.disconnect();
       this.pitchDelayA?.disconnect();
-      this.pitchDelayB?.disconnect();
       this.pitchGainA?.disconnect();
-      this.pitchGainB?.disconnect();
+      this.masterGain?.disconnect();
       this.monitorGainNode?.disconnect();
       this.analyserNode?.disconnect();
     } catch {}

@@ -70,6 +70,10 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
 
   const filteredChats = chats
     .filter((chat) => {
+      // Exclude public broadcast channels and announcements from the direct chat list
+      if (chat.type === 'announcement' || chat.type === 'channel') {
+        return false;
+      }
       if (chat.type === 'direct' && !chat.participants.includes(currentUser.id)) {
         return false;
       }
@@ -276,11 +280,6 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
                       <Users className="w-2.5 h-2.5 text-white" />
                     </span>
                   )}
-                  {(chat.id === 'chat_chattime_announcements' || chat.type === 'announcement' || chat.type === 'channel') && (
-                    <span className="w-5 h-5 rounded-full bg-emerald-500 border-2 border-slate-900 absolute -bottom-1 -right-1 flex items-center justify-center shadow">
-                      <Megaphone className="w-2.5 h-2.5 text-slate-950" />
-                    </span>
-                  )}
                 </div>
 
                 {/* Middle Info */}
@@ -291,7 +290,7 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
                         {displayName}
                       </span>
                       {peerUser && <VerifiedBadge user={peerUser} size="xs" />}
-                      {!peerUser && (chat.isVerified || chat.id === 'chat_chattime_support' || chat.id === 'chat_chattime_announcements') && (
+                      {!peerUser && (chat.isVerified || chat.id === 'chat_chattime_support') && (
                         <VerifiedBadge type="red" size="xs" />
                       )}
                       {chat.isMuted && (

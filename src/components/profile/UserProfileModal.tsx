@@ -222,7 +222,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
 
   if (!inspectedUserId) return null;
 
-  const isSelf = Boolean(currentUser?.id && targetUser.id === currentUser.id);
+  const isSelf = isTargetSelf || Boolean(currentUser?.id && targetUser.id === currentUser.id);
   const isAdminViewer = currentUser?.role === 'admin' && !isSharedAppUrl();
   const isContact = (currentUser?.contacts || []).includes(targetUser.id);
   const isFollowing = (currentUser?.following || []).includes(targetUser.id);
@@ -350,12 +350,14 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
 
   return (
     <div
+      style={{ zIndex: 99999 }}
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose();
       }}
-      className="fixed inset-0 z-[100] bg-slate-950/90 flex items-center justify-center p-0 md:p-6 overflow-hidden select-none animate-in fade-in duration-150"
+      className="fixed inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-0 md:p-6 overflow-hidden select-none animate-in fade-in duration-150"
     >
       <div
+        onClick={(e) => e.stopPropagation()}
         className={`border-0 md:border rounded-none md:rounded-3xl max-w-4xl w-full h-[100dvh] md:h-[88vh] md:max-h-[850px] min-h-[500px] overflow-hidden shadow-2xl flex flex-col transition-colors ${
           isLight
             ? 'bg-slate-50 border-slate-200 text-slate-900'
@@ -378,10 +380,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
           <div className="flex items-center gap-3">
             <button
               onClick={handleClose}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                handleClose(e);
-              }}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer shadow-md select-none shrink-0 min-h-[44px]"
               title={t('back', 'Go Back')}
             >
@@ -401,10 +399,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
           </div>
           <button
             onClick={handleClose}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              handleClose(e);
-            }}
             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer border shrink-0 ${
               isLight
                 ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'

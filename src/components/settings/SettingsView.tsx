@@ -39,6 +39,7 @@ import {
   ChevronRight,
   Info,
   Wand2,
+  Mail,
 } from 'lucide-react';
 import { useChatTime } from '../../context/ChatTimeContext';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
@@ -84,6 +85,8 @@ export const SettingsView: React.FC = () => {
     sendMessage,
     setVerificationBadgeByAdmin,
     openVoiceStudio,
+    setInspectedUserId,
+    loginAccount,
   } = useChatTime();
 
   const [activeSection, setActiveSection] = useState<
@@ -166,6 +169,33 @@ export const SettingsView: React.FC = () => {
       setActiveTab('chats');
     } finally {
       setIsSendingSupportMsg(false);
+    }
+  };
+
+  // Admin Quick Code Login State (Code: 0814)
+  const [adminCodeInput, setAdminCodeInput] = useState('');
+  const [isAdminLoggingIn, setIsAdminLoggingIn] = useState(false);
+
+  const handleAdminCodeLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = adminCodeInput.trim();
+    if (code !== '0814' && code !== '814') {
+      addToast('Invalid Admin Code', 'The code entered does not match master administrator credentials.', 'warning');
+      return;
+    }
+    setIsAdminLoggingIn(true);
+    try {
+      const res = await loginAccount('0814');
+      if (res.user) {
+        addToast('Admin Authorized', 'Logged in as ChatTime Administrator.', 'success');
+        setAdminCodeInput('');
+      } else {
+        addToast('Login Failed', res.error || 'Could not verify admin code.', 'error');
+      }
+    } catch {
+      addToast('Error', 'Failed to connect to authentication service.', 'error');
+    } finally {
+      setIsAdminLoggingIn(false);
     }
   };
 
@@ -467,16 +497,26 @@ export const SettingsView: React.FC = () => {
                   </div>
                 </div>
 
-                <label className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 cursor-pointer flex items-center gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-teal-400" />
-                  <span>Change Photo</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
-                  />
-                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setInspectedUserId(currentUser.id || 'me')}
+                    className="px-3.5 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-xs font-bold text-slate-950 cursor-pointer flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+                  >
+                    <UserIcon className="w-3.5 h-3.5" />
+                    <span>View Full Profile</span>
+                  </button>
+                  <label className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 cursor-pointer flex items-center gap-1.5 transition-colors">
+                    <Camera className="w-3.5 h-3.5 text-teal-400" />
+                    <span>Change Photo</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
               </div>
 
               {/* Admin Verification Badge Control Card */}
@@ -1591,35 +1631,54 @@ export const SettingsView: React.FC = () => {
               </p>
             </div>
 
-            {/* Quick Contact Support Banner */}
-            <div className="p-5 bg-gradient-to-r from-teal-950/60 via-slate-900 to-slate-900 border border-teal-500/30 rounded-3xl space-y-4 shadow-xl">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-teal-500/20 border border-teal-500/40 flex items-center justify-center shrink-0">
-                    <MessageSquare className="w-5 h-5 text-teal-400" />
+            {/* WhatsApp-Style Official Support Account & Concierge */}
+            <div className="p-5 bg-gradient-to-br from-rose-950/30 via-slate-900 to-slate-900 border border-rose-500/40 rounded-3xl space-y-4 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3.5">
+                  <div className="relative shrink-0">
+                    <img
+                      src="/icon.svg"
+                      alt="ChatTime Support"
+                      className="w-12 h-12 rounded-2xl object-cover bg-slate-800 border-2 border-rose-500/60 shadow-md"
+                    />
+                    <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-slate-900 absolute -bottom-0.5 -right-0.5" title="Online 24/7" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
-                      Chat with ChatTime Support
-                      <span className="inline-block w-4 h-4 bg-teal-500 rounded-full text-slate-950 font-bold text-[10px] flex items-center justify-center">✓</span>
-                    </h4>
-                    <p className="text-xs text-slate-400">
-                      Official 24/7 direct encrypted support desk.
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h4 className="text-sm font-bold text-white">ChatTime Support</h4>
+                      <VerifiedBadge type="red" size="sm" />
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                        Official Support Desk
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-300 mt-0.5">
+                      Direct WhatsApp-style 24/7 technical care, account security & inquiries.
                     </p>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleContactSupport()}
+                  disabled={isSendingSupportMsg}
+                  className="px-4 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-teal-500/20 active:scale-95 transition-all cursor-pointer disabled:opacity-50 shrink-0"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>{isSendingSupportMsg ? 'Opening...' : 'Message Support'}</span>
+                </button>
               </div>
 
-              <div className="space-y-3 pt-1">
+              {/* Inquiry Composer */}
+              <div className="space-y-3 pt-2 border-t border-slate-800">
                 <div className="flex flex-wrap gap-2">
-                  {['Account & Login', 'Verification / OTP', 'Privacy & Settings', 'Voice / Video Calls', 'Other Question'].map((cat) => (
+                  {['Account & Login', 'Verification / OTP', 'Krisp Audio & Voice', 'Privacy & Settings', 'Other Question'].map((cat) => (
                     <button
                       key={cat}
                       type="button"
                       onClick={() => setContactSubject(cat)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                         contactSubject === cat
-                          ? 'bg-teal-500 text-slate-950 font-bold'
+                          ? 'bg-teal-500 text-slate-950 font-bold shadow-sm'
                           : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800'
                       }`}
                     >
@@ -1631,27 +1690,96 @@ export const SettingsView: React.FC = () => {
                 <textarea
                   value={contactMessage}
                   onChange={(e) => setContactMessage(e.target.value)}
-                  placeholder="How can we help you? Describe your question or issue..."
-                  rows={3}
+                  placeholder="Type a message to ChatTime Support... (Sends as 1-on-1 direct message)"
+                  rows={2}
                   className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500/80 resize-none"
                 />
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                  <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
-                    End-to-end encrypted inquiry
+                    End-to-end encrypted • Not a public channel
                   </span>
                   <button
                     type="button"
                     onClick={() => handleContactSupport()}
                     disabled={isSendingSupportMsg}
-                    className="px-5 py-2.5 rounded-2xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-teal-500/20 cursor-pointer disabled:opacity-50"
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
                   >
-                    <MessageSquare className="w-4 h-4" />
-                    <span>{isSendingSupportMsg ? 'Opening...' : 'Start Support Chat'}</span>
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Send Inquiry</span>
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* Human Support Concierge & Admin Access Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* Human Support Email Card */}
+              <div className="p-4 bg-slate-900 border border-teal-500/30 rounded-2xl space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-bold text-teal-400 uppercase tracking-wider">
+                    <Mail className="w-4 h-4" />
+                    <span>Human Support Email</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-400">24/7 Monitored</span>
+                </div>
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono font-bold text-white">
+                  <span>support@chattime.com</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText('support@chattime.com');
+                      addToast('Email Copied', 'support@chattime.com copied to clipboard.', 'info');
+                    }}
+                    className="p-1 rounded text-slate-400 hover:text-white"
+                    title="Copy Email"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <a
+                  href="mailto:support@chattime.com?subject=ChatTime%20Support%20Inquiry"
+                  className="w-full py-2 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Email Support Concierge</span>
+                </a>
+              </div>
+
+              {/* Administrator Quick Code Login (Code: 0814) */}
+              <form onSubmit={handleAdminCodeLogin} className="p-4 bg-slate-900 border border-amber-500/30 rounded-2xl space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Admin Access (Code: 0814)</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                    Master Code
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Enter administrator passcode <strong className="text-amber-300 font-mono">0814</strong> to sign into the platform management desk.
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="password"
+                    maxLength={6}
+                    value={adminCodeInput}
+                    onChange={(e) => setAdminCodeInput(e.target.value)}
+                    placeholder="Enter code 0814"
+                    className="flex-1 bg-slate-950 border border-slate-800 focus:border-amber-400 rounded-xl px-3 py-2 text-xs text-white font-mono outline-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isAdminLoggingIn || !adminCodeInput.trim()}
+                    className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 disabled:opacity-50 cursor-pointer transition-colors shadow-sm"
+                  >
+                    <Key className="w-3.5 h-3.5" />
+                    <span>{isAdminLoggingIn ? '...' : 'Verify'}</span>
+                  </button>
+                </div>
+              </form>
             </div>
 
             {/* Search Help Articles */}

@@ -265,14 +265,15 @@ const ChatTimeMain: React.FC = () => {
           {/* Create New Group Modal */}
           <NewGroupModal isOpen={isNewGroupOpen} onClose={() => setIsNewGroupOpen(false)} />
 
-          {/* Global Responsive User Profile Modal */}
-          <UserProfileModal 
-            onOpenRegister={() => setIsRegisterOpen(true)} 
-            onClose={() => setInspectedUserId(null)} 
-          />
         </>
         )
       )}
+
+      {/* Global Responsive User Profile Modal */}
+      <UserProfileModal 
+        onOpenRegister={() => setIsRegisterOpen(true)} 
+        onClose={() => setInspectedUserId(null)} 
+      />
 
       {/* AI Voice Studio & Regional Accent Effects Modal */}
       <VoiceStudioModal

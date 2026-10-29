@@ -21,8 +21,10 @@ import {
   Layers,
   ArrowRightLeft,
   ChevronDown,
+  Headphones,
 } from 'lucide-react';
 import { useChatTime } from '../../context/ChatTimeContext';
+import { globalVoiceProcessor } from '../../services/voiceProcessingEngine';
 import {
   krispSessionClient,
   krispRTCAdapter,
@@ -68,6 +70,89 @@ export const VoiceAISettingsSection: React.FC = () => {
   const [ttsError, setTtsError] = useState('');
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Accent Preview & Live DSP Monitor State
+  const [previewingAccentId, setPreviewingAccentId] = useState<string | null>(null);
+  const [isLiveMicMonitorActive, setIsLiveMicMonitorActive] = useState<boolean>(false);
+  const accentAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const mapAccentCodeToStyle = (accentId: string): string => {
+    const map: Record<string, string> = {
+      'en-US': 'american',
+      'en_US': 'american',
+      'en-GB': 'british',
+      'en_GB': 'british',
+      'en-AU': 'australian',
+      'en_AU': 'australian',
+      'en-IN': 'indian',
+      'en_IN': 'indian',
+      'es-ES': 'spanish_spain',
+      'es_ES': 'spanish_spain',
+      'es-419': 'spanish_latam',
+      'es_419': 'spanish_latam',
+      'en-NG': 'nigerian',
+      'en_NG': 'nigerian',
+      'en-GH': 'ghanaian',
+      'en_GH': 'ghanaian',
+      'en-ZA': 'south_african',
+      'en_ZA': 'south_african',
+    };
+    return map[accentId] || 'american';
+  };
+
+  const handlePlayAccentPreview = async (accentId: string, samplePhrase?: string) => {
+    if (previewingAccentId === accentId) {
+      if (accentAudioRef.current) {
+        accentAudioRef.current.pause();
+      }
+      setPreviewingAccentId(null);
+      return;
+    }
+
+    setPreviewingAccentId(accentId);
+    try {
+      const styleId = mapAccentCodeToStyle(accentId);
+      const url = `/api/voice/preview-accent?styleId=${encodeURIComponent(styleId)}&format=wav&phrase=${encodeURIComponent(samplePhrase || 'Hello! Testing ChatTime live accent conversion.')}`;
+      if (!accentAudioRef.current) {
+        accentAudioRef.current = new Audio(url);
+      } else {
+        accentAudioRef.current.src = url;
+      }
+      accentAudioRef.current.onended = () => setPreviewingAccentId(null);
+      accentAudioRef.current.onerror = () => setPreviewingAccentId(null);
+      await accentAudioRef.current.play();
+    } catch {
+      setPreviewingAccentId(null);
+    }
+  };
+
+  const handleToggleLiveMicMonitor = async () => {
+    const nextVal = !isLiveMicMonitorActive;
+    setIsLiveMicMonitorActive(nextVal);
+    try {
+      if (nextVal) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const track = stream.getAudioTracks()[0];
+        if (track) {
+          const style = mapAccentCodeToStyle(settings.selectedAccent);
+          globalVoiceProcessor.updateSettings({
+            voiceStyleId: style,
+            pitch: 0,
+            speed: 1.0,
+            intensity: 1.1,
+          });
+          await globalVoiceProcessor.attachMicrophoneTrack(track);
+          globalVoiceProcessor.setMonitor(true);
+          addToast('Live Monitor On', 'Speak into your microphone with headphones on to hear your converted accent.', 'info');
+        }
+      } else {
+        globalVoiceProcessor.setMonitor(false);
+      }
+    } catch (err: any) {
+      setIsLiveMicMonitorActive(false);
+      addToast('Microphone Error', err?.message || 'Could not access microphone for live monitoring.', 'error');
+    }
+  };
+
   // VT Live Test State
   const [isVTRunning, setIsVTRunning] = useState(false);
   const [vtSourceTranscript, setVtSourceTranscript] = useState('');
@@ -101,6 +186,15 @@ export const VoiceAISettingsSection: React.FC = () => {
     if (key === 'voiceIsolationEnabled') krispRTCAdapter.setVoiceIsolation(Boolean(nextVal));
     if (key === 'liveAccentConversionEnabled') {
       krispRTCAdapter.setAccentConversion(Boolean(nextVal), settings.selectedAccent);
+      const style = mapAccentCodeToStyle(settings.selectedAccent);
+      globalVoiceProcessor.updateSettings({
+        voiceStyleId: nextVal ? style : 'original',
+      });
+      addToast(
+        nextVal ? 'Live Accent Conversion Active' : 'Live Accent Conversion Disabled',
+        nextVal ? 'Accent voice applied to live microphone & call stream.' : 'Microphone reverted to standard audio.',
+        'info'
+      );
     }
 
     updateCurrentUser({
@@ -112,6 +206,10 @@ export const VoiceAISettingsSection: React.FC = () => {
     const newSettings = { ...settings, selectedAccent: accentId };
     setSettings(newSettings);
     krispRTCAdapter.setAccentConversion(settings.liveAccentConversionEnabled, accentId);
+    const style = mapAccentCodeToStyle(accentId);
+    globalVoiceProcessor.updateSettings({
+      voiceStyleId: settings.liveAccentConversionEnabled ? style : 'original',
+    });
     updateCurrentUser({ krispSettings: newSettings });
   };
 
@@ -162,15 +260,15 @@ export const VoiceAISettingsSection: React.FC = () => {
         // Try Krisp Streaming TTS first
         const { audioUrl } = await krispTTSClient.synthesizeSpeech(ttsText, settings.ttsVoiceId);
         setTtsAudioUrl(audioUrl);
-      } else {
-        // High-fidelity fallback via server-side Google GenAI TTS
+        // High-fidelity fallback via server-side Google GenAI TTS & acoustic DSP
         const res = await fetch('/api/voice/synthesize-tts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             userId: currentUser.id,
             text: ttsText.trim(),
-            voiceStyleId: 'american',
+            voiceStyleId: mapAccentCodeToStyle(settings.selectedAccent),
             presentation: 'feminine',
           }),
         });
@@ -421,26 +519,81 @@ export const VoiceAISettingsSection: React.FC = () => {
             { id: 'es-419', name: 'Spanish (Latin America)', flag: '🇲🇽', krispCode: 'es_419' },
           ]).map((acc) => {
             const isSelected = settings.selectedAccent === acc.id;
+            const isPlayingThis = previewingAccentId === acc.id;
             return (
-              <button
+              <div
                 key={acc.id}
-                type="button"
                 onClick={() => handleSelectAccent(acc.id)}
-                className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                className={`p-3 rounded-2xl border text-left transition-all cursor-pointer relative group ${
                   isSelected
-                    ? 'bg-amber-500/15 border-amber-500/40 text-amber-200 ring-2 ring-amber-500/20'
+                    ? 'bg-amber-500/15 border-amber-500/40 text-amber-200 ring-2 ring-amber-500/20 shadow-md'
                     : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xl">{acc.flag}</span>
-                  {isSelected && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                  <div className="flex items-center gap-1.5">
+                    {/* Play Audio Sample Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayAccentPreview(acc.id);
+                      }}
+                      className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                        isPlayingThis
+                          ? 'bg-amber-500 text-slate-950 border-amber-400 animate-pulse'
+                          : 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800'
+                      }`}
+                      title="Listen to accent sample"
+                    >
+                      {isPlayingThis ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 fill-current" />}
+                    </button>
+                    {isSelected && <Check className="w-3.5 h-3.5 text-amber-400" />}
+                  </div>
                 </div>
-                <div className="text-xs font-bold text-white mt-1 truncate">{acc.name}</div>
+                <div className="text-xs font-bold text-white mt-1.5 truncate">{acc.name}</div>
                 <div className="text-[10px] text-slate-500 font-mono mt-0.5">{acc.krispCode}</div>
-              </button>
+              </div>
             );
           })}
+        </div>
+
+        {/* Live Audio Test & Mic Monitor Bar */}
+        <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Radio className="w-4 h-4 text-amber-400 shrink-0" />
+            <div className="text-xs">
+              <span className="text-slate-400">Active Voice Accent: </span>
+              <span className="font-bold text-amber-300">
+                {(krispStatus?.supportedAccents || []).find((a) => a.id === settings.selectedAccent)?.name || settings.selectedAccent}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => handlePlayAccentPreview(settings.selectedAccent)}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-300 font-bold text-xs transition-colors cursor-pointer"
+            >
+              <Volume2 className="w-3.5 h-3.5" />
+              <span>{previewingAccentId === settings.selectedAccent ? 'Playing Sample...' : 'Hear Accent Sample'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleToggleLiveMicMonitor}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs border transition-colors cursor-pointer ${
+                isLiveMicMonitorActive
+                  ? 'bg-amber-500 text-slate-950 border-amber-400 animate-pulse'
+                  : 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-slate-300'
+              }`}
+            >
+              <Headphones className="w-3.5 h-3.5" />
+              <span>{isLiveMicMonitorActive ? 'Mic Monitor Active' : 'Hear Myself (Mic)'}</span>
+            </button>
+          </div>
         </div>
       </div>
 

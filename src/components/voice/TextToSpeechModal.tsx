@@ -104,8 +104,9 @@ export const TextToSpeechModal: React.FC<TextToSpeechModalProps> = ({
       const res = await fetch('/api/voice/synthesize-tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
-          userId: currentUser.id,
+          userId: currentUser?.id,
           text: text.trim(),
           voiceStyleId: selectedStyle.id,
           presentation,

@@ -351,31 +351,10 @@ export class KrispTTSClient {
       // Automatic fallback: If Krisp credit balance is exhausted or token is unavailable,
       // synthesize speech using the built-in server audio synthesizer so text-to-voice note never fails
       try {
-        const fbRes = await fetch(buildApiUrl('/api/voice/synthesize-tts'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: text.trim(),
-            voiceStyleId: voiceId.startsWith('es') ? 'spanish_spain' : voiceId.startsWith('en_GB') ? 'british' : 'american',
-            presentation: 'neutral',
-          }),
-        });
-        if (fbRes.ok) {
-          const data = await fbRes.json();
-          if (data.audioBase64) {
-            const byteCharacters = atob(data.audioBase64);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const audioBlob = new Blob([byteArray], { type: 'audio/wav' });
-            const audioUrl = URL.createObjectURL(audioBlob);
-            return { audioBlob, audioUrl };
-          }
-        }
-      } catch {}
-      throw new Error(tokenRes.error || 'Krisp TTS session could not be established.');
+        return await this.fallbackServerTTS(text, voiceId);
+      } catch {
+        throw new Error(tokenRes.error || 'Krisp TTS session could not be established.');
+      }
     }
 
     return new Promise((resolve, reject) => {
@@ -385,68 +364,119 @@ export class KrispTTSClient {
         tokenStr
       )}`;
 
-      const ws = new WebSocket(wsUrl);
-      ws.binaryType = 'arraybuffer';
+      let ws: WebSocket | null = null;
+      let isResolved = false;
+
+      const triggerFallback = async () => {
+        if (isResolved) return;
+        isResolved = true;
+        if (ws) {
+          try { ws.close(); } catch {}
+        }
+        try {
+          const fb = await this.fallbackServerTTS(text, voiceId);
+          resolve(fb);
+        } catch (err: any) {
+          reject(err);
+        }
+      };
 
       const timeout = setTimeout(() => {
-        ws.close();
-        reject(new Error('Krisp TTS synthesis timed out.'));
-      }, 20000);
+        void triggerFallback();
+      }, 12000);
 
-      ws.onopen = () => {
-        // Send initial handshake
-        ws.send(
-          JSON.stringify({
-            type: 'config',
-            voice: voiceId,
-            format: 'pcm_s16le',
-            sample_rate: 24000,
-          })
-        );
+      try {
+        ws = new WebSocket(wsUrl);
+        ws.binaryType = 'arraybuffer';
 
-        // Stream text chunk
-        ws.send(
-          JSON.stringify({
-            type: 'text',
-            text: text.trim(),
-          })
-        );
+        ws.onopen = () => {
+          ws?.send(
+            JSON.stringify({
+              type: 'config',
+              voice: voiceId,
+              format: 'pcm_s16le',
+              sample_rate: 24000,
+            })
+          );
+          ws?.send(
+            JSON.stringify({
+              type: 'text',
+              text: text.trim(),
+            })
+          );
+          ws?.send(JSON.stringify({ type: 'end_of_text' }));
+        };
 
-        // Signal end of text stream
-        ws.send(JSON.stringify({ type: 'end_of_text' }));
-      };
+        ws.onmessage = (event) => {
+          if (event.data instanceof ArrayBuffer) {
+            audioChunks.push(event.data);
+          } else if (typeof event.data === 'string') {
+            try {
+              const data = JSON.parse(event.data);
+              if (data.type === 'end' || data.type === 'done') {
+                clearTimeout(timeout);
+                if (ws) try { ws.close(); } catch {}
+                if (!isResolved) {
+                  isResolved = true;
+                  const wavBlob = this.convertPcmToWav(audioChunks, 24000, 1);
+                  const audioUrl = URL.createObjectURL(wavBlob);
+                  resolve({ audioBlob: wavBlob, audioUrl });
+                }
+              }
+            } catch {}
+          }
+        };
 
-      ws.onmessage = (event) => {
-        if (event.data instanceof ArrayBuffer) {
-          audioChunks.push(event.data);
-        } else if (typeof event.data === 'string') {
-          try {
-            const data = JSON.parse(event.data);
-            if (data.type === 'end' || data.type === 'done') {
-              clearTimeout(timeout);
-              ws.close();
-              const wavBlob = this.convertPcmToWav(audioChunks, 24000, 1);
-              const audioUrl = URL.createObjectURL(wavBlob);
-              resolve({ audioBlob: wavBlob, audioUrl });
-            }
-          } catch {}
-        }
-      };
+        ws.onerror = () => {
+          clearTimeout(timeout);
+          void triggerFallback();
+        };
 
-      ws.onerror = (e) => {
+        ws.onclose = () => {
+          clearTimeout(timeout);
+          if (audioChunks.length > 0 && !isResolved) {
+            isResolved = true;
+            const wavBlob = this.convertPcmToWav(audioChunks, 24000, 1);
+            const audioUrl = URL.createObjectURL(wavBlob);
+            resolve({ audioBlob: wavBlob, audioUrl });
+          } else if (!isResolved) {
+            void triggerFallback();
+          }
+        };
+      } catch {
         clearTimeout(timeout);
-        reject(new Error('WebSocket connection error during Krisp TTS.'));
-      };
-
-      ws.onclose = () => {
-        clearTimeout(timeout);
-        if (audioChunks.length > 0) {
-          const wavBlob = this.convertPcmToWav(audioChunks, 24000, 1);
-          const audioUrl = URL.createObjectURL(wavBlob);
-          resolve({ audioBlob: wavBlob, audioUrl });
-        }
-      };
+        void triggerFallback();
+      }
     });
+  }
+
+  private async fallbackServerTTS(text: string, voiceId: string): Promise<{ audioBlob: Blob; audioUrl: string }> {
+    const fbRes = await fetch(buildApiUrl('/api/voice/synthesize-tts'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        userId: 'active_user',
+        text: text.trim(),
+        voiceStyleId: voiceId.startsWith('es') ? 'spanish_spain' : voiceId.startsWith('en_GB') ? 'british' : 'american',
+        presentation: 'neutral',
+      }),
+    });
+    if (fbRes.ok) {
+      const data = await fbRes.json();
+      if (data.audioBase64) {
+        const byteCharacters = atob(data.audioBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const audioBlob = new Blob([byteArray], { type: 'audio/wav' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        return { audioBlob, audioUrl };
+      }
+    }
+    throw new Error('Could not synthesize speech');
   }
 
   private convertPcmToWav(chunks: ArrayBuffer[], sampleRate: number, numChannels: number): Blob {
