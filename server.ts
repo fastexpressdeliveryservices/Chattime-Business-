@@ -347,7 +347,8 @@ function recordAdminFailedAttempt(key: string): void {
 
 // Admin Protection Middleware (Exempting Login)
 app.use('/api/admin', (req, res, next) => {
-  if (req.path === '/auth/login' || req.path === '/login') {
+  const publicAdminPaths = ['/auth/login', '/login', '/auth/verify-2fa', '/auth/resend-2fa'];
+  if (publicAdminPaths.includes(req.path)) {
     return next();
   }
   const token = readSessionToken(req);
