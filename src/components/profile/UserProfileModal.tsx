@@ -589,11 +589,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
                   <div className="flex items-center justify-center gap-1.5 flex-wrap">
                     <h2 className={`text-xl font-bold truncate ${headingClass}`}>{targetUser.name}</h2>
                     <VerifiedBadge user={targetUser} size="md" />
-                    {targetUser.role === 'admin' && (
-                      <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-amber-500/20 text-amber-500 dark:text-amber-300 border border-amber-500/30">
-                        {t('admin', 'Admin')}
-                      </span>
-                    )}
                   </div>
 
                   {/* Handle */}
@@ -647,30 +642,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
                       className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 transition-colors active:scale-95 cursor-pointer"
                     >
                       <Settings className="w-4 h-4 text-teal-400" /> {t('settings', 'Full Settings & Privacy')}
-                    </button>
-
-                    {onOpenRegister && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleClose();
-                          onOpenRegister();
-                        }}
-                        className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 transition-colors active:scale-95 cursor-pointer"
-                      >
-                        <UserPlus className="w-4 h-4 text-teal-400" /> {t('addSwitchAccount', 'Add / Switch Account')}
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleClose();
-                        logoutUser();
-                      }}
-                      className="w-full py-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 font-bold text-xs flex items-center justify-center gap-2 transition-colors active:scale-95 cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4" /> {t('signOut', 'Sign Out')}
                     </button>
                   </div>
                 ) : (
