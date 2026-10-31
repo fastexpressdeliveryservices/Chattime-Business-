@@ -283,8 +283,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
     onClose?.();
   };
 
-  if (!inspectedUserId) return null;
-
   const isSelf = isTargetSelf || Boolean(currentUser?.id && targetUser.id === currentUser.id);
   const isAdminViewer = currentUser?.role === 'admin' && !isSharedAppUrl();
   const isContact = (currentUser?.contacts || []).includes(targetUser.id);
@@ -410,6 +408,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  if (!inspectedUserId) return null;
 
   return (
     <div
