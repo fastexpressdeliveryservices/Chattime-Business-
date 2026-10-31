@@ -1713,8 +1713,8 @@ export const SettingsView: React.FC = () => {
               </div>
             </div>
 
-            {/* Human Support Concierge & Admin Access Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {/* Human Support Concierge Card */}
+            <div className="grid grid-cols-1 gap-3.5">
               {/* Human Support Email Card */}
               <div className="p-4 bg-slate-900 border border-teal-500/30 rounded-2xl space-y-2.5">
                 <div className="flex items-center justify-between">
@@ -1747,39 +1747,6 @@ export const SettingsView: React.FC = () => {
                 </a>
               </div>
 
-              {/* Administrator Quick Code Login (Code: 0814) */}
-              <form onSubmit={handleAdminCodeLogin} className="p-4 bg-slate-900 border border-amber-500/30 rounded-2xl space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider">
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Admin Access (Code: 0814)</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
-                    Master Code
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-400">
-                  Enter administrator passcode <strong className="text-amber-300 font-mono">0814</strong> to sign into the platform management desk.
-                </p>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="password"
-                    maxLength={6}
-                    value={adminCodeInput}
-                    onChange={(e) => setAdminCodeInput(e.target.value)}
-                    placeholder="Enter code 0814"
-                    className="flex-1 bg-slate-950 border border-slate-800 focus:border-amber-400 rounded-xl px-3 py-2 text-xs text-white font-mono outline-none"
-                  />
-                  <button
-                    type="submit"
-                    disabled={isAdminLoggingIn || !adminCodeInput.trim()}
-                    className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 disabled:opacity-50 cursor-pointer transition-colors shadow-sm"
-                  >
-                    <Key className="w-3.5 h-3.5" />
-                    <span>{isAdminLoggingIn ? '...' : 'Verify'}</span>
-                  </button>
-                </div>
-              </form>
             </div>
 
             {/* Search Help Articles */}
