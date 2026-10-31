@@ -1,3 +1,4 @@
+import { applyVoiceModifier } from '../../utils/voiceModifier';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Phone,
@@ -742,19 +743,21 @@ export const ChatWindow: React.FC = () => {
         recorder.stream.getTracks().forEach((t) => t.stop());
         if (!cancel && activeChat) {
           if (audioChunksRef.current.length > 0) {
-            const blob = new Blob(audioChunksRef.current, {
+            const rawBlob = new Blob(audioChunksRef.current, {
               type: recorder.mimeType || 'audio/webm',
             });
+            applyVoiceModifier(rawBlob, modifierToApply).then(({ blob, duration }) => {
             const reader = new FileReader();
             reader.onloadend = () => {
               sendMessage(activeChat.id, 'Voice Message', 'voice', {
-                audioDuration: dur,
+                audioDuration: duration || dur,
                 mediaUrl: typeof reader.result === 'string' ? reader.result : undefined,
                 ...(modifierToApply ? { voiceModifier: modifierToApply } : {}),
                 ...(sendAsViewOnce ? { isViewOnce: true, viewedBy: [] } : {}),
               });
             };
             reader.readAsDataURL(blob);
+            });
           } else {
             const synthUrl = createSynthesizedAudioDataUrl(dur);
             sendMessage(activeChat.id, 'Voice Message', 'voice', {
