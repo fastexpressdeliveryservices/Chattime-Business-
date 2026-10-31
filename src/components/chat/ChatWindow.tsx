@@ -2139,7 +2139,7 @@ export const ChatWindow: React.FC = () => {
               </div>
 
               {/* Dynamic Action: Send button when text is entered, or Voice Note button when empty */}
-              {inputText.trim() ? (
+              {inputText.trim() || peerUser?.id === 'user_chattime_support' ? (
                 <button
                   type="submit"
                   className="w-10 h-10 flex items-center justify-center rounded-2xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold transition-all shrink-0 shadow-lg shadow-teal-500/30 active:scale-95 cursor-pointer"
