@@ -53,10 +53,6 @@ export const CallsView: React.FC = () => {
   const [showAddCustom, setShowAddCustom] = useState(false);
   const [dialNumber, setDialNumber] = useState('');
 
-  const allOtherUsers = useMemo(() => {
-    return (Object.values(users) as User[]).filter((u) => Boolean(u && u.id));
-  }, [users]);
-
   const dialMatchingUsers = useMemo(() => {
     const raw = dialNumber.trim();
     if (!raw || raw.length < 2) return [];
@@ -211,66 +207,6 @@ export const CallsView: React.FC = () => {
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* Quick Call Registered People */}
-          {allOtherUsers.length > 0 && (
-            <div className="space-y-2.5">
-              <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-teal-400" />
-                Start a New Call
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {allOtherUsers.map((u: User) => (
-                  <div
-                    key={u.id}
-                    className="p-3 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2"
-                  >
-                    <div
-                      onClick={() => setInspectedUserId(u.id)}
-                      className="flex items-center gap-2.5 min-w-0 cursor-pointer"
-                    >
-                      <div className="relative shrink-0">
-                        <img
-                          src={u.avatar}
-                          alt={u.name}
-                          className="w-10 h-10 rounded-xl object-cover bg-slate-800"
-                        />
-                        <span
-                          className={`w-2.5 h-2.5 rounded-full border-2 border-slate-900 absolute -bottom-0.5 -right-0.5 ${
-                            u.isOnline ? 'bg-emerald-500' : 'bg-slate-500'
-                          }`}
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-bold text-slate-100 truncate hover:text-teal-400">
-                          {u.name}
-                        </div>
-                        <div className="text-[10px] font-mono text-teal-400 truncate">
-                          @{u.username}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        onClick={() => handleCallUserDirect(u.id, 'voice')}
-                        className="p-2 rounded-xl bg-teal-500/15 hover:bg-teal-500 text-teal-300 hover:text-slate-950 transition-colors"
-                        title="Voice Call"
-                      >
-                        <Phone className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleCallUserDirect(u.id, 'video')}
-                        className="p-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500 text-indigo-300 hover:text-white transition-colors"
-                        title="Video Call"
-                      >
-                        <Video className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Call History List */}
           <div className="space-y-2.5">
             <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
