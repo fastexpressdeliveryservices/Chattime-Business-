@@ -284,6 +284,8 @@ interface ChatTimeContextType {
   // Profile & Contact Actions
   updateCurrentUser: (updates: Partial<User>) => void;
   updateNotificationSettings: (updates: Partial<NotificationSettings>) => void;
+  getContactName: (userId: string, fallbackName: string) => string;
+  saveContactName: (userId: string, name: string) => void;
   addNewContactByNumber: (query: string) => Promise<User | null>;
   searchUsers: (query: string) => Promise<User[]>;
   toggleContact: (targetUserId: string) => void;
@@ -384,6 +386,14 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
   const [chats, setChats] = useState<Chat[]>([]);
   const [messages, setMessages] = useState<Record<string, Message[]>>({});
+  const [contactNames, setContactNames] = useState<Record<string, string>>(() => {
+    if (typeof window === 'undefined' || !activeUserId) return {};
+    try {
+      return JSON.parse(localStorage.getItem(`chattime_contact_names_${activeUserId}`) || '{}');
+    } catch {
+      return {};
+    }
+  });
   const [calls, setCalls] = useState<CallRecord[]>([]);
   const [statuses, setStatuses] = useState<StatusStory[]>([]);
   const [statusHistory, setStatusHistory] = useState<StatusStory[]>([]);
@@ -511,6 +521,40 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         verificationBadgeType: 'red',
       }
     : baseUser;
+
+  useEffect(() => {
+    if (!activeUserId) {
+      setContactNames({});
+      return;
+    }
+    try {
+      setContactNames(
+        JSON.parse(localStorage.getItem(`chattime_contact_names_${activeUserId}`) || '{}')
+      );
+    } catch {
+      setContactNames({});
+    }
+  }, [activeUserId]);
+
+  const getContactName = useCallback(
+    (userId: string, fallbackName: string) => contactNames[userId]?.trim() || fallbackName,
+    [contactNames]
+  );
+
+  const saveContactName = useCallback(
+    (userId: string, name: string) => {
+      if (!currentUser.id || !userId) return;
+      setContactNames((previous) => {
+        const next = { ...previous };
+        const cleanName = name.trim();
+        if (cleanName) next[userId] = cleanName;
+        else delete next[userId];
+        localStorage.setItem(`chattime_contact_names_${currentUser.id}`, JSON.stringify(next));
+        return next;
+      });
+    },
+    [currentUser.id]
+  );
 
   useEffect(() => {
     if (!activeUserId || !isAuthenticated || notificationPermission !== 'granted') {
@@ -4969,6 +5013,8 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         commentChannelPost,
         updateCurrentUser,
         updateNotificationSettings,
+        getContactName,
+        saveContactName,
         addNewContactByNumber,
         searchUsers,
         toggleContact,

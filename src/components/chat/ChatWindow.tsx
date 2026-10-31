@@ -104,6 +104,7 @@ export const ChatWindow: React.FC = () => {
     addToast,
     platformFeatures,
     openTTSModal,
+    getContactName,
     t,
   } = useChatTime();
 
@@ -458,7 +459,7 @@ export const ChatWindow: React.FC = () => {
   );
   const isPeerGhosted = isPeerBlockedByMe;
 
-  const displayName = peerUser ? peerUser.name : activeChat.name;
+  const displayName = peerUser ? getContactName(peerUser.id, peerUser.name) : activeChat.name;
   const displayAvatar = peerUser ? peerUser.avatar : activeChat.avatar;
 
   // Respect privacy settings for phone number & lastSeen

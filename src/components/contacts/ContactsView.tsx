@@ -43,6 +43,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
     addNewContactByNumber,
     searchUsers,
     toggleContact,
+    getContactName,
+    saveContactName,
     addToast,
     setActiveTab,
     statuses,
@@ -97,6 +99,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
       const userDigits = (u.phoneNumber || u.chatTimeNumber || '').replace(/[^0-9]/g, '');
 
       return (
+        getContactName(u.id, u.name || '').toLowerCase().includes(q) ||
         (u.name || '').toLowerCase().includes(q) ||
         (u.username || '').toLowerCase().includes(q.replace(/^@/, '')) ||
         (u.phoneNumber || u.chatTimeNumber || '').toLowerCase().includes(q) ||
@@ -105,11 +108,11 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
         (u.bio && u.bio.toLowerCase().includes(q))
       );
     })
-    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    .sort((a, b) => getContactName(a.id, a.name || '').localeCompare(getContactName(b.id, b.name || '')));
 
   // Group contacts alphabetically (A-Z) like WhatsApp
   const groupedContacts = filteredContacts.reduce<Record<string, User[]>>((acc, contact) => {
-    const firstChar = contact.name.trim().charAt(0).toUpperCase();
+    const firstChar = getContactName(contact.id, contact.name).trim().charAt(0).toUpperCase();
     const groupKey = /^[A-Z]$/.test(firstChar) ? firstChar : '#';
     if (!acc[groupKey]) {
       acc[groupKey] = [];
@@ -208,12 +211,14 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
     }
 
     if (targetUser) {
+      const savedName = contactNameInput.trim() || targetUser.name;
+      saveContactName(targetUser.id, savedName);
       if (!savedContactIds.includes(targetUser.id)) {
         toggleContact(targetUser.id);
       }
       addToast(
         'Contact Saved',
-        `${targetUser.name} (${targetUser.chatTimeNumber}) was saved to your contacts.`,
+        `${savedName} (${targetUser.chatTimeNumber}) was saved to your contacts.`,
         'success'
       );
       setIsAddModalOpen(false);
@@ -249,6 +254,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
   const handleRemoveContact = (contact: User) => {
     if (confirm(`Remove ${contact.name} from your saved contacts?`)) {
       toggleContact(contact.id);
+      saveContactName(contact.id, '');
       if (inspectedContact?.id === contact.id) {
         setInspectedContact(null);
       }
@@ -460,6 +466,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
                   <div className="space-y-1">
                     {groupedContacts[letter].map((person) => {
                       const isInspected = inspectedContact?.id === person.id;
+                      const contactName = getContactName(person.id, person.name);
                       const rawPhone = person.phoneNumber || person.chatTimeNumber;
                       const showPhone = canViewPhone(person)
                         ? rawPhone
@@ -488,7 +495,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
                                   setActiveTab('status');
                                 }
                               }}
-                              title={personHasStatus ? `${person.name} has a 24h Status` : person.name}
+                              title={personHasStatus ? `${contactName} has a 24h Status` : contactName}
                             >
                               <img
                                 src={person.avatar}
@@ -509,7 +516,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="text-sm font-bold text-white truncate">
-                                  {person.name}
+                                  {contactName}
                                 </span>
                                 <VerifiedBadge user={person} size="xs" />
                                 {person.id === currentUser.id && (

@@ -41,6 +41,7 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
     setActiveTab,
     setInspectedUserId,
     startDirectChat,
+    getContactName,
     statuses,
     wsConnected,
     t,
@@ -63,7 +64,7 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
 
   const getChatDisplayName = (chat: Chat) => {
     const peer = getDirectPeer(chat);
-    return peer ? peer.name : chat.name;
+    return peer ? getContactName(peer.id, peer.name) : chat.name;
   };
 
   const getChatDisplayAvatar = (chat: Chat) => {
@@ -80,6 +81,7 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
       if (chat.type === 'direct' && !chat.participants.includes(currentUser.id)) {
         return false;
       }
+      if (chat.type === 'direct' && !chat.lastMessage) return false;
       if (
         chat.type === 'group' &&
         !chat.participants.includes(currentUser.id) &&
