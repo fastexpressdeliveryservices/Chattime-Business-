@@ -137,12 +137,14 @@ export function stopCallRinging() {
  */
 export async function showIncomingCallNotification(
   callerName: string,
-  callType: 'voice' | 'video' = 'voice'
+  callType: 'voice' | 'video' = 'voice',
+  callerAvatar?: string
 ) {
   if (!isNotificationSupported() || Notification.permission !== 'granted') return;
 
   const title = `📞 Incoming ${callType === 'video' ? 'Video' : 'Voice'} Call`;
   const body = `${callerName} is calling you on Chat Time`;
+  const avatar = callerAvatar || '/icon.svg';
 
   // Prefer ServiceWorker showNotification if available (works when phone is locked/sleeping)
   if ('serviceWorker' in navigator) {
@@ -151,8 +153,9 @@ export async function showIncomingCallNotification(
       if (reg) {
         reg.showNotification(title, {
           body,
-          icon: '/icon.svg',
+          icon: avatar,
           badge: '/icon.svg',
+          image: avatar,
           tag: 'incoming-call',
           renotify: true,
           requireInteraction: true,
@@ -170,7 +173,7 @@ export async function showIncomingCallNotification(
   try {
     new Notification(title, {
       body,
-      icon: '/icon.svg',
+      icon: avatar,
       tag: 'incoming-call',
       requireInteraction: true,
     });
@@ -180,9 +183,14 @@ export async function showIncomingCallNotification(
 }
 
 /**
- * Play message chime and display native notification for incoming chat message
+ * Play message chime and display native notification for incoming chat message with sender avatar
  */
-export async function showMessageNotification(senderName: string, messageText: string, chatId?: string) {
+export async function showMessageNotification(
+  senderName: string,
+  messageText: string,
+  chatId?: string,
+  senderAvatar?: string
+) {
   // Mobile vibration: 2 short pulses
   if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
     try {
@@ -194,6 +202,7 @@ export async function showMessageNotification(senderName: string, messageText: s
 
   const title = senderName;
   const body = messageText || 'Sent a new message';
+  const avatar = senderAvatar || '/icon.svg';
 
   // Use ServiceWorker showNotification for sleeping/background support
   if ('serviceWorker' in navigator) {
@@ -202,7 +211,7 @@ export async function showMessageNotification(senderName: string, messageText: s
       if (reg) {
         reg.showNotification(title, {
           body,
-          icon: '/icon.svg',
+          icon: avatar,
           badge: '/icon.svg',
           tag: chatId ? `chat-${chatId}` : 'new-message',
           renotify: true,
@@ -217,7 +226,7 @@ export async function showMessageNotification(senderName: string, messageText: s
   try {
     new Notification(title, {
       body,
-      icon: '/icon.svg',
+      icon: avatar,
       tag: chatId ? `chat-${chatId}` : 'new-message',
     });
   } catch {}

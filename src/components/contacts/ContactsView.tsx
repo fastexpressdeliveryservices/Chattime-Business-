@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Users,
   Search,
@@ -74,29 +74,38 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
   // Current user's saved contacts (strict privacy: only users explicitly added to currentUser.contacts)
   const savedContactIds = currentUser.contacts || [];
   const myContactsList: User[] = (Object.values(users) as User[]).filter(
-    (u) => u.id !== currentUser.id && savedContactIds.includes(u.id)
+    (u) => u && u.id !== currentUser.id && savedContactIds.includes(u.id)
   );
 
+  // When searching, allow searching through all active registered accounts on ChatTime (including self)
+  const baseList: User[] = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return myContactsList;
+    }
+    const all = Object.values(users) as User[];
+    return all.filter((u) => Boolean(u && u.id));
+  }, [searchQuery, myContactsList, users]);
+
   // Filter contacts by search query & online state
-  const filteredContacts = myContactsList
+  const filteredContacts = baseList
     .filter((u) => {
       if (activeFilter === 'online' && !u.isOnline) return false;
       if (!searchQuery.trim()) return true;
 
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
       const numDigits = q.replace(/[^0-9]/g, '');
       const userDigits = (u.phoneNumber || u.chatTimeNumber || '').replace(/[^0-9]/g, '');
 
       return (
-        u.name.toLowerCase().includes(q) ||
-        u.username.toLowerCase().includes(q.replace(/^@/, '')) ||
-        (u.phoneNumber || u.chatTimeNumber).toLowerCase().includes(q) ||
-        (numDigits && userDigits.includes(numDigits)) ||
+        (u.name || '').toLowerCase().includes(q) ||
+        (u.username || '').toLowerCase().includes(q.replace(/^@/, '')) ||
+        (u.phoneNumber || u.chatTimeNumber || '').toLowerCase().includes(q) ||
+        (numDigits.length >= 2 && (userDigits.includes(numDigits) || numDigits.includes(userDigits))) ||
         (u.statusFeeling && u.statusFeeling.toLowerCase().includes(q)) ||
         (u.bio && u.bio.toLowerCase().includes(q))
       );
     })
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
   // Group contacts alphabetically (A-Z) like WhatsApp
   const groupedContacts = filteredContacts.reduce<Record<string, User[]>>((acc, contact) => {
@@ -498,11 +507,16 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
                             </div>
 
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="text-sm font-bold text-white truncate">
                                   {person.name}
                                 </span>
                                 <VerifiedBadge user={person} size="xs" />
+                                {person.id === currentUser.id && (
+                                  <span className="px-1.5 py-0.2 rounded bg-teal-500/20 text-teal-300 text-[10px] font-bold">
+                                    You
+                                  </span>
+                                )}
                                 {isUserGhosted(person.id) && (
                                   <span className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0">
                                     <Ghost className="w-3 h-3 text-rose-400" />

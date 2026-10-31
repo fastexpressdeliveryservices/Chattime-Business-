@@ -446,7 +446,16 @@ export const ChatWindow: React.FC = () => {
       ? activeChat.participants.find((id) => id !== currentUser.id) || activeChat.participants[0]
       : undefined;
   const peerUser = peerUserId ? users[peerUserId] : undefined;
-  const isPeerGhosted = Boolean(peerUserId && isUserGhosted(peerUserId));
+  const isPeerBlockedByMe = Boolean(
+    peerUserId &&
+    ((currentUser.blockedUsers || []).includes(peerUserId) || isUserGhosted(peerUserId))
+  );
+  const amIBlockedByPeer = Boolean(
+    peerUserId &&
+    peerUser?.blockedUsers &&
+    peerUser.blockedUsers.includes(currentUser.id)
+  );
+  const isPeerGhosted = isPeerBlockedByMe;
 
   const displayName = peerUser ? peerUser.name : activeChat.name;
   const displayAvatar = peerUser ? peerUser.avatar : activeChat.avatar;
@@ -456,6 +465,8 @@ export const ChatWindow: React.FC = () => {
   const numberVis = peerUser?.privacySettings?.numberVisibility || 'everyone';
   const canSeePhone =
     peerUser &&
+    !isPeerBlockedByMe &&
+    !amIBlockedByPeer &&
     (currentUser.role === 'admin' ||
       (!peerUser.phonePrivate &&
         (numberVis === 'everyone' || (numberVis === 'contacts' && isContact))));
@@ -469,6 +480,9 @@ export const ChatWindow: React.FC = () => {
   const lastSeenVis = peerUser?.privacySettings?.lastSeenVisibility || 'everyone';
   const canSeePresence =
     peerUser &&
+    peerUser.id !== 'user_chattime_support' &&
+    !isPeerBlockedByMe &&
+    !amIBlockedByPeer &&
     (currentUser.role === 'admin' ||
       lastSeenVis === 'everyone' ||
       (lastSeenVis === 'contacts' && isContact));
@@ -924,25 +938,37 @@ export const ChatWindow: React.FC = () => {
             )}
 
             <button
-              onClick={() => startCall(activeChat.id, 'voice')}
-              title={isPeerGhosted ? 'Cannot call ghosted user' : 'Start Audio Call'}
-              disabled={isPeerGhosted}
+              onClick={() => {
+                if (isPeerBlockedByMe || amIBlockedByPeer) {
+                  addToast('Call Blocked', 'Cannot place call. This contact is blocked.', 'error');
+                  return;
+                }
+                startCall(activeChat.id, 'voice');
+              }}
+              title={isPeerBlockedByMe || amIBlockedByPeer ? 'Cannot call blocked contact' : 'Start Audio Call'}
+              disabled={isPeerBlockedByMe || amIBlockedByPeer}
               className={`p-2 sm:p-2.5 rounded-xl border transition-colors ${
-                isPeerGhosted
+                isPeerBlockedByMe || amIBlockedByPeer
                   ? 'opacity-40 cursor-not-allowed bg-slate-950/70 text-slate-600 border-slate-800/50'
-                  : 'bg-slate-950/70 hover:bg-teal-500/15 text-teal-400 sm:text-slate-300 hover:text-teal-400 border border-slate-800/80'
+                  : 'bg-slate-950/70 hover:bg-teal-500/15 text-teal-400 sm:text-slate-300 hover:text-teal-400 border border-slate-800/80 cursor-pointer'
               }`}
             >
               <Phone className="w-4 h-4" />
             </button>
             <button
-              onClick={() => startCall(activeChat.id, 'video')}
-              title={isPeerGhosted ? 'Cannot call ghosted user' : 'Start Video Call'}
-              disabled={isPeerGhosted}
+              onClick={() => {
+                if (isPeerBlockedByMe || amIBlockedByPeer) {
+                  addToast('Call Blocked', 'Cannot place call. This contact is blocked.', 'error');
+                  return;
+                }
+                startCall(activeChat.id, 'video');
+              }}
+              title={isPeerBlockedByMe || amIBlockedByPeer ? 'Cannot call blocked contact' : 'Start Video Call'}
+              disabled={isPeerBlockedByMe || amIBlockedByPeer}
               className={`p-2 sm:p-2.5 rounded-xl border transition-colors ${
-                isPeerGhosted
+                isPeerBlockedByMe || amIBlockedByPeer
                   ? 'opacity-40 cursor-not-allowed bg-slate-950/70 text-slate-600 border-slate-800/50'
-                  : 'bg-slate-950/70 hover:bg-indigo-500/15 text-indigo-400 sm:text-slate-300 hover:text-indigo-400 border border-slate-800/80'
+                  : 'bg-slate-950/70 hover:bg-indigo-500/15 text-indigo-400 sm:text-slate-300 hover:text-indigo-400 border border-slate-800/80 cursor-pointer'
               }`}
             >
               <Video className="w-4 h-4" />
@@ -1934,21 +1960,27 @@ export const ChatWindow: React.FC = () => {
             </div>
           )}
 
-          {isPeerGhosted && peerUser ? (
+          {isPeerBlockedByMe && peerUser ? (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 w-full animate-in fade-in duration-150">
               <div className="flex items-center gap-2.5 text-xs text-rose-300 min-w-0">
-                <Ghost className="w-4 h-4 text-rose-400 shrink-0" />
+                <Lock className="w-4 h-4 text-rose-400 shrink-0" />
                 <span className="leading-snug">
-                  You have <strong>ghosted (blocked)</strong> {peerUser.name}. Messages, calls, and status updates are blocked.
+                  You blocked this contact. Tap to unblock.
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => toggleGhostUser(peerUser.id)}
-                className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shrink-0 transition-colors shadow-sm active:scale-95 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shrink-0 transition-colors shadow-sm active:scale-95 cursor-pointer"
               >
-                Unghost Contact
+                Unblock Contact
               </button>
+            </div>
+          ) : amIBlockedByPeer && peerUser ? (
+            <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 w-full text-center animate-in fade-in duration-150">
+              <span className="text-xs text-slate-400 font-medium">
+                You cannot send messages or place calls to this user. This contact has blocked you.
+              </span>
             </div>
           ) : isRecording ? (
             <div className="flex items-center justify-between gap-2 bg-slate-950 border border-rose-500/40 rounded-2xl px-3 py-2.5 w-full shadow-inner">
@@ -2397,6 +2429,9 @@ export const ChatWindow: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Conversation Media & Information Side Drawer */}
+      <MediaDrawer />
     </div>
   );
 };

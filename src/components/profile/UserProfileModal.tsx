@@ -112,37 +112,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
       const targetDigits = cleanTarget.replace(/[^0-9]/g, '');
 
       // Known admin accounts immediate resolution
-      if (
-        cleanTarget === 'user_admin_fastexpress' ||
-        targetUserClean === 'fastexpress_admin' ||
-        cleanTarget === 'fastexpressdeliveryservices00@gmail.com' ||
-        targetDigits === '15550199001' ||
-        targetDigits === '5550199001'
-      ) {
-        return {
-          id: 'user_admin_fastexpress',
-          name: 'Fast Express Admin',
-          username: 'fastexpress_admin',
-          email: 'fastexpressdeliveryservices00@gmail.com',
-          phoneNumber: '+15550199001',
-          chatTimeNumber: '+1 (555) 019-9001',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fastexpress_admin&backgroundColor=b91c1c',
-          role: 'admin',
-          isVerified: true,
-          isRedVerified: true,
-          verificationBadge: 'red',
-          verificationBadgeType: 'red',
-          bio: 'Fast Express Delivery & ChatTime Platform Administrator',
-          statusFeeling: '🛡️ Platform Admin',
-          phonePrivate: false,
-          isOnline: true,
-          lastSeen: Date.now(),
-          createdAt: Date.now() - 100 * 24 * 3600 * 1000,
-          contacts: [],
-          followers: [],
-          following: [],
-        } as unknown as User;
-      }
 
       if (
         cleanTarget === 'user_admin_prosper' ||
@@ -254,18 +223,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
       } as unknown as User;
     }
     return currentUser || ({
-      id: 'user_admin_fastexpress',
-      name: 'Fast Express Admin',
-      username: 'fastexpress_admin',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fastexpress_admin&backgroundColor=b91c1c',
+      id: 'user_admin_prosper',
+      name: 'Prosper Ikeokwu',
+      username: 'prosperikeokwu',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=prosperikeokwu&backgroundColor=b91c1c',
       role: 'admin',
-      phoneNumber: '+15550199001',
-      chatTimeNumber: '+1 (555) 019-9001',
+      phoneNumber: '+15550199000',
+      chatTimeNumber: '+1 (555) 019-9000',
       createdAt: Date.now(),
       lastSeen: Date.now(),
       isOnline: true,
       phonePrivate: false,
-      bio: 'Fast Express Delivery & ChatTime Platform Administrator',
+      bio: 'Chat Time Official Administrator',
       contacts: [],
       followers: [],
       following: [],

@@ -99,9 +99,11 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       if (clients.some((client) => client.visibilityState === 'visible')) return;
+      const avatar = data.icon || data.senderAvatar || '/icon.svg';
       return self.registration.showNotification(data.title || 'Chat Time', {
         body: data.body || 'You have a new message.',
-        icon: '/icon.svg',
+        icon: avatar,
+        image: data.image || data.senderAvatar || undefined,
         badge: '/icon.svg',
         vibrate: data.isCall ? [400, 200, 400, 200, 800] : [150, 80, 150],
         tag: data.tag || 'chattime-notification',
@@ -117,9 +119,11 @@ self.addEventListener('push', (event) => {
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
     const { title, options } = event.data;
+    const avatar = options?.icon || options?.senderAvatar || '/icon.svg';
     event.waitUntil(
       self.registration.showNotification(title || 'Chat Time', {
-        icon: '/icon.svg',
+        icon: avatar,
+        image: options?.image || options?.senderAvatar || undefined,
         badge: '/icon.svg',
         vibrate: [200, 100, 200, 100, 400],
         renotify: true,

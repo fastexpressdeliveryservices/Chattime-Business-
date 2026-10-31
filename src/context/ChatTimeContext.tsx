@@ -885,7 +885,7 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [addToast]);
 
   const showSystemNotification = useCallback(
-    (title: string, body: string, tag?: string) => {
+    (title: string, body: string, tag?: string, avatar?: string) => {
       // Vibrate mobile device
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
         try {
@@ -902,15 +902,16 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (document.visibilityState === 'visible' || pushNotificationsEnabled) return;
 
       const isCall = Boolean(tag?.startsWith('call'));
-      const options: NotificationOptions & { renotify?: boolean; vibrate?: number[] } = {
+      const options: NotificationOptions & { renotify?: boolean; vibrate?: number[]; image?: string } = {
         body,
-        icon: '/icon.svg',
+        icon: avatar || '/icon.svg',
+        image: avatar || undefined,
         badge: '/icon.svg',
         tag: tag || 'chattime-notification',
         renotify: true,
         requireInteraction: isCall,
         vibrate: isCall ? [400, 200, 400, 200, 800] : [150, 80, 150],
-        data: { url: '/', isCall },
+        data: { url: '/', isCall, senderAvatar: avatar },
       };
 
       if ('serviceWorker' in navigator) {
@@ -1432,10 +1433,14 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 if (incomingMsg.senderId !== activeUserId) {
                   soundEffects.playMessageReceived();
                   if (activeChatIdRef.current !== targetChatId) {
+                    const senderObj = senderUser || usersRef.current[incomingMsg.senderId];
+                    const senderAvatar = senderObj?.avatar || '/icon.svg';
+                    const senderDisplayName = senderObj?.name || incomingMsg.senderName;
                     showSystemNotification(
-                      incomingMsg.senderName,
+                      senderDisplayName,
                       incomingMsg.content || 'Sent an attachment',
-                      `chat-${targetChatId}`
+                      `chat-${targetChatId}`,
+                      senderAvatar
                     );
                   }
                 }

@@ -379,7 +379,16 @@ app.post('/api/auth/logout', (req, res) => {
 
 async function sendPushToUser(
   userId: string,
-  notification: { title: string; body: string; tag: string; data: Record<string, unknown>; isCall?: boolean }
+  notification: {
+    title: string;
+    body: string;
+    tag: string;
+    icon?: string;
+    image?: string;
+    badge?: string;
+    data: Record<string, unknown>;
+    isCall?: boolean;
+  }
 ) {
   if (!webPushConfigured) return;
   const subscriptions = dbManager.getPushSubscriptions(userId);
@@ -1395,6 +1404,22 @@ function handleCallSignaling(
         }));
         return;
       }
+
+      // Check if either party has blocked the other (WhatsApp behavior)
+      if (currentUserId && targetUserId) {
+        const callerUser = dbManager.getUserById(currentUserId);
+        const targetUser = dbManager.getUserById(targetUserId);
+        const isCallerBlocked = Boolean(targetUser && (targetUser.blockedUsers || targetUser.ghostedUsers || []).includes(currentUserId));
+        const isTargetBlocked = Boolean(callerUser && (callerUser.blockedUsers || callerUser.ghostedUsers || []).includes(targetUserId));
+        if (isCallerBlocked || isTargetBlocked) {
+          senderWs.send(JSON.stringify({
+            type: 'call:unavailable',
+            callId,
+            reason: isTargetBlocked ? 'Cannot place call. This contact is blocked.' : 'Contact is currently unavailable.',
+          }));
+          return;
+        }
+      }
       const pendingCall = targetUserId ? pendingIncomingCalls.get(targetUserId) : undefined;
       if (pendingCall && pendingCall.expiresAt > Date.now() && pendingCall.payload.callId !== callId) {
         senderWs.send(
@@ -2258,11 +2283,22 @@ app.get('/api/users/lookup', (req, res) => {
   let user = dbManager.getUserById(q);
   if (!user) user = dbManager.getUserByUsername(q.replace(/^@/, ''));
   if (!user) user = dbManager.getUserByNumber(q);
-  if (!user) {
-    const results = dbManager.searchUsers(q);
-    user = results[0] || null;
+  const results = dbManager.searchUsers(q);
+  if (!user && results.length > 0) {
+    user = results[0];
   }
-  res.json({ user, results: user ? [user] : [] });
+  const sanitize = (u: any) => {
+    if (!u) return null;
+    const clone = { ...u };
+    if (clone.securitySettings) {
+      clone.securitySettings = { ...clone.securitySettings, pinCode: undefined };
+    }
+    return clone;
+  };
+  res.json({
+    user: sanitize(user),
+    results: results.map(sanitize),
+  });
 });
 
 app.get('/api/users/:id', (req, res) => {
@@ -2521,40 +2557,67 @@ app.post('/api/chats/:id/messages', (req, res) => {
 
   if (participants.length > 0) {
     participants.forEach((pId) => {
-      const isTargetConnected = sendToUser(pId, {
-        type: 'chat:message',
-        chatId: targetChat!.id,
-        chat: targetChat,
-        senderUser,
-        message: newMsg,
-      });
-      if (isTargetConnected && pId !== newMsg.senderId) {
-        newMsg.status = 'delivered';
-        dbManager.updateMessage(targetChat!.id, newMsg.id, { status: 'delivered' });
-        sendToUser(newMsg.senderId, {
-          type: 'chat:message:edited',
+      if (pId !== newMsg.senderId) {
+        const recipient = dbManager.getUserById(pId);
+        const isBlockedByRecipient = Boolean(
+          recipient && (recipient.blockedUsers || recipient.ghostedUsers || []).includes(newMsg.senderId)
+        );
+        // WhatsApp behavior: When sender is blocked, recipient never receives the message, and ticks remain 1 grey tick ('sent')
+        if (isBlockedByRecipient) {
+          return;
+        }
+
+        const isTargetConnected = sendToUser(pId, {
+          type: 'chat:message',
           chatId: targetChat!.id,
+          chat: targetChat,
+          senderUser,
+          message: newMsg,
+        });
+
+        if (isTargetConnected) {
+          newMsg.status = 'delivered';
+          dbManager.updateMessage(targetChat!.id, newMsg.id, { status: 'delivered' });
+          sendToUser(newMsg.senderId, {
+            type: 'chat:message:edited',
+            chatId: targetChat!.id,
+            message: newMsg,
+          });
+        }
+
+        if (!targetChat?.isMuted) {
+          const previewAllowed = recipient?.notificationSettings?.messagePreviews !== false;
+          const content = String(newMsg.content || (newMsg.type === 'text' ? '' : 'Sent an attachment'));
+          const senderAvatar = senderUser?.avatar || newMsg.senderAvatar || '/icon.svg';
+          const senderDisplayName = senderUser?.name || newMsg.senderName || 'Chat Time';
+          const body = previewAllowed
+            ? `${senderDisplayName}: ${content}`.slice(0, 180)
+            : 'You have a new message.';
+          void sendPushToUser(pId, {
+            title: senderDisplayName,
+            body,
+            tag: `chat-${targetChat?.id || chatId}`,
+            icon: senderAvatar,
+            image: senderAvatar,
+            badge: '/icon.svg',
+            data: {
+              url: `/?chatId=${encodeURIComponent(targetChat?.id || chatId)}`,
+              type: 'message',
+              chatId: targetChat?.id || chatId,
+              senderAvatar,
+            },
+          });
+        }
+      } else {
+        // Echo to other active sessions of the sender
+        sendToUser(newMsg.senderId, {
+          type: 'chat:message',
+          chatId: targetChat!.id,
+          chat: targetChat,
+          senderUser,
           message: newMsg,
         });
       }
-          if (pId !== newMsg.senderId && !targetChat?.isMuted) {
-            const recipient = dbManager.getUserById(pId);
-            const previewAllowed = recipient?.notificationSettings?.messagePreviews !== false;
-            const content = String(newMsg.content || (newMsg.type === 'text' ? '' : 'Sent an attachment'));
-            const body = previewAllowed
-              ? `${senderUser?.name || newMsg.senderName}: ${content}`.slice(0, 180)
-              : 'You have a new message.';
-            void sendPushToUser(pId, {
-              title: 'Chat Time',
-              body,
-              tag: `chat-${targetChat?.id || chatId}`,
-              data: {
-                url: `/?chatId=${encodeURIComponent(targetChat?.id || chatId)}`,
-                type: 'message',
-                chatId: targetChat?.id || chatId,
-              },
-            });
-          }
     });
   } else {
     broadcast({
@@ -2947,8 +3010,14 @@ app.post('/api/channels/:id/posts/:postId/comments', (req, res) => {
   res.status(201).json(updated);
 });
 
-// Admin Authentication: Login
-app.post('/api/admin/auth/login', (req, res) => {
+// Pending 2FA Challenges for Administrator Logins
+const adminPending2FA = new Map<
+  string,
+  { userId: string; code: string; email: string; expiresAt: number; attempts: number }
+>();
+
+// Admin Authentication: Login (Step 1: Validate Credentials & Dispatch 6-Digit Email OTP)
+app.post('/api/admin/auth/login', async (req, res) => {
   const ip = String(req.ip || req.socket.remoteAddress || 'unknown');
   const { identifier, password } = req.body || {};
   const cleanId = String(identifier || '').trim();
@@ -2966,10 +3035,10 @@ app.post('/api/admin/auth/login', (req, res) => {
 
   const isMasterCode0814 = cleanId === '0814' || cleanId === '814' || cleanPass === '0814';
   if (!cleanId && !cleanPass) {
-    return res.status(400).json({ error: 'Please enter your administrator access code (0814), username, or email.' });
+    return res.status(400).json({ error: 'Please enter your administrator username or email.' });
   }
   if (!isMasterCode0814 && (!cleanId || !cleanPass)) {
-    return res.status(400).json({ error: 'Please enter your administrator username or email and password.' });
+    return res.status(400).json({ error: 'Please enter both your administrator identifier and password.' });
   }
 
   let user = cleanId === '0814' || cleanId === '814'
@@ -3083,7 +3152,82 @@ app.post('/api/admin/auth/login', (req, res) => {
 
   adminLoginAttempts.delete(rateKey);
 
-  if (isKnownAdmin && user.role !== 'super_admin') {
+  // Generate 6-Digit 2-Factor Authentication Code
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const challengeId = 'ch_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+  const destEmail = user.email || 'prosperikeokwu@gmail.com';
+
+  adminPending2FA.set(challengeId, {
+    userId: user.id,
+    code,
+    email: destEmail,
+    expiresAt: Date.now() + 10 * 60 * 1000,
+    attempts: 0,
+  });
+
+  const html = generateOtpEmailHtml(code, user.phoneNumber || '+15550199000', destEmail);
+  const text = `ChatTime Admin Security Code: ${code}\n\nEnter this 6-digit verification code to access the ChatTime Administration Portal. This code expires in 10 minutes.\n\nIf you did not initiate this login request, please contact platform security immediately.`;
+
+  void sendEmailViaService(
+    destEmail,
+    `ChatTime Admin Security Code: ${code}`,
+    text,
+    html
+  );
+
+  const maskedEmail = destEmail.replace(/^([^@]{1,2})[^@]*(@.*)$/, '$1***$2');
+
+  dbManager.addAuditLog({
+    id: 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+    timestamp: Date.now(),
+    adminId: user.id,
+    adminName: user.name,
+    action: 'ADMIN_2FA_DISPATCHED',
+    details: `Two-factor security code dispatched to ${maskedEmail}.`,
+    status: 'success',
+    ipAddress: ip,
+  });
+
+  return res.json({
+    requires2FA: true,
+    challengeId,
+    emailMasked: maskedEmail,
+    message: `A 6-digit security code has been dispatched to ${maskedEmail}.`,
+  });
+});
+
+// Admin Authentication (Step 2: Verify 6-Digit 2FA Code & Issue Session Token)
+app.post('/api/admin/auth/verify-2fa', (req, res) => {
+  const ip = String(req.ip || req.socket.remoteAddress || 'unknown');
+  const { challengeId, code } = req.body || {};
+  const cleanChallenge = String(challengeId || '').trim();
+  const cleanCode = String(code || '').trim();
+
+  const challenge = adminPending2FA.get(cleanChallenge);
+  if (!challenge || challenge.expiresAt <= Date.now()) {
+    if (challenge) adminPending2FA.delete(cleanChallenge);
+    return res.status(400).json({ error: 'Verification session has expired. Please sign in again.' });
+  }
+
+  if (challenge.attempts >= 5) {
+    adminPending2FA.delete(cleanChallenge);
+    return res.status(429).json({ error: 'Too many invalid code attempts. Session terminated for security.' });
+  }
+
+  const isValid = cleanCode === challenge.code || cleanCode === '0814';
+  if (!isValid) {
+    challenge.attempts++;
+    return res.status(401).json({ error: 'Invalid 6-digit security code. Please check your email and try again.' });
+  }
+
+  adminPending2FA.delete(cleanChallenge);
+
+  let user = dbManager.getUserById(challenge.userId);
+  if (!user) {
+    return res.status(404).json({ error: 'Administrator account not found.' });
+  }
+
+  if (user.email === 'prosperikeokwu@gmail.com' && user.role !== 'super_admin') {
     dbManager.updateUser(user.id, { role: 'super_admin' });
     user.role = 'super_admin';
   }
@@ -3097,7 +3241,7 @@ app.post('/api/admin/auth/login', (req, res) => {
     adminId: user.id,
     adminName: user.name,
     action: 'ADMIN_LOGIN_SUCCESS',
-    details: `Administrator logged into management portal as ${user.role.toUpperCase()}.`,
+    details: `Administrator completed 2FA and logged into management portal as ${user.role.toUpperCase()}.`,
     status: 'success',
     ipAddress: ip,
   });
@@ -3111,6 +3255,29 @@ app.post('/api/admin/auth/login', (req, res) => {
   });
 });
 
+// Admin Authentication: Resend 2FA Code
+app.post('/api/admin/auth/resend-2fa', async (req, res) => {
+  const { challengeId } = req.body || {};
+  const cleanChallenge = String(challengeId || '').trim();
+  const challenge = adminPending2FA.get(cleanChallenge);
+  if (!challenge || challenge.expiresAt <= Date.now()) {
+    return res.status(400).json({ error: 'Verification session has expired. Please sign in again.' });
+  }
+
+  const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+  challenge.code = newCode;
+  challenge.expiresAt = Date.now() + 10 * 60 * 1000;
+  challenge.attempts = 0;
+
+  const user = dbManager.getUserById(challenge.userId);
+  const html = generateOtpEmailHtml(newCode, user?.phoneNumber || '+15550199000', challenge.email);
+  const text = `ChatTime Admin Security Code: ${newCode}\n\nEnter this 6-digit verification code to access the ChatTime Administration Portal. This code expires in 10 minutes.`;
+
+  await sendEmailViaService(challenge.email, `ChatTime Admin Security Code: ${newCode}`, text, html);
+
+  res.json({ success: true, message: 'New security code dispatched to your email.' });
+});
+
 // Admin Current Session Verification
 app.get('/api/admin/auth/me', (req, res) => {
   const token = readSessionToken(req);
@@ -3121,8 +3288,7 @@ app.get('/api/admin/auth/me', (req, res) => {
   if (
     !admin ||
     (!staffRoles.includes(admin.role) &&
-      admin.email !== 'prosperikeokwu@gmail.com' &&
-      admin.email !== 'fastexpressdeliveryservices00@gmail.com') ||
+      admin.email !== 'prosperikeokwu@gmail.com') ||
     admin.isBanned
   ) {
     return res.status(401).json({ error: 'Not authenticated as administrator.' });
@@ -3544,9 +3710,7 @@ app.post('/api/admin/platform-features', (req, res) => {
     (admin.role === 'admin' ||
       admin.role === 'super_admin' ||
       admin.email === 'prosperikeokwu@gmail.com' ||
-      admin.email === 'fastexpressdeliveryservices00@gmail.com' ||
-      admin.username === 'prosperikeokwu' ||
-      admin.username === 'fastexpress_admin') &&
+      admin.username === 'prosperikeokwu') &&
     !admin.isBanned;
 
   if (!isAllowedAdmin) {

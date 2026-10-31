@@ -88,6 +88,12 @@ export const AdminApp: React.FC = () => {
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
+  const [loginStep, setLoginStep] = useState<'credentials' | '2fa'>('credentials');
+  const [challengeId, setChallengeId] = useState('');
+  const [maskedEmail, setMaskedEmail] = useState('');
+  const [otpInput, setOtpInput] = useState('');
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isResendingOtp, setIsResendingOtp] = useState(false);
 
   // Dashboard Data State
   const [activeTab, setActiveTab] = useState<
@@ -310,7 +316,7 @@ export const AdminApp: React.FC = () => {
     }
   }, [adminUser?.id]);
 
-  // Handle Admin Login
+  // Handle Admin Login (Step 1: Validate Credentials)
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
@@ -332,6 +338,16 @@ export const AdminApp: React.FC = () => {
         return;
       }
 
+      if (data.requires2FA) {
+        setChallengeId(data.challengeId);
+        setMaskedEmail(data.emailMasked);
+        setLoginStep('2fa');
+        setOtpInput('');
+        setLoginError('');
+        showToast('Verification Code Sent', data.message || 'Please enter the 6-digit code sent to your email.', 'info');
+        return;
+      }
+
       if (data.token) {
         try {
           sessionStorage.setItem('chattime_admin_token', data.token);
@@ -349,6 +365,75 @@ export const AdminApp: React.FC = () => {
     }
   };
 
+  // Handle Step 2: 2FA OTP Code Verification
+  const handleVerify2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanCode = otpInput.trim();
+    if (!cleanCode || cleanCode.length < 4) {
+      setLoginError('Please enter the 6-digit verification code.');
+      return;
+    }
+    setLoginError('');
+    setIsVerifyingOtp(true);
+
+    try {
+      const res = await adminFetch('/api/admin/auth/verify-2fa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          challengeId,
+          code: cleanCode,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setLoginError(data.error || 'Invalid verification code. Please check your email.');
+        return;
+      }
+
+      if (data.token) {
+        try {
+          sessionStorage.setItem('chattime_admin_token', data.token);
+          localStorage.setItem('chattime_admin_token', data.token);
+        } catch {}
+      }
+
+      setAdminUser(data.user);
+      setAdminPermissions(data.permissions || []);
+      setLoginStep('credentials');
+      showToast('Security Verified', `Welcome back, ${data.user.name} (${data.role.toUpperCase()})`, 'success');
+    } catch {
+      setLoginError('Network failure. Could not complete 2FA verification.');
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  // Resend 2FA OTP Code
+  const handleResend2FA = async () => {
+    if (!challengeId) return;
+    setIsResendingOtp(true);
+    setLoginError('');
+    try {
+      const res = await adminFetch('/api/admin/auth/resend-2fa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challengeId }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Code Resent', 'A fresh 6-digit verification code was dispatched to your email.', 'success');
+      } else {
+        setLoginError(data.error || 'Failed to resend security code.');
+      }
+    } catch {
+      setLoginError('Network failure. Could not resend security code.');
+    } finally {
+      setIsResendingOtp(false);
+    }
+  };
+
   // Handle Admin Logout
   const handleAdminLogout = async () => {
     try {
@@ -360,13 +445,16 @@ export const AdminApp: React.FC = () => {
     } catch {}
     setAdminUser(null);
     setAdminPermissions([]);
+    setLoginStep('credentials');
+    setChallengeId('');
+    setOtpInput('');
     showToast('Signed Out', 'Administrative session terminated.', 'info');
   };
 
-  // Permissions helper
+  // Permissions helper (Strict super admin: prosperikeokwu@gmail.com)
   const hasPerm = (perm: AdminPermission): boolean => {
     if (!adminUser) return false;
-    if (adminUser.role === 'super_admin' || adminUser.email === 'prosperikeokwu@gmail.com' || adminUser.email === 'fastexpressdeliveryservices00@gmail.com') return true;
+    if (adminUser.role === 'super_admin' || adminUser.email === 'prosperikeokwu@gmail.com') return true;
     return adminPermissions.includes(perm);
   };
 
@@ -673,65 +761,128 @@ export const AdminApp: React.FC = () => {
               </div>
             )}
 
-            {/* Official Administrator Credentials Reference */}
-            <div className="mb-5 p-3.5 rounded-2xl bg-slate-950/90 border border-amber-500/30 text-xs space-y-1.5 shadow-sm">
-              <div className="font-bold flex items-center gap-1.5 text-amber-400">
-                <Crown className="w-3.5 h-3.5" /> Official Platform Admin Credentials
-              </div>
-              <div className="text-[11px] text-slate-300 space-y-1 font-mono">
-                <div>Admin Code: <strong className="text-amber-300 font-bold text-xs">0814</strong> (or <span className="text-teal-400">fastexpressdeliveryservices00@gmail.com</span>)</div>
-                <div>Password: <strong className="text-amber-300 font-bold text-xs">prosper100@</strong></div>
-              </div>
-            </div>
+            {loginStep === 'credentials' ? (
+              <form onSubmit={handleAdminLogin} className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                    Account Email or Username
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={identifierInput}
+                      onChange={(e) => setIdentifierInput(e.target.value)}
+                      placeholder="name@company.com or username"
+                      required
+                      autoComplete="username"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-red-500 transition-colors"
+                    />
+                  </div>
+                </div>
 
-            <form onSubmit={handleAdminLogin} className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                  Admin Login Code / Email / Username
-                </label>
-                <div className="relative">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                    Account Password
+                  </label>
                   <input
-                    type="text"
-                    value={identifierInput}
-                    onChange={(e) => setIdentifierInput(e.target.value)}
-                    placeholder="Enter code: 0814 or email"
+                    type="password"
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    placeholder="••••••••••••"
                     required
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-500 transition-colors"
+                    autoComplete="current-password"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-red-500 transition-colors font-mono"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                  Admin Password
-                </label>
-                <input
-                  type="password"
-                  value={passwordInput}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  placeholder="prosper100@"
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-red-500 transition-colors font-mono"
-                />
-              </div>
+                <button
+                  type="submit"
+                  disabled={isSubmittingLogin}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-red-600/25 transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 mt-2"
+                >
+                  {isSubmittingLogin ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Verifying Credentials...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4" />
+                      <span>Continue &rarr;</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerify2FA} className="space-y-4">
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-center space-y-1">
+                  <div className="text-xs font-bold text-amber-300 flex items-center justify-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-amber-400" /> Two-Factor Authentication
+                  </div>
+                  <p className="text-[11px] text-slate-300">
+                    A 6-digit verification code has been dispatched to{' '}
+                    <strong className="text-amber-300 font-mono">{maskedEmail || 'your email'}</strong>
+                  </p>
+                </div>
 
-              <button
-                type="submit"
-                disabled={isSubmittingLogin}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-red-600/25 transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 mt-2"
-              >
-                {isSubmittingLogin ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Authenticating...</span>
-                  </>
-                ) : (
-                  <>
-                    <Lock className="w-4 h-4" />
-                    <span>Authenticate into Admin Console</span>
-                  </>
-                )}
-              </button>
-            </form>
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 text-center">
+                    Enter 6-Digit Code
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={otpInput}
+                    onChange={(e) => setOtpInput(e.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder="000000"
+                    autoFocus
+                    required
+                    className="w-full bg-slate-950 border-2 border-amber-500/40 rounded-xl px-4 py-3 text-center text-2xl font-mono tracking-widest text-white placeholder-slate-600 focus:outline-none focus:border-amber-400 transition-colors"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isVerifyingOtp || otpInput.trim().length < 4}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/25 transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {isVerifyingOtp ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Validating Security Code...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Authorize Session</span>
+                    </>
+                  )}
+                </button>
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <button
+                    type="button"
+                    onClick={handleResend2FA}
+                    disabled={isResendingOtp}
+                    className="text-amber-400 hover:text-amber-300 transition-colors disabled:opacity-50 font-medium cursor-pointer"
+                  >
+                    {isResendingOtp ? 'Resending...' : 'Resend code'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginStep('credentials');
+                      setOtpInput('');
+                      setLoginError('');
+                    }}
+                    className="text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  >
+                    &larr; Back to login
+                  </button>
+                </div>
+              </form>
+            )}
 
             <div className="mt-5 pt-4 border-t border-slate-800 flex flex-col items-center gap-2 text-center">
               <a
@@ -759,7 +910,7 @@ export const AdminApp: React.FC = () => {
   // RENDER: SUPER ADMIN ENTERPRISE DASHBOARD
   // -------------------------------------------------------------
   const overviewStats = analyticsData?.overview || {};
-  const isSuper = adminUser.role === 'super_admin' || adminUser.email === 'prosperikeokwu@gmail.com' || adminUser.email === 'fastexpressdeliveryservices00@gmail.com';
+  const isSuper = adminUser.role === 'super_admin' || adminUser.email === 'prosperikeokwu@gmail.com';
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row overflow-hidden font-sans select-none">
@@ -1216,8 +1367,9 @@ export const AdminApp: React.FC = () => {
                               </div>
                             </td>
 
-                            <td className="py-3 px-4 font-mono text-slate-300">
-                              {u.phoneNumber || u.chatTimeNumber}
+                            <td className="py-3 px-4 font-mono">
+                              <div className="text-xs text-white font-semibold">{u.phoneNumber || '—'}</div>
+                              <div className="text-[11px] text-teal-400 font-mono">ChatTime: {u.chatTimeNumber || '—'}</div>
                             </td>
 
                             <td className="py-3 px-4">

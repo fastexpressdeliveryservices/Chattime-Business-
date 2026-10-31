@@ -1,0 +1,249 @@
+{
+  "users": [
+    {
+      "id": "user_admin_prosper",
+      "name": "Prosper Ikeokwu",
+      "username": "prosperikeokwu",
+      "email": "prosperikeokwu@gmail.com",
+      "phoneNumber": "+15550199000",
+      "chatTimeNumber": "+1 (555) 019-9000",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=prosperikeokwu&backgroundColor=b91c1c",
+      "bio": "Chat Time Official Administrator",
+      "statusFeeling": "🛡️ Super Admin",
+      "phonePrivate": false,
+      "isOnline": true,
+      "lastSeen": 1793445283170,
+      "createdAt": 1793445283170,
+      "role": "super_admin",
+      "isVerified": true,
+      "isRedVerified": true,
+      "verificationBadge": "red",
+      "verificationBadgeType": "red",
+      "contacts": [],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": true,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": true,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": []
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 90,
+        "communityAlerts": true
+      }
+    },
+    {
+      "id": "user_fastexpress",
+      "name": "Fast Express",
+      "username": "fastexpress",
+      "email": "fastexpressdeliveryservices00@gmail.com",
+      "phoneNumber": "+15550199001",
+      "chatTimeNumber": "+1 (555) 019-9001",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=fastexpress&backgroundColor=0284c7",
+      "bio": "Fast Express Delivery Services",
+      "statusFeeling": "Available on ChatTime",
+      "phonePrivate": false,
+      "isOnline": true,
+      "lastSeen": 1793445283170,
+      "createdAt": 1793445283170,
+      "role": "user",
+      "isVerified": false,
+      "isRedVerified": false,
+      "verificationBadge": "none",
+      "verificationBadgeType": "none",
+      "contacts": [],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": true,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": []
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 90,
+        "communityAlerts": true
+      }
+    },
+    {
+      "id": "user_chattime_support",
+      "name": "ChatTime Support",
+      "username": "support",
+      "email": "support@chattime.com",
+      "phoneNumber": "+18002428846",
+      "chatTimeNumber": "+1 (800) 242-8846",
+      "avatar": "/icon.svg",
+      "bio": "Official ChatTime Support & Help Desk. Here to assist you 24/7.",
+      "statusFeeling": "🔴 Official Support • Red Tick Verified",
+      "phonePrivate": false,
+      "isOnline": true,
+      "lastSeen": 1793445283170,
+      "createdAt": 1793445283170,
+      "role": "admin",
+      "isVerified": true,
+      "isRedVerified": true,
+      "verificationBadge": "red",
+      "verificationBadgeType": "red",
+      "contacts": [],
+      "privacySettings": {
+        "lastSeenVisibility": "everyone",
+        "numberVisibility": "everyone",
+        "statusVisibility": "everyone",
+        "readReceipts": true,
+        "discoverable": true,
+        "whoCanCallMe": "everyone"
+      },
+      "securitySettings": {
+        "twoFactorEnabled": false,
+        "pinEnabled": false,
+        "biometricSupported": true,
+        "activeSessions": []
+      },
+      "notificationSettings": {
+        "messagePreviews": true,
+        "soundEffects": true,
+        "callRingtone": true,
+        "ringtoneStyle": "harmonic",
+        "ringtoneVolume": 90,
+        "communityAlerts": true
+      }
+    }
+  ],
+  "chats": [
+    {
+      "id": "chat_chattime_support",
+      "type": "direct",
+      "name": "ChatTime Support",
+      "avatar": "/icon.svg",
+      "folder": "direct",
+      "participants": [
+        "user_chattime_support"
+      ],
+      "isPinned": true,
+      "isVerified": true,
+      "unreadCount": 0,
+      "createdAt": 1793445283170,
+      "lastMessage": {
+        "id": "msg_support_welcome",
+        "chatId": "chat_chattime_support",
+        "senderId": "user_chattime_support",
+        "senderName": "ChatTime Support",
+        "senderAvatar": "/icon.svg",
+        "type": "text",
+        "content": "Hello! Welcome to ChatTime Support. How can we help you today? Send a message here anytime.",
+        "timestamp": 1793445283170,
+        "reactions": {},
+        "status": "delivered"
+      }
+    }
+  ],
+  "messages": {
+    "chat_chattime_support": [
+      {
+        "id": "msg_support_welcome",
+        "chatId": "chat_chattime_support",
+        "senderId": "user_chattime_support",
+        "senderName": "ChatTime Support",
+        "senderAvatar": "/icon.svg",
+        "type": "text",
+        "content": "Hello! Welcome to ChatTime Support. How can we help you today? Send a message here anytime.",
+        "timestamp": 1793445283170,
+        "reactions": {},
+        "status": "delivered"
+      }
+    ]
+  },
+  "calls": [],
+  "stories": [],
+  "statusHistory": [],
+  "channels": [],
+  "reports": [],
+  "announcements": [],
+  "otpCodes": {},
+  "auditLogs": [],
+  "pushSubscriptions": {},
+  "authSessions": {},
+  "platformFeatures": {
+    "allowRegistration": true,
+    "allowMessaging": true,
+    "allowCalls": true,
+    "allowVideoCalls": true,
+    "allowGroupCalls": true,
+    "allowGroups": true,
+    "allowCommunities": true,
+    "allowVoiceNotes": true,
+    "allowVoiceChanger": true,
+    "allowFileSharing": true,
+    "allowMediaSharing": true,
+    "allowReactions": true,
+    "allowStories": true,
+    "allowNotifications": true,
+    "voiceEffectsEnabled": true,
+    "voiceModifiers": [
+      "American 🇺🇸",
+      "British 🇬🇧",
+      "Indian 🇮🇳",
+      "Asian 🌏",
+      "Australian 🇦🇺",
+      "Jamaican 🇯🇲"
+    ]
+  },
+  "voiceSubscriptions": {},
+  "voiceUsageStats": {
+    "totalTTSCalls": 0,
+    "totalTTSChars": 0,
+    "activeSubscriptions": 0,
+    "estimatedCostUsd": 0
+  },
+  "voiceAdminConfig": {
+    "enabled": true,
+    "provider": "webaudio_neural",
+    "allowFreePreviews": true,
+    "plans": {
+      "weekly": {
+        "priceNgn": 1000,
+        "days": 7,
+        "label": "Weekly Voice Pass (7 Days)"
+      },
+      "monthly": {
+        "priceNgn": 6000,
+        "days": 30,
+        "label": "Monthly Voice Pro (30 Days)"
+      },
+      "yearly": {
+        "priceNgn": 20000,
+        "days": 365,
+        "label": "Yearly Voice Unlimited (365 Days)"
+      }
+    }
+  },
+  "maintenanceMode": false,
+  "welcomeSettings": {
+    "enabled": true,
+    "senderId": "user_chattime_support",
+    "senderName": "ChatTime Support",
+    "senderAvatar": "/icon.svg",
+    "messageText": "Hello! Welcome to ChatTime Business. We are delighted to have you. If you need any assistance, have questions, or want to explore features, reply here anytime. End-to-end encrypted support is available 24/7."
+  }
+}

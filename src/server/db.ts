@@ -204,22 +204,34 @@ class DatabaseManager {
     const ADMIN_EMAILS = [
       'prosperikeokwu@gmail.com',
     ];
-    let adminFound = false;
 
-    // 1. Ensure admin accounts have role 'super_admin' and red verified badge
+    // 1. Ensure ONLY prosperikeokwu@gmail.com is super_admin. Demote all unchosen admin accounts to regular users.
     database.users = database.users.map((u) => {
-      const isTargetAdmin = Boolean(
-        u.email && ADMIN_EMAILS.includes(u.email.toLowerCase().trim())
-      );
-      if (isTargetAdmin) {
+      const isProsper = u.id === 'user_admin_prosper' || u.username === 'prosperikeokwu';
+      if (isProsper) {
         return {
           ...u,
+          id: 'user_admin_prosper',
+          name: 'Prosper Ikeokwu',
+          username: 'prosperikeokwu',
+          email: 'prosperikeokwu@gmail.com',
           role: 'super_admin' as const,
           isVerified: true,
           isRedVerified: true,
           verificationBadge: 'red',
           verificationBadgeType: 'red',
         };
+      }
+      // If another account had prosperikeokwu@gmail.com attached, clear it so there is only one
+      if (u.email && u.email.toLowerCase().trim() === 'prosperikeokwu@gmail.com') {
+        u.email = undefined;
+      }
+      // Demote unchosen admin accounts
+      if (u.role === 'super_admin' || u.role === 'admin') {
+        u.role = 'user';
+        u.isRedVerified = false;
+        u.verificationBadge = 'none';
+        u.verificationBadgeType = 'none';
       }
       return u;
     });
@@ -241,12 +253,12 @@ class DatabaseManager {
         chatTimeNumber: '+1 (555) 019-9000',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=prosperikeokwu&backgroundColor=b91c1c',
         bio: 'Chat Time Official Administrator',
-        statusFeeling: '🛡️ Platform Admin',
+        statusFeeling: '🛡️ Super Admin',
         phonePrivate: false,
         isOnline: true,
         lastSeen: Date.now(),
         createdAt: Date.now(),
-        role: 'admin',
+        role: 'super_admin',
         isVerified: true,
         isRedVerified: true,
         verificationBadge: 'red',
@@ -261,7 +273,7 @@ class DatabaseManager {
           whoCanCallMe: 'everyone',
         },
         securitySettings: {
-          twoFactorEnabled: false,
+          twoFactorEnabled: true,
           pinEnabled: false,
           biometricSupported: true,
           activeSessions: [],
@@ -279,9 +291,12 @@ class DatabaseManager {
     } else {
       prosperUser.role = 'super_admin';
       prosperUser.email = 'prosperikeokwu@gmail.com';
+      prosperUser.name = 'Prosper Ikeokwu';
+      prosperUser.username = 'prosperikeokwu';
       prosperUser.isVerified = true;
       prosperUser.isRedVerified = true;
       prosperUser.verificationBadge = 'red';
+      prosperUser.verificationBadgeType = 'red';
       if (!prosperUser.chatTimeNumber) prosperUser.chatTimeNumber = '+1 (555) 019-9000';
       if (!prosperUser.phoneNumber) prosperUser.phoneNumber = '+15550199000';
     }
@@ -1707,20 +1722,14 @@ class DatabaseManager {
 
   // --- Full State Bootstrap ---
   getBootstrapState(userId?: string) {
-    let bootstrapUsers: User[] = [];
-
-    if (userId) {
-      const user = this.getUserById(userId);
-      if (user) {
-        const contactIds = new Set<string>(user.contacts || []);
-        contactIds.add(userId);
-        const userChats = this.getChatsForUser(userId);
-        userChats.forEach((c) => {
-          (c.participants || []).forEach((pId) => contactIds.add(pId));
-        });
-        bootstrapUsers = this.db.users.filter((u) => contactIds.has(u.id));
+    // Return all registered users with sensitive security codes stripped so profiles are never blank and search immediately resolves
+    const bootstrapUsers: User[] = this.db.users.map((u) => {
+      const clone = { ...u };
+      if (clone.securitySettings) {
+        clone.securitySettings = { ...clone.securitySettings, pinCode: undefined };
       }
-    }
+      return clone;
+    });
 
     const userChats = userId ? this.getChatsForUser(userId) : [];
     const bootstrapMessages: Record<string, Message[]> = {};
@@ -1770,9 +1779,7 @@ class DatabaseManager {
     return Boolean(
       user &&
         (user.role === 'super_admin' ||
-          user.role === 'admin' ||
-          user.email === 'prosperikeokwu@gmail.com' ||
-          user.email === 'fastexpressdeliveryservices00@gmail.com')
+          user.email === 'prosperikeokwu@gmail.com')
     );
   }
 
@@ -1782,8 +1789,7 @@ class DatabaseManager {
     const staffRoles: UserRole[] = ['super_admin', 'admin', 'moderator', 'support', 'analyst'];
     return (
       staffRoles.includes(user.role) ||
-      user.email === 'prosperikeokwu@gmail.com' ||
-      user.email === 'fastexpressdeliveryservices00@gmail.com'
+      user.email === 'prosperikeokwu@gmail.com'
     );
   }
 
