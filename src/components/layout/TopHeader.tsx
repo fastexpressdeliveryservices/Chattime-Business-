@@ -53,8 +53,14 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onOpenRegister: _onOpenReg
     const digits = q.replace(/[^0-9]/g, '');
     const cleanUser = q.replace(/^@/, '');
 
-    const allUsers = Object.values(users) as User[];
-    return allUsers.filter((u) => {
+    const userPoolMap = new Map<string, User>();
+    if (currentUser?.id) userPoolMap.set(currentUser.id, currentUser);
+    Object.values(users).forEach((u) => {
+      if (u && u.id) userPoolMap.set(u.id, u);
+    });
+    const allUsers = Array.from(userPoolMap.values());
+
+    const matches = allUsers.filter((u) => {
       if (!u) return false;
       const uUser = (u.username || '').toLowerCase();
       const uName = (u.name || '').toLowerCase();
@@ -67,7 +73,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onOpenRegister: _onOpenReg
       if (digits.length >= 2 && (uChatDigits.includes(digits) || uPhoneDigits.includes(digits) || digits.includes(uChatDigits) || digits.includes(uPhoneDigits))) return true;
       return false;
     });
-  }, [searchQuery, users]);
+
+    return matches.sort((a, b) => {
+      if (a.id === currentUser.id) return -1;
+      if (b.id === currentUser.id) return 1;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+  }, [searchQuery, users, currentUser]);
 
   const rawNumber = currentUser.phoneNumber || currentUser.chatTimeNumber || '+1 (555) 019-9001';
   const displayedNumber = currentUser.phonePrivate

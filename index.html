@@ -92,7 +92,55 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased selection:bg-teal-500/20 selection:text-teal-200 overflow-hidden font-sans">
-    <div id="root" class="h-[var(--app-height,100dvh)] w-full overflow-hidden flex flex-col"></div>
+    <div id="root" class="h-[var(--app-height,100dvh)] w-full overflow-hidden flex flex-col">
+      <!-- WhatsApp-Style Opening Splash Screen (Instant Centered Brand Logo) -->
+      <div style="height:100dvh;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:48px 24px;background-color:#020617;color:#f8fafc;user-select:none;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:25%;left:50%;transform:translateX(-50%);width:320px;height:320px;background:rgba(239,68,68,0.12);border-radius:9999px;filter:blur(64px);pointer-events:none;"></div>
+
+        <!-- Center: WhatsApp-style Centered Logo with Gentle Breathing Pulse -->
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:10;">
+          <div style="width:84px;height:84px;border-radius:24px;background:linear-gradient(135deg, #450a0a, #0f172a, #020617);border:1px solid rgba(239,68,68,0.4);box-shadow:0 10px 25px -5px rgba(239,68,68,0.3);display:flex;align-items:center;justify-content:center;animation:chattimePulse 2s ease-in-out infinite;">
+            <svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:64px;height:64px;">
+              <defs>
+                <linearGradient id="splashLogoGradient" x1="64" y1="64" x2="448" y2="448" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#f87171" />
+                  <stop offset="50%" stop-color="#ef4444" />
+                  <stop offset="100%" stop-color="#b91c1c" />
+                </linearGradient>
+              </defs>
+              <path d="M256 86C155.48 86 74 158.08 74 247C74 286.84 90.35 323.33 117.54 351.5C112.24 377.28 97.7 402.88 95.74 406.17C92.74 411.22 96.67 417.63 102.54 417.06C135.91 413.83 167.49 401.52 189.81 390.4C210.65 397.49 232.9 401.29 256 401.29C356.52 401.29 438 329.21 438 240.29C438 151.37 356.52 86 256 86Z" fill="url(#splashLogoGradient)" />
+              <circle cx="256" cy="244" r="98" fill="#090d16" />
+              <circle cx="256" cy="244" r="84" stroke="#f87171" stroke-width="8" stroke-opacity="0.5" stroke-dasharray="20 12" />
+              <path d="M256 184V244L298 270" stroke="#ffffff" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="256" cy="244" r="14" fill="#ef4444" />
+            </svg>
+          </div>
+
+          <!-- Subtle Progress Line -->
+          <div style="width:120px;height:3px;border-radius:9999px;background:#0f172a;overflow:hidden;margin-top:12px;">
+            <div style="height:100%;width:65%;background:linear-gradient(90deg, #ef4444, #f87171);border-radius:9999px;animation:chattimeBar 1.5s ease-in-out infinite;"></div>
+          </div>
+        </div>
+
+        <!-- Bottom: WhatsApp "from" branding -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;z-index:10;text-align:center;">
+          <div style="font-size:11px;color:#64748b;letter-spacing:0.05em;text-transform:lowercase;">from</div>
+          <div style="font-size:13px;font-weight:800;color:#f1f5f9;letter-spacing:0.2em;text-transform:uppercase;">CHAT TIME</div>
+          <div style="font-size:11px;color:#475569;margin-top:2px;">🔒 End-to-End Encrypted</div>
+        </div>
+      </div>
+      <style>
+        @keyframes chattimePulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.06); }
+        }
+        @keyframes chattimeBar {
+          0% { transform: translateX(-100%); }
+          50% { transform: translateX(30%); }
+          100% { transform: translateX(160%); }
+        }
+      </style>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

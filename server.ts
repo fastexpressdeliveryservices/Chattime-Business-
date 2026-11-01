@@ -1790,20 +1790,15 @@ app.get('/api/bootstrap', (req, res) => {
   res.json(state);
 });
 
-app.get('/api/users', (req, res) => {
-  const userId = req.query.userId as string | undefined;
-  if (userId) {
-    const user = dbManager.getUserById(userId);
-    if (user?.role === 'admin') {
-      return res.json(dbManager.getUsers());
+app.get('/api/users', (_req, res) => {
+  const users = dbManager.getUsers().map((u) => {
+    const clone = { ...u };
+    if (clone.securitySettings) {
+      clone.securitySettings = { ...clone.securitySettings, pinCode: undefined };
     }
-    const contactIds = new Set<string>(user?.contacts || []);
-    contactIds.add(userId);
-    const userChats = dbManager.getChatsForUser(userId);
-    userChats.forEach((c) => (c.participants || []).forEach((pId) => contactIds.add(pId)));
-    return res.json(dbManager.getUsers().filter((u) => contactIds.has(u.id)));
-  }
-  res.json([]);
+    return clone;
+  });
+  res.json(users);
 });
 
 // Search users by username, generated ChatTime number, phone number, or name
@@ -2026,16 +2021,14 @@ app.post('/api/auth/register', (req, res) => {
     },
   });
 
-  // Only notify admin sessions about new registrations (preserving privacy)
-  connectedClients.forEach((sockets, cUserId) => {
-    const clientUser = dbManager.getUserById(cUserId);
-    if (clientUser?.role === 'admin' || cUserId === newUser.id) {
-      sockets.forEach((s) => {
-        if (s.readyState === WebSocket.OPEN) {
-          s.send(JSON.stringify({ type: 'user:new', user: newUser }));
-        }
-      });
-    }
+  // Broadcast new registered user to all active clients (with private PIN stripped)
+  const sanitizedNewUser = { ...newUser };
+  if (sanitizedNewUser.securitySettings) {
+    sanitizedNewUser.securitySettings = { ...sanitizedNewUser.securitySettings, pinCode: undefined };
+  }
+  broadcast({
+    type: 'user:new',
+    user: sanitizedNewUser,
   });
 
   writeSessionCookie(req, res, newUser.id);

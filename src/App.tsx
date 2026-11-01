@@ -130,28 +130,30 @@ const ChatTimeMain: React.FC = () => {
     return (
       <div className="h-[var(--app-height,100dvh)] w-full max-w-full flex flex-col items-center justify-between py-12 px-6 bg-slate-950 text-slate-100 select-none relative overflow-hidden">
         {/* Ambient Top Glow */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-80 h-80 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 z-10">
-          <div className="relative">
-            <BrandLogo size="xl" showText subtitle="Encrypted Messaging & Calls" />
+        {/* Center: WhatsApp-style Centered Brand Logo */}
+        <div className="flex-1 flex flex-col items-center justify-center gap-5 z-10">
+          <div className="animate-pulse duration-1000">
+            <BrandLogo size="xl" showText={false} />
           </div>
 
-          {/* Smooth WhatsApp-style Progress Bar */}
-          <div className="w-48 h-1 rounded-full bg-slate-900 border border-slate-800/80 overflow-hidden shadow-inner mt-4">
-            <div className="h-full w-2/3 bg-gradient-to-r from-teal-500 to-emerald-400 rounded-full animate-pulse transition-all duration-300" />
+          {/* Smooth Minimal Loading Bar */}
+          <div className="w-28 h-1 rounded-full bg-slate-900 border border-slate-800/80 overflow-hidden shadow-inner mt-2">
+            <div className="h-full w-2/3 bg-gradient-to-r from-red-500 to-rose-400 rounded-full animate-pulse transition-all duration-300" />
           </div>
         </div>
 
-        {/* Bottom Security Footer */}
-        <div className="flex flex-col items-center gap-1.5 z-10 text-center">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+        {/* Bottom WhatsApp-style Footer */}
+        <div className="flex flex-col items-center gap-1 z-10 text-center">
+          <span className="text-[11px] text-slate-500 tracking-wider">from</span>
+          <span className="text-[13px] font-extrabold text-slate-200 tracking-[0.2em] uppercase font-display">
+            Chat Time
+          </span>
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium mt-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span>End-to-End Encrypted</span>
           </div>
-          <span className="text-[11px] font-bold text-slate-300 tracking-wider font-display">
-            Chat Time
-          </span>
         </div>
       </div>
     );

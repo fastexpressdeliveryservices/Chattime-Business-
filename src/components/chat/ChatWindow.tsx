@@ -1,4 +1,3 @@
-import { applyVoiceModifier } from '../../utils/voiceModifier';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Phone,
@@ -104,7 +103,6 @@ export const ChatWindow: React.FC = () => {
     addToast,
     platformFeatures,
     openTTSModal,
-    getContactName,
     t,
   } = useChatTime();
 
@@ -459,8 +457,15 @@ export const ChatWindow: React.FC = () => {
   );
   const isPeerGhosted = isPeerBlockedByMe;
 
-  const displayName = peerUser ? getContactName(peerUser.id, peerUser.name) : activeChat.name;
-  const displayAvatar = peerUser ? peerUser.avatar : activeChat.avatar;
+  const rawPhone = peerUser?.phoneNumber || peerUser?.chatTimeNumber || '';
+  const displayName =
+    peerUser?.name ||
+    activeChat.name ||
+    (rawPhone ? rawPhone : 'ChatTime User');
+  const displayAvatar =
+    peerUser?.avatar ||
+    activeChat.avatar ||
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(peerUserId || activeChat.id)}&backgroundColor=0d9488`;
 
   // Respect privacy settings for phone number & lastSeen
   const isContact = peerUser && (currentUser.contacts || []).includes(peerUser.id);
@@ -472,7 +477,7 @@ export const ChatWindow: React.FC = () => {
     (currentUser.role === 'admin' ||
       (!peerUser.phonePrivate &&
         (numberVis === 'everyone' || (numberVis === 'contacts' && isContact))));
-  const rawPhone = peerUser?.phoneNumber || peerUser?.chatTimeNumber || '';
+
   const peerPhone = peerUser
     ? canSeePhone
       ? rawPhone
@@ -744,21 +749,19 @@ export const ChatWindow: React.FC = () => {
         recorder.stream.getTracks().forEach((t) => t.stop());
         if (!cancel && activeChat) {
           if (audioChunksRef.current.length > 0) {
-            const rawBlob = new Blob(audioChunksRef.current, {
+            const blob = new Blob(audioChunksRef.current, {
               type: recorder.mimeType || 'audio/webm',
             });
-            applyVoiceModifier(rawBlob, modifierToApply).then(({ blob, duration }) => {
             const reader = new FileReader();
             reader.onloadend = () => {
               sendMessage(activeChat.id, 'Voice Message', 'voice', {
-                audioDuration: duration || dur,
+                audioDuration: dur,
                 mediaUrl: typeof reader.result === 'string' ? reader.result : undefined,
                 ...(modifierToApply ? { voiceModifier: modifierToApply } : {}),
                 ...(sendAsViewOnce ? { isViewOnce: true, viewedBy: [] } : {}),
               });
             };
             reader.readAsDataURL(blob);
-            });
           } else {
             const synthUrl = createSynthesizedAudioDataUrl(dur);
             sendMessage(activeChat.id, 'Voice Message', 'voice', {
@@ -841,6 +844,9 @@ export const ChatWindow: React.FC = () => {
                 <img
                   src={displayAvatar}
                   alt={displayName}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/icon.svg';
+                  }}
                   className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl object-cover bg-slate-800 border border-slate-700 group-hover:border-teal-400 transition-colors"
                 />
                 {peerUser && canSeePresence && (
@@ -886,14 +892,17 @@ export const ChatWindow: React.FC = () => {
                       </span>
                     ) : (
                       <>
-                        {peerUser.isOnline && canSeePresence && (
+                        {peerUser.isOnline && canSeePresence ? (
                           <span className="truncate text-emerald-400 font-medium">
                             {t('online', 'online')}
                           </span>
-                        )}
-                        {peerPhone && !peerUser.isOnline && (
-                          <span className="hidden sm:inline font-mono text-slate-400">
+                        ) : peerPhone ? (
+                          <span className="font-mono text-slate-400 truncate">
                             {peerPhone}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 truncate">
+                            @{peerUser.username || 'user'}
                           </span>
                         )}
                       </>
@@ -912,6 +921,10 @@ export const ChatWindow: React.FC = () => {
                     <span className="text-teal-400 font-semibold flex items-center gap-1">
                       <BadgeCheck className="w-3.5 h-3.5 text-teal-400 shrink-0" />
                       Official Community
+                    </span>
+                  ) : activeChat.type === 'direct' ? (
+                    <span className="font-mono text-slate-400 truncate">
+                      {activeChat.name && activeChat.name.startsWith('+') ? activeChat.name : 'End-to-End Encrypted'}
                     </span>
                   ) : activeChat.participants.length <= 1 ? (
                     <span className="text-slate-400">
@@ -1026,11 +1039,11 @@ export const ChatWindow: React.FC = () => {
                       <Search className="w-3.5 h-3.5 text-teal-400" />
                       <span>{t('searchInChat', 'Search in Chat')}</span>
                     </button>
-                    {peerUser && (
+                    {(peerUser || peerUserId) && (
                       <button
                         onClick={() => {
                           setIsHeaderMenuOpen(false);
-                          setInspectedUserId(peerUser.id);
+                          setInspectedUserId(peerUser?.id || peerUserId!);
                         }}
                         className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-200 hover:bg-slate-800"
                       >
@@ -2143,7 +2156,7 @@ export const ChatWindow: React.FC = () => {
               </div>
 
               {/* Dynamic Action: Send button when text is entered, or Voice Note button when empty */}
-              {inputText.trim() || peerUser?.id === 'user_chattime_support' ? (
+              {inputText.trim() ? (
                 <button
                   type="submit"
                   className="w-10 h-10 flex items-center justify-center rounded-2xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold transition-all shrink-0 shadow-lg shadow-teal-500/30 active:scale-95 cursor-pointer"

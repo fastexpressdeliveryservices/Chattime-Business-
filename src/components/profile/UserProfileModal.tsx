@@ -105,14 +105,24 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
     }
 
     if (inspectedUserId && users[inspectedUserId]) return users[inspectedUserId];
-    if (fetchedUser) return fetchedUser;
+
+    // Only return fetchedUser if it matches the current inspected user ID or query
+    if (
+      fetchedUser &&
+      (fetchedUser.id === inspectedUserId ||
+        fetchedUser.username?.toLowerCase() === inspectedUserId?.toLowerCase().replace(/^@/, '') ||
+        fetchedUser.phoneNumber === inspectedUserId ||
+        fetchedUser.chatTimeNumber === inspectedUserId)
+    ) {
+      return fetchedUser;
+    }
+
     if (inspectedUserId) {
       const cleanTarget = inspectedUserId.trim().toLowerCase();
       const targetUserClean = cleanTarget.replace(/^@/, '');
       const targetDigits = cleanTarget.replace(/[^0-9]/g, '');
 
       // Known admin accounts immediate resolution
-
       if (
         cleanTarget === 'user_admin_prosper' ||
         targetUserClean === 'prosperikeokwu' ||
@@ -125,7 +135,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
           id: 'user_admin_prosper',
           name: 'Prosper Ikeokwu',
           username: 'prosperikeokwu',
-          email: 'ikeokwuprosper6@gmail.com',
+          email: 'prosperikeokwu@gmail.com',
           phoneNumber: '+15550199000',
           chatTimeNumber: '+1 (555) 019-9000',
           avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=prosperikeokwu&backgroundColor=b91c1c',
@@ -178,14 +188,16 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
         (c) => c && c.type === 'direct' && Array.isArray(c.participants) && c.participants.includes(inspectedUserId)
       );
       if (chatWithPeer) {
+        const peerPhoneCandidate =
+          chatWithPeer.name && chatWithPeer.name.startsWith('+') ? chatWithPeer.name : '';
         return {
           id: inspectedUserId,
           name: chatWithPeer.name || 'ChatTime User',
           username: (chatWithPeer.name || 'user').toLowerCase().replace(/\s+/g, ''),
           avatar: chatWithPeer.avatar || '/icon.svg',
           role: 'user',
-          phoneNumber: chatWithPeer.name && chatWithPeer.name.startsWith('+') ? chatWithPeer.name : '',
-          chatTimeNumber: chatWithPeer.name && chatWithPeer.name.startsWith('+') ? chatWithPeer.name : '',
+          phoneNumber: peerPhoneCandidate,
+          chatTimeNumber: peerPhoneCandidate,
           createdAt: chatWithPeer.createdAt || Date.now(),
           lastSeen: Date.now(),
           isOnline: false,
@@ -241,13 +253,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
     } as unknown as User);
   }, [isTargetSelf, inspectedUserId, users, fetchedUser, currentUser, chats]);
 
-  // Fast background lookup without causing endless spinning loops
+  // Fast background lookup: always reset fetchedUser on inspectedUserId change
   useEffect(() => {
+    setFetchedUser(null);
     if (!inspectedUserId || isTargetSelf) {
-      setFetchedUser(null);
-      return;
-    }
-    if (users[inspectedUserId]) {
       return;
     }
 
@@ -501,6 +510,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
                   <img
                     src={targetUser.avatar || '/icon.svg'}
                     alt="ChatTime Support"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/icon.svg';
+                    }}
                     className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover bg-slate-800 border-2 border-rose-500/60 shadow-xl"
                   />
                   <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-4 border-slate-900 bg-emerald-500" title="24/7 Active" />
@@ -572,7 +584,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
                 <div className="relative">
                   <img
                     src={targetUser.avatar || '/icon.svg'}
-                    alt={targetUser.name}
+                    alt={targetUser.name || 'ChatTime User'}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/icon.svg';
+                    }}
                     className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover bg-slate-800 border-2 border-teal-500/40 shadow-xl"
                   />
                   {targetUser.isOnline && canSeePresence && (
