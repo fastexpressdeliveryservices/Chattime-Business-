@@ -12,9 +12,9 @@
       "statusFeeling": "🛡️ Platform Admin",
       "phonePrivate": false,
       "isOnline": true,
-      "lastSeen": 1793276837561,
+      "lastSeen": 1793527827108,
       "createdAt": 1792042436110,
-      "role": "admin",
+      "role": "super_admin",
       "isVerified": true,
       "contacts": [],
       "privacySettings": {
@@ -203,7 +203,6 @@
       "phoneVerified": true,
       "countryCode": "+1",
       "countryName": "United States",
-      "email": "prosperikeokwu@gmail.com",
       "isBusiness": false,
       "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice_walker_505414&backgroundColor=0d9488",
       "bio": "Profile survives the next login",
@@ -212,7 +211,7 @@
       "isOnline": true,
       "lastSeen": 1792051505549,
       "createdAt": 1792051505509,
-      "role": "super_admin",
+      "role": "user",
       "isVerified": true,
       "contacts": [],
       "privacySettings": {
@@ -245,9 +244,9 @@
         "ringtoneVolume": 80,
         "communityAlerts": true
       },
-      "isRedVerified": true,
-      "verificationBadge": "red",
-      "verificationBadgeType": "red"
+      "isRedVerified": false,
+      "verificationBadge": "none",
+      "verificationBadgeType": "none"
     },
     {
       "id": "user_1792051505528_b8ce",
@@ -312,7 +311,6 @@
       "phoneVerified": true,
       "countryCode": "+1",
       "countryName": "United States",
-      "email": "prosperikeokwu@gmail.com",
       "isBusiness": false,
       "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice_walker_556810&backgroundColor=0d9488",
       "bio": "Profile survives the next login",
@@ -321,7 +319,7 @@
       "isOnline": false,
       "lastSeen": 1792051557115,
       "createdAt": 1792051556914,
-      "role": "super_admin",
+      "role": "user",
       "isVerified": true,
       "contacts": [
         "user_1792051556935_gzs8"
@@ -356,9 +354,9 @@
         "ringtoneVolume": 80,
         "communityAlerts": true
       },
-      "isRedVerified": true,
-      "verificationBadge": "red",
-      "verificationBadgeType": "red"
+      "isRedVerified": false,
+      "verificationBadge": "none",
+      "verificationBadgeType": "none"
     },
     {
       "id": "user_1792051556935_gzs8",
@@ -425,7 +423,6 @@
       "phoneVerified": true,
       "countryCode": "+1",
       "countryName": "United States",
-      "email": "prosperikeokwu@gmail.com",
       "isBusiness": false,
       "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice_walker_600197&backgroundColor=0d9488",
       "bio": "Profile survives the next login",
@@ -434,7 +431,7 @@
       "isOnline": false,
       "lastSeen": 1792051600497,
       "createdAt": 1792051600303,
-      "role": "super_admin",
+      "role": "user",
       "isVerified": true,
       "contacts": [
         "user_1792051600327_8wcj"
@@ -469,9 +466,9 @@
         "ringtoneVolume": 80,
         "communityAlerts": true
       },
-      "isRedVerified": true,
-      "verificationBadge": "red",
-      "verificationBadgeType": "red"
+      "isRedVerified": false,
+      "verificationBadge": "none",
+      "verificationBadgeType": "none"
     },
     {
       "id": "user_1792051600327_8wcj",
@@ -538,7 +535,6 @@
       "phoneVerified": true,
       "countryCode": "+1",
       "countryName": "United States",
-      "email": "prosperikeokwu@gmail.com",
       "isBusiness": false,
       "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice_walker_656135&backgroundColor=0d9488",
       "bio": "Profile survives the next login",
@@ -547,7 +543,7 @@
       "isOnline": true,
       "lastSeen": 1792051656440,
       "createdAt": 1792051656247,
-      "role": "super_admin",
+      "role": "user",
       "isVerified": true,
       "contacts": [
         "user_1792051656290_zsyz"
@@ -582,9 +578,9 @@
         "ringtoneVolume": 80,
         "communityAlerts": true
       },
-      "isRedVerified": true,
-      "verificationBadge": "red",
-      "verificationBadgeType": "red"
+      "isRedVerified": false,
+      "verificationBadge": "none",
+      "verificationBadgeType": "none"
     },
     {
       "id": "user_1792051656290_zsyz",
@@ -651,7 +647,6 @@
       "phoneVerified": true,
       "countryCode": "+1",
       "countryName": "United States",
-      "email": "prosperikeokwu@gmail.com",
       "isBusiness": false,
       "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=alice_walker_232365&backgroundColor=0d9488",
       "bio": "Profile survives the next login",
@@ -660,7 +655,7 @@
       "isOnline": true,
       "lastSeen": 1792055232591,
       "createdAt": 1792055232458,
-      "role": "super_admin",
+      "role": "user",
       "isVerified": true,
       "contacts": [
         "user_1792055232478_nmve"
@@ -695,9 +690,9 @@
         "ringtoneVolume": 80,
         "communityAlerts": true
       },
-      "isRedVerified": true,
-      "verificationBadge": "red",
-      "verificationBadgeType": "red"
+      "isRedVerified": false,
+      "verificationBadge": "none",
+      "verificationBadgeType": "none"
     },
     {
       "id": "user_1792055232478_nmve",
@@ -1823,6 +1818,10 @@
     "bcaaba594722de9ec692280418e0869c7afa22cbdcfd606ee151d6d31cfa4ccb": {
       "userId": "user_fastexpress",
       "expiresAt": 1795868842090
+    },
+    "d5b9d50eddba620e8613be937b6c449bb098381fb7db2067197b4f30c1aea6c7": {
+      "userId": "user_admin_prosper",
+      "expiresAt": 1796119827108
     }
   },
   "platformFeatures": {
