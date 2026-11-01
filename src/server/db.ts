@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { createHash } from 'crypto';
 import { fileURLToPath } from 'url';
 import type {
   User,
@@ -57,6 +58,28 @@ const DEFAULT_PLATFORM_FEATURES: PlatformFeatureSettings = {
   voiceEffectsEnabled: true,
   voiceModifiers: ['American 🇺🇸', 'British 🇬🇧', 'Indian 🇮🇳', 'Asian 🌏', 'Australian 🇦🇺', 'Jamaican 🇯🇲'],
 };
+
+export function hashPin(pin: string): string {
+  const value = String(pin ?? '').trim();
+  if (!value) return '';
+  const salt = process.env.CHATTIME_PIN_SECRET || 'chattime-pin-default-secret';
+  return createHash('sha256').update(`${salt}:${value}`).digest('hex');
+}
+
+export function normalizePin(pin: string | undefined): string {
+  const value = typeof pin === 'string' ? pin.trim() : '';
+  if (!value) return '';
+  if (/^[a-f0-9]{64}$/i.test(value)) return value;
+  return hashPin(value);
+}
+
+export function verifyPin(pin: string | undefined, expectedHash?: string): boolean {
+  const candidate = typeof pin === 'string' ? pin.trim() : '';
+  const expected = typeof expectedHash === 'string' ? expectedHash.trim() : '';
+  if (!candidate || !expected) return false;
+  const hashed = normalizePin(candidate);
+  return hashed === expected || hashPin(candidate) === expected;
+}
 
 export interface ChatTimeDatabase {
   users: User[];
@@ -163,6 +186,7 @@ class DatabaseManager {
             maintenanceMode: Boolean(parsed.maintenanceMode),
             welcomeSettings: parsed.welcomeSettings || { ...DEFAULT_WELCOME_SETTINGS },
           };
+          this.migrateLegacyPinHashes(loaded);
           this.ensureAdminAndOfficialChannel(loaded);
           this.persist(loaded);
           return loaded;
@@ -195,9 +219,23 @@ class DatabaseManager {
       welcomeSettings: { ...DEFAULT_WELCOME_SETTINGS },
     };
 
+    this.migrateLegacyPinHashes(initialDb);
     this.ensureAdminAndOfficialChannel(initialDb);
     this.persist(initialDb);
     return initialDb;
+  }
+
+  private migrateLegacyPinHashes(database: ChatTimeDatabase) {
+    for (const user of database.users) {
+      const rawPin = user.securitySettings?.pinCode;
+      if (typeof rawPin === 'string' && rawPin.trim()) {
+        user.securitySettings = {
+          ...user.securitySettings,
+          pinCode: normalizePin(rawPin),
+          pinEnabled: Boolean(rawPin),
+        };
+      }
+    }
   }
 
   private ensureAdminAndOfficialChannel(database: ChatTimeDatabase) {
@@ -654,6 +692,14 @@ class DatabaseManager {
   }
 
   addUser(user: User): User {
+    if (user.securitySettings?.pinCode) {
+      user.securitySettings = {
+        ...user.securitySettings,
+        pinCode: normalizePin(user.securitySettings.pinCode),
+        pinEnabled: Boolean(user.securitySettings.pinCode),
+      };
+    }
+
     const ADMIN_EMAILS = [
       'prosperikeokwu@gmail.com',
     ];
@@ -697,7 +743,15 @@ class DatabaseManager {
   updateUser(id: string, updates: Partial<User>): User | null {
     const idx = this.db.users.findIndex((u) => u.id === id);
     if (idx === -1) return null;
-    this.db.users[idx] = { ...this.db.users[idx], ...updates };
+    const nextUser = { ...this.db.users[idx], ...updates };
+    if (nextUser.securitySettings?.pinCode) {
+      nextUser.securitySettings = {
+        ...nextUser.securitySettings,
+        pinCode: normalizePin(nextUser.securitySettings.pinCode),
+        pinEnabled: Boolean(nextUser.securitySettings.pinCode),
+      };
+    }
+    this.db.users[idx] = nextUser;
 
     // Cascade avatar and name changes everywhere across messages, calls, and stories
     if (updates.avatar || updates.name) {
@@ -821,7 +875,7 @@ class DatabaseManager {
     const user = this.getUserById(id);
     if (!user) return null;
     user.securitySettings.pinEnabled = Boolean(newPin);
-    user.securitySettings.pinCode = newPin || undefined;
+    user.securitySettings.pinCode = newPin ? normalizePin(newPin) : undefined;
     this.addAuditLog({
       id: 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
       timestamp: Date.now(),
@@ -860,6 +914,15 @@ class DatabaseManager {
     });
     this.save();
     return user;
+  }
+
+  verifyUserPin(userId: string, pin: string): boolean {
+    const user = this.getUserById(userId);
+    if (!user || !pin) return false;
+    const candidate = String(pin).trim();
+    const expected = user.securitySettings?.pinCode || '';
+    if (!expected) return false;
+    return verifyPin(candidate, expected) || String(candidate) === String(expected);
   }
 
   deleteUser(id: string, adminName: string = 'Admin'): boolean {

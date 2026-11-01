@@ -36,6 +36,7 @@ import {
   HelpCircle,
   MessageSquare,
   FileText,
+  TimerReset,
   ChevronRight,
   Info,
   Wand2,
@@ -237,7 +238,12 @@ export const SettingsView: React.FC = () => {
   const [phoneSuccess, setPhoneSuccess] = useState('');
 
   // Security PIN state
-  const [newPin, setNewPin] = useState(currentUser.securitySettings?.pinCode || '');
+  const [newPin, setNewPin] = useState('');
+  const [lockTimeoutMs, setLockTimeoutMs] = useState<number>(() => {
+    if (typeof window === 'undefined') return 15 * 60 * 1000;
+    const saved = Number(localStorage.getItem('chattime_lock_timeout_ms') || '900000');
+    return Number.isFinite(saved) && saved > 0 ? saved : 15 * 60 * 1000;
+  });
 
   useEffect(() => {
     setName(currentUser.name);
@@ -248,8 +254,14 @@ export const SettingsView: React.FC = () => {
     setWebsite(currentUser.website || '');
     setAvatar(currentUser.avatar);
     setPhoneCountryCode(currentUser.countryCode || '+1');
-    setNewPin(currentUser.securitySettings?.pinCode || '');
+    setNewPin('');
   }, [currentUser.id]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('chattime_lock_timeout_ms', String(lockTimeoutMs));
+    }
+  }, [lockTimeoutMs]);
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1484,6 +1496,31 @@ export const SettingsView: React.FC = () => {
             </div>
 
             <div className="p-5 bg-slate-900 border border-slate-800 rounded-3xl space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400">
+                    <TimerReset className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-100">Auto-lock timeout</h4>
+                    <p className="text-[11px] text-slate-400">Lock ChatTime after inactivity</p>
+                  </div>
+                </div>
+                <select
+                  value={lockTimeoutMs}
+                  onChange={(e) => setLockTimeoutMs(Number(e.target.value))}
+                  className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200"
+                >
+                  <option value={15 * 1000}>15 seconds</option>
+                  <option value={60 * 1000}>1 minute</option>
+                  <option value={5 * 60 * 1000}>5 minutes</option>
+                  <option value={15 * 60 * 1000}>15 minutes</option>
+                  <option value={30 * 60 * 1000}>30 minutes</option>
+                  <option value={60 * 60 * 1000}>1 hour</option>
+                  <option value={0}>Disabled</option>
+                </select>
+              </div>
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 rounded-xl bg-teal-500/10 text-teal-400">
@@ -1502,7 +1539,7 @@ export const SettingsView: React.FC = () => {
                   onChange={(e) =>
                     updateSecurityField({
                       pinEnabled: e.target.checked,
-                      pinCode: newPin || '1234',
+                      pinCode: e.target.checked ? newPin || '1234' : undefined,
                     })
                   }
                   className="w-4 h-4 accent-teal-500"

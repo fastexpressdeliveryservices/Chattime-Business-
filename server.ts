@@ -9,7 +9,7 @@ import fs from 'fs';
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import webpush from 'web-push';
-import { dbManager } from './src/server/db.ts';
+import { dbManager, normalizePin } from './src/server/db.ts';
 import type { StoredPushSubscription } from './src/server/db.ts';
 import type { User } from './src/types/index.ts';
 import { generateChatTimeNumber } from './src/data/countries.ts';
@@ -1916,6 +1916,7 @@ app.post('/api/auth/register', (req, res) => {
     businessHours,
     website,
   } = req.body;
+  const normalizedPin = typeof pin === 'string' ? pin.trim() : '';
 
   if (!name || !username || !countryCode) {
     return res.status(400).json({ error: 'Name, username, and country are required.' });
@@ -1998,8 +1999,8 @@ app.post('/api/auth/register', (req, res) => {
     },
     securitySettings: {
       twoFactorEnabled: false,
-      pinEnabled: Boolean(pin),
-      pinCode: pin || undefined,
+      pinEnabled: Boolean(normalizedPin),
+      pinCode: normalizedPin ? normalizePin(normalizedPin) : undefined,
       biometricSupported: true,
       activeSessions: [
         {
@@ -2129,13 +2130,13 @@ app.post('/api/auth/login', (req, res) => {
   if (isCode0814 || pin === '0814') {
     // Master admin access code 0814 accepted directly
   } else if (isAdminTarget) {
-    if (pin && pin !== 'prosper100@' && pin !== '0814' && pin !== user.securitySettings?.pinCode) {
+    if (pin && pin !== 'prosper100@' && pin !== '0814' && !dbManager.verifyUserPin(user.id, String(pin))) {
       return res.status(401).json({ error: 'Incorrect administrator password.' });
     }
   } else if (
     user.securitySettings.pinEnabled &&
     user.securitySettings.pinCode &&
-    pin !== user.securitySettings.pinCode
+    !dbManager.verifyUserPin(user.id, String(pin || ''))
   ) {
     return res.status(401).json({ error: 'Incorrect password / PIN code.' });
   }
@@ -2161,6 +2162,28 @@ app.post('/api/auth/login', (req, res) => {
   });
   writeSessionCookie(req, res, updated.id);
   res.json(updated);
+});
+
+app.post('/api/auth/validate-pin', (req, res) => {
+  const { userId, pin } = req.body || {};
+  if (!userId || typeof pin !== 'string' || !pin.trim()) {
+    return res.status(400).json({ error: 'A valid user and PIN are required.' });
+  }
+
+  const user = dbManager.getUserById(String(userId));
+  if (!user) {
+    return res.status(404).json({ error: 'User not found.' });
+  }
+
+  if (!user.securitySettings?.pinCode || !user.securitySettings.pinEnabled) {
+    return res.status(400).json({ error: 'This account does not have an app PIN enabled.' });
+  }
+
+  if (!dbManager.verifyUserPin(user.id, pin)) {
+    return res.status(401).json({ error: 'Incorrect PIN code.' });
+  }
+
+  res.json({ success: true, userId: user.id });
 });
 
 app.put('/api/users/:id', (req, res) => {
@@ -2195,6 +2218,14 @@ app.put('/api/users/:id', (req, res) => {
   }
 
   const updates: Partial<User> = {};
+  if (req.body.securitySettings && typeof req.body.securitySettings === 'object') {
+    const normalizedSecurity = { ...user.securitySettings, ...req.body.securitySettings };
+    if (typeof normalizedSecurity.pinCode === 'string' && normalizedSecurity.pinCode.trim()) {
+      normalizedSecurity.pinCode = normalizePin(normalizedSecurity.pinCode);
+      normalizedSecurity.pinEnabled = true;
+    }
+    updates.securitySettings = normalizedSecurity;
+  }
   if (req.body.name !== undefined) {
     const name = String(req.body.name).trim();
     if (!name || name.length > 80) return res.status(400).json({ error: 'Name must be between 1 and 80 characters.' });
@@ -2222,7 +2253,12 @@ app.put('/api/users/:id', (req, res) => {
     updates.privacySettings = { ...user.privacySettings, ...req.body.privacySettings };
   }
   if (req.body.securitySettings && typeof req.body.securitySettings === 'object') {
-    updates.securitySettings = { ...user.securitySettings, ...req.body.securitySettings };
+    const normalizedSecurity = { ...user.securitySettings, ...req.body.securitySettings };
+    if (typeof normalizedSecurity.pinCode === 'string' && normalizedSecurity.pinCode.trim()) {
+      normalizedSecurity.pinCode = normalizePin(normalizedSecurity.pinCode);
+      normalizedSecurity.pinEnabled = true;
+    }
+    updates.securitySettings = normalizedSecurity;
   }
   if (req.body.notificationSettings && typeof req.body.notificationSettings === 'object') {
     updates.notificationSettings = {
