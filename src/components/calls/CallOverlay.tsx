@@ -768,7 +768,7 @@ export const CallOverlay: React.FC = () => {
                       ? 'bg-gradient-to-r from-teal-500 to-indigo-500 text-slate-950 font-bold shadow-lg shadow-teal-500/25 ring-2 ring-teal-400'
                       : 'bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-700'
                   }`}
-                  title="WhatsApp-Style Camera Filters & Beauty Glow"
+                  title="Camera Filters & Beauty Glow"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span className="hidden sm:inline text-xs font-bold">
@@ -976,7 +976,7 @@ export const CallOverlay: React.FC = () => {
                           Camera Beauty & Filters
                         </h4>
                         <p className="text-[10px] text-slate-400">
-                          Real-time enhancements like WhatsApp & Instagram
+                          Real-time enhancements & beauty glow
                         </p>
                       </div>
                     </div>

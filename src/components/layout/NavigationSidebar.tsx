@@ -43,17 +43,6 @@ export const NavigationSidebar: React.FC = () => {
       badge: totalUnreadMessages > 0 ? totalUnreadMessages : undefined,
     },
     {
-      id: 'calls',
-      label: t('calls', 'Calls'),
-      icon: PhoneCall,
-      badge: missedCallsCount > 0 ? missedCallsCount : undefined,
-    },
-    {
-      id: 'contacts',
-      label: t('contacts', 'Contacts'),
-      icon: Users,
-    },
-    {
       id: 'status',
       label: t('status', 'Status'),
       icon: CircleDot,
@@ -63,6 +52,12 @@ export const NavigationSidebar: React.FC = () => {
       id: 'discover',
       label: t('communities', 'Communities'),
       icon: Compass,
+    },
+    {
+      id: 'calls',
+      label: t('calls', 'Calls'),
+      icon: PhoneCall,
+      badge: missedCallsCount > 0 ? missedCallsCount : undefined,
     },
   ];
 

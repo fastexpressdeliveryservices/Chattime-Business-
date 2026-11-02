@@ -58,7 +58,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
   // Filter tabs: all saved contacts vs online saved contacts
   const [activeFilter, setActiveFilter] = useState<'all' | 'online'>('all');
 
-  // WhatsApp-style "New Contact" Modal State
+  // "New Contact" Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(
     SUPPORTED_COUNTRIES.find((c) => c.iso === 'US') || SUPPORTED_COUNTRIES[0]
@@ -79,14 +79,10 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
     (u) => u && u.id !== currentUser.id && savedContactIds.includes(u.id)
   );
 
-  // When searching, allow searching through all active registered accounts on ChatTime (including self)
+  // Contacts tab strictly lists the user's saved contacts; searching only filters their own contacts
   const baseList: User[] = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return myContactsList;
-    }
-    const all = Object.values(users) as User[];
-    return all.filter((u) => Boolean(u && u.id));
-  }, [searchQuery, myContactsList, users]);
+    return myContactsList;
+  }, [myContactsList]);
 
   // Filter contacts by search query & online state
   const filteredContacts = baseList
@@ -110,7 +106,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
     })
     .sort((a, b) => getContactName(a.id, a.name || '').localeCompare(getContactName(b.id, b.name || '')));
 
-  // Group contacts alphabetically (A-Z) like WhatsApp
+  // Group contacts alphabetically (A-Z)
   const groupedContacts = filteredContacts.reduce<Record<string, User[]>>((acc, contact) => {
     const firstChar = getContactName(contact.id, contact.name).trim().charAt(0).toUpperCase();
     const groupKey = /^[A-Z]$/.test(firstChar) ? firstChar : '#';
@@ -127,15 +123,12 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
     return a.localeCompare(b);
   });
 
-  // Live lookup in New Contact Modal when user types a number or username
+  // Live lookup in New Contact Modal only when user enters COMPLETE details (full phone number or exact username)
   useEffect(() => {
     const raw = contactIdentifierInput.trim();
     const cleanDigits = raw.replace(/[^0-9]/g, '');
     const isUsername = raw.startsWith('@') || /^[a-zA-Z]/.test(raw);
-    const cleanUsername = raw.replace(/^@/, '').trim();
-
-    // Require complete contact information: at least 2 chars for username, or 3+ digits for phone
-    const isComplete = isUsername ? cleanUsername.length >= 2 : cleanDigits.length >= 3;
+    const cleanUsername = raw.replace(/^@/, '').trim().toLowerCase();
 
     if (!raw) {
       setLookupMatch(null);
@@ -144,12 +137,15 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
       return;
     }
 
+    // Require complete details: at least 3 chars for exact username, or at least 7 digits for phone number
+    const isComplete = isUsername ? cleanUsername.length >= 3 : cleanDigits.length >= 7;
+
     if (!isComplete) {
       setLookupMatch(null);
       setLookupError(
         isUsername
-          ? 'Enter username (at least 2 characters)'
-          : 'Enter phone number (at least 3 digits)'
+          ? 'Enter complete username (at least 3 characters)'
+          : 'Enter complete phone number (at least 7 digits with country code)'
       );
       setIsLookingUp(false);
       return;
@@ -160,26 +156,39 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
 
     const timer = setTimeout(async () => {
       try {
-        // Build candidate search queries: raw input, and with selected country code
         const withCountry = selectedCountry.code ? `${selectedCountry.code} ${raw}` : raw;
 
         const results = await searchUsers(raw);
-        let match = results[0];
+        let candidate = results[0];
 
-        if (!match && cleanDigits) {
+        if (!candidate && cleanDigits) {
           const countryResults = await searchUsers(withCountry);
-          match = countryResults[0];
+          candidate = countryResults[0];
         }
 
-        if (match) {
-          setLookupMatch(match);
+        // For username, verify it matches exactly
+        if (candidate && isUsername) {
+          const candidateUser = (candidate.username || '').toLowerCase();
+          if (candidateUser !== cleanUsername) {
+            candidate = undefined as any;
+          }
+        }
+
+        // Exclude admin accounts from non-admin viewers
+        const isViewerAdmin = currentUser.role === 'admin' || currentUser.role === 'super_admin';
+        if (candidate && (candidate.role === 'admin' || candidate.role === 'super_admin') && !isViewerAdmin) {
+          candidate = undefined as any;
+        }
+
+        if (candidate) {
+          setLookupMatch(candidate);
           setLookupError(null);
           if (!contactNameInput.trim()) {
-            setContactNameInput(match.name);
+            setContactNameInput(candidate.name);
           }
         } else {
           setLookupMatch(null);
-          setLookupError('No ChatTime user found matching this exact contact information.');
+          setLookupError('No ChatTime user found matching this contact information.');
         }
       } catch {
         setLookupError('Could not verify contact on network.');
@@ -189,7 +198,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
     }, 280);
 
     return () => clearTimeout(timer);
-  }, [contactIdentifierInput, selectedCountry, searchUsers, currentUser.id, contactNameInput]);
+  }, [contactIdentifierInput, selectedCountry, searchUsers, currentUser.id, currentUser.role, contactNameInput]);
 
   const handleOpenAddModal = (initialQuery?: string) => {
     setContactNameInput('');
@@ -278,9 +287,9 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
 
   return (
     <div className="flex-1 flex h-full bg-slate-950 overflow-hidden relative">
-      {/* Main Contacts List Container (WhatsApp Styled) */}
+      {/* Main Contacts List Container */}
       <div className="flex-1 flex flex-col h-full overflow-hidden border-r border-slate-800/80">
-        {/* WhatsApp Top Header */}
+        {/* Top Header */}
         <div className="p-4 sm:px-6 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
           <div>
             <h1 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
@@ -354,14 +363,14 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
             </div>
 
             <span className="text-[11px] text-slate-500 hidden sm:inline">
-              Private Address Book • WhatsApp Styled
+              Private Address Book • Encrypted
             </span>
           </div>
         </div>
 
         {/* Contacts Scrollable Body */}
         <div className="flex-1 overflow-y-auto no-scrollbar">
-          {/* WhatsApp Action List Items (Always at the top) */}
+          {/* Action List Items (Always at the top) */}
           <div className="p-2 sm:px-4 space-y-1 border-b border-slate-800/60">
             {/* New Contact Action Row */}
             <button
@@ -412,7 +421,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
 
           {/* Section: Contacts List on ChatTime */}
           {myContactsList.length === 0 ? (
-            /* Clean WhatsApp-Style Empty State */
+            /* Clean Empty State */
             <div className="py-16 px-6 text-center max-w-md mx-auto space-y-4">
               <div className="w-16 h-16 rounded-3xl bg-teal-500/10 border border-teal-500/25 flex items-center justify-center text-teal-400 mx-auto shadow-inner">
                 <UserPlus className="w-8 h-8" />
@@ -590,7 +599,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
           )}
         </div>
 
-        {/* WhatsApp Floating Action Button (FAB) at bottom-right */}
+        {/* Floating Action Button (FAB) at bottom-right */}
         <button
           type="button"
           onClick={() => handleOpenAddModal()}
@@ -657,7 +666,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
               )}
             </div>
 
-            {/* Quick Actions (WhatsApp Style: Chat, Voice, Video) */}
+            {/* Quick Actions (Chat, Voice, Video) */}
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
@@ -773,7 +782,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
       )}
 
       {/* ============================================================== */}
-      {/* WhatsApp-Style "New Contact" Modal Dialog */}
+      {/* "New Contact" Modal Dialog */}
       {/* ============================================================== */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150">

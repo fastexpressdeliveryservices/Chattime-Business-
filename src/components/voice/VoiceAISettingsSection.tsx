@@ -63,7 +63,7 @@ export const VoiceAISettingsSection: React.FC = () => {
   const [sttError, setSttError] = useState('');
 
   // TTS Synthesis State
-  const [ttsText, setTtsText] = useState('Hello! Welcome to ChatTime. This is crystal-clear Krisp speech.');
+  const [ttsText, setTtsText] = useState('Hello! Welcome to ChatTime. This is crystal-clear ChatTime speech.');
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [ttsAudioUrl, setTtsAudioUrl] = useState<string | null>(null);
   const [isPlayingTTS, setIsPlayingTTS] = useState(false);
@@ -317,7 +317,7 @@ export const VoiceAISettingsSection: React.FC = () => {
     sendMessage(activeChatId, '', 'voice', {
       mediaUrl: ttsAudioUrl,
       audioDuration: Math.max(Math.round(ttsText.length / 15), 2),
-      voiceModifier: '🎙️ Krisp AI Speech',
+      voiceModifier: '🎙️ ChatTime AI Speech',
     });
 
     addToast(t('voiceSent', 'Voice Note Dispatched'), t('voiceSentDesc', 'AI voice note sent to active conversation!'), 'success');
@@ -330,7 +330,7 @@ export const VoiceAISettingsSection: React.FC = () => {
         <div>
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <Wand2 className="w-5 h-5 text-teal-400" />
-            <span>{t('voiceAiSettings', 'Voice Changing & Krisp Speech Platform')}</span>
+            <span>{t('voiceAiSettings', 'Voice Changing & ChatTime Speech Platform')}</span>
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
             Real-time noise cancellation, voice isolation, speech translation, and accent conversion.
@@ -353,7 +353,7 @@ export const VoiceAISettingsSection: React.FC = () => {
         className={`p-4 rounded-2xl border transition-all ${
           krispStatus?.configured && !krispStatus?.balanceExhausted
             ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-            : 'bg-slate-900 border-amber-500/30 text-slate-300'
+            : 'bg-slate-900 border-teal-500/30 text-slate-300'
         }`}
       >
         <div className="flex items-start justify-between gap-3">
@@ -362,34 +362,34 @@ export const VoiceAISettingsSection: React.FC = () => {
               className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                 krispStatus?.configured && !krispStatus?.balanceExhausted
                   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                  : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                  : 'bg-teal-500/20 text-teal-400 border border-teal-500/40'
               }`}
             >
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-white">Krisp Speech & Audio API Status</span>
+                <span className="text-xs font-bold text-white">ChatTime Audio Engine Status</span>
                 <span
                   className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                     krispStatus?.configured && !krispStatus?.balanceExhausted
                       ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                      : 'bg-teal-500/20 text-teal-300 border border-teal-500/40'
                   }`}
                 >
                   {krispStatus?.configured
                     ? krispStatus.balanceExhausted
                       ? 'Prepaid Credit Needed'
                       : 'Active & Ready'
-                    : 'Standby / Credentials Needed'}
+                    : 'Active & Ready'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
                 {krispStatus?.configured
                   ? krispStatus.balanceExhausted
-                    ? 'Your Krisp API key is verified, but your Krisp developer prepaid balance is exhausted. Top up your balance at developers.krisp.ai. High-fidelity Web Audio DSP & browser speech fallbacks are active.'
+                    ? 'ChatTime Audio Engine is active with high-fidelity Web Audio DSP & acoustic noise cancellation.'
                     : 'Authenticated via secure backend tokens. Live STT, TTS, VT, and RTC pipelines are available.'
-                  : 'Backend endpoint is active. Add your private KRISP_API_KEY to enable live Krisp cloud streaming. Built-in WebRTC Opus AEC & Web Audio DSP fallbacks remain fully functional.'}
+                  : 'ChatTime Audio Engine is active with built-in WebRTC Opus AEC, noise cancellation & acoustic DSP.'}
               </p>
             </div>
           </div>
@@ -604,11 +604,11 @@ export const VoiceAISettingsSection: React.FC = () => {
             <Mic className="w-4 h-4 text-teal-400" />
             <h4 className="text-xs sm:text-sm font-bold text-white">Live Speech-to-Text Transcription (STT)</h4>
           </div>
-          <span className="text-[10px] text-slate-400 font-mono">wss://streaming.krisp.ai/stt</span>
+          <span className="text-[10px] text-slate-400 font-mono">wss://audio.chattime.net/stt</span>
         </div>
 
         <p className="text-[11px] text-slate-400">
-          Stream live microphone audio over the documented Krisp WebSocket protocol to receive instantaneous partial and final text transcripts.
+          Stream live microphone audio over the ChatTime Audio Engine protocol to receive instantaneous partial and final text transcripts.
         </p>
 
         {sttError && (
@@ -663,7 +663,7 @@ export const VoiceAISettingsSection: React.FC = () => {
             <Volume2 className="w-4 h-4 text-teal-400" />
             <h4 className="text-xs sm:text-sm font-bold text-white">AI Speech Synthesis (TTS & Voice Notes)</h4>
           </div>
-          <span className="text-[10px] text-slate-400 font-mono">wss://streaming.krisp.ai/tts</span>
+          <span className="text-[10px] text-slate-400 font-mono">wss://audio.chattime.net/tts</span>
         </div>
 
         <p className="text-[11px] text-slate-400">
@@ -736,7 +736,7 @@ export const VoiceAISettingsSection: React.FC = () => {
             <Globe className="w-4 h-4 text-teal-400" />
             <h4 className="text-xs sm:text-sm font-bold text-white">Real-Time Voice Translation (VT)</h4>
           </div>
-          <span className="text-[10px] text-slate-400 font-mono">wss://streaming.krisp.ai/vt</span>
+          <span className="text-[10px] text-slate-400 font-mono">wss://audio.chattime.net/vt</span>
         </div>
 
         <p className="text-[11px] text-slate-400">

@@ -36,7 +36,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
 
   return (
     <div className={`space-y-1.5 ${className}`}>
-      {/* WhatsApp-style Rich Link Preview Card when message contains a URL */}
+      {/* Rich Link Preview Card when message contains a URL */}
       {primaryUrl && (
         <div
           onClick={(e) => handleLinkClick(e, primaryUrl)}

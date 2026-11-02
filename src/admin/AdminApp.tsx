@@ -1284,7 +1284,7 @@ export const AdminApp: React.FC = () => {
                     <Lock className="w-4 h-4 text-red-400" /> Encryption & Privacy
                   </h3>
                   <div className="p-3 rounded-xl bg-slate-950 text-xs text-slate-300 leading-relaxed">
-                    ChatTime customer communications are end-to-end encrypted like WhatsApp. Administrative tools operate strictly through metadata, account authorities, and trust policies without backdoors.
+                    ChatTime customer communications are end-to-end encrypted. Administrative tools operate strictly through metadata, account authorities, and trust policies without backdoors.
                   </div>
                 </div>
               </div>

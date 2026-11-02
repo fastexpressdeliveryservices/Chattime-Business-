@@ -60,8 +60,14 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onOpenRegister: _onOpenReg
     });
     const allUsers = Array.from(userPoolMap.values());
 
+    const isViewerAdmin = currentUser.role === 'admin' || currentUser.role === 'super_admin';
+
     const matches = allUsers.filter((u) => {
       if (!u) return false;
+      // Exclude admin accounts from regular customers search
+      const isAdmin = u.role === 'admin' || u.role === 'super_admin';
+      if (isAdmin && !isViewerAdmin) return false;
+
       const uUser = (u.username || '').toLowerCase();
       const uName = (u.name || '').toLowerCase();
       const uEmail = (u.email || '').toLowerCase();

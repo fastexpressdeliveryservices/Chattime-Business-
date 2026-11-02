@@ -41,6 +41,8 @@ import {
   Sparkles,
   ChevronDown,
   Megaphone,
+  LifeBuoy,
+  Ban,
 } from 'lucide-react';
 import { useChatTime } from '../../context/ChatTimeContext';
 import { Message, LocationData, PollData, User } from '../../types';
@@ -58,6 +60,7 @@ import { MessageStatusTicks } from './MessageStatusTicks';
 import { BrandLogo } from '../common/BrandLogo';
 import { VerifiedBadge } from '../common/VerifiedBadge';
 import { RichMessageContent } from './RichMessageContent';
+import { SupportTicketsModal } from '../support/SupportTicketsModal';
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 const REACTION_BAR_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '🎉'];
@@ -146,6 +149,7 @@ export const ChatWindow: React.FC = () => {
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const [selectedVoiceModifier, setSelectedVoiceModifier] = useState<string>('Original 🎙️');
   const [isVoiceModifierPickerOpen, setIsVoiceModifierPickerOpen] = useState(false);
+  const [isSupportTicketsOpen, setIsSupportTicketsOpen] = useState(false);
 
   // Lightbox for photos
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
@@ -446,6 +450,12 @@ export const ChatWindow: React.FC = () => {
       ? activeChat.participants.find((id) => id !== currentUser.id) || activeChat.participants[0]
       : undefined;
   const peerUser = peerUserId ? users[peerUserId] : undefined;
+  const isSupportChat =
+    activeChat.id === 'chat_chattime_support' ||
+    activeChat.name === 'ChatTime Support' ||
+    (Array.isArray(activeChat.participants) && activeChat.participants.includes('user_chattime_support')) ||
+    peerUser?.id === 'user_chattime_support';
+
   const isPeerBlockedByMe = Boolean(
     peerUserId &&
     ((currentUser.blockedUsers || []).includes(peerUserId) || isUserGhosted(peerUserId))
@@ -478,11 +488,7 @@ export const ChatWindow: React.FC = () => {
       (!peerUser.phonePrivate &&
         (numberVis === 'everyone' || (numberVis === 'contacts' && isContact))));
 
-  const peerPhone = peerUser
-    ? canSeePhone
-      ? rawPhone
-      : maskPhoneNumber(rawPhone)
-    : null;
+  const peerPhone = peerUser && canSeePhone ? rawPhone : null;
 
   const lastSeenVis = peerUser?.privacySettings?.lastSeenVisibility || 'everyone';
   const canSeePresence =
@@ -614,7 +620,7 @@ export const ChatWindow: React.FC = () => {
             sampleRate: 48000,
           },
         });
-        // Prioritize native Opus 128kbps codec for crystal-clear WhatsApp-quality audio
+        // Prioritize native Opus 128kbps codec for crystal-clear HD audio
         const mimeType =
           typeof MediaRecorder !== 'undefined'
             ? MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
@@ -938,58 +944,74 @@ export const ChatWindow: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Header Controls: Audio Call, Video Call, Ghost Toggle, Search, Profile & Menu */}
+          {/* Right Header Controls: Support Tickets OR Audio Call, Video Call, Ghost Toggle, Search, Profile & Menu */}
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-            {peerUser && (
+            {isSupportChat ? (
               <button
-                onClick={() => toggleGhostUser(peerUser.id)}
-                title={isPeerGhosted ? 'Unghost Contact' : 'Ghost Contact (Block)'}
-                className={`p-2 sm:p-2.5 rounded-xl border transition-colors ${
-                  isPeerGhosted
-                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
-                    : 'bg-slate-950/70 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border-slate-800/80'
-                }`}
+                type="button"
+                onClick={() => setIsSupportTicketsOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs shadow-md shadow-teal-500/20 transition-all active:scale-95 cursor-pointer"
+                title="Open Support Tickets"
               >
-                <Ghost className="w-4 h-4" />
+                <LifeBuoy className="w-4 h-4 stroke-[2.2]" />
+                <span className="hidden sm:inline">Support Tickets</span>
               </button>
-            )}
+            ) : (
+              <>
+                {peerUser && (
+                  <button
+                    type="button"
+                    onClick={() => toggleGhostUser(peerUser.id)}
+                    title={isPeerGhosted ? 'Unblock User' : 'Block User'}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      isPeerGhosted
+                        ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30 shadow-sm'
+                        : 'bg-slate-950/70 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border-slate-800/80'
+                    }`}
+                  >
+                    <Ban className="w-3.5 h-3.5 text-rose-400" />
+                    <span className="hidden sm:inline">{isPeerGhosted ? 'Unblock' : 'Block'}</span>
+                  </button>
+                )}
 
-            <button
-              onClick={() => {
-                if (isPeerBlockedByMe || amIBlockedByPeer) {
-                  addToast('Call Blocked', 'Cannot place call. This contact is blocked.', 'error');
-                  return;
-                }
-                startCall(activeChat.id, 'voice');
-              }}
-              title={isPeerBlockedByMe || amIBlockedByPeer ? 'Cannot call blocked contact' : 'Start Audio Call'}
-              disabled={isPeerBlockedByMe || amIBlockedByPeer}
-              className={`p-2 sm:p-2.5 rounded-xl border transition-colors ${
-                isPeerBlockedByMe || amIBlockedByPeer
-                  ? 'opacity-40 cursor-not-allowed bg-slate-950/70 text-slate-600 border-slate-800/50'
-                  : 'bg-slate-950/70 hover:bg-teal-500/15 text-teal-400 sm:text-slate-300 hover:text-teal-400 border border-slate-800/80 cursor-pointer'
-              }`}
-            >
-              <Phone className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => {
-                if (isPeerBlockedByMe || amIBlockedByPeer) {
-                  addToast('Call Blocked', 'Cannot place call. This contact is blocked.', 'error');
-                  return;
-                }
-                startCall(activeChat.id, 'video');
-              }}
-              title={isPeerBlockedByMe || amIBlockedByPeer ? 'Cannot call blocked contact' : 'Start Video Call'}
-              disabled={isPeerBlockedByMe || amIBlockedByPeer}
-              className={`p-2 sm:p-2.5 rounded-xl border transition-colors ${
-                isPeerBlockedByMe || amIBlockedByPeer
-                  ? 'opacity-40 cursor-not-allowed bg-slate-950/70 text-slate-600 border-slate-800/50'
-                  : 'bg-slate-950/70 hover:bg-indigo-500/15 text-indigo-400 sm:text-slate-300 hover:text-indigo-400 border border-slate-800/80 cursor-pointer'
-              }`}
-            >
-              <Video className="w-4 h-4" />
-            </button>
+                <button
+                  onClick={() => {
+                    if (isPeerBlockedByMe || amIBlockedByPeer) {
+                      addToast('Call Blocked', 'Cannot place call. This contact is blocked.', 'error');
+                      return;
+                    }
+                    startCall(activeChat.id, 'voice');
+                  }}
+                  title={isPeerBlockedByMe || amIBlockedByPeer ? 'Cannot call blocked contact' : 'Start Audio Call'}
+                  disabled={isPeerBlockedByMe || amIBlockedByPeer}
+                  className={`p-2 sm:p-2.5 rounded-xl border transition-colors ${
+                    isPeerBlockedByMe || amIBlockedByPeer
+                      ? 'opacity-40 cursor-not-allowed bg-slate-950/70 text-slate-600 border-slate-800/50'
+                      : 'bg-slate-950/70 hover:bg-teal-500/15 text-teal-400 sm:text-slate-300 hover:text-teal-400 border border-slate-800/80 cursor-pointer'
+                  }`}
+                >
+                  <Phone className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    if (isPeerBlockedByMe || amIBlockedByPeer) {
+                      addToast('Call Blocked', 'Cannot place call. This contact is blocked.', 'error');
+                      return;
+                    }
+                    startCall(activeChat.id, 'video');
+                  }}
+                  title={isPeerBlockedByMe || amIBlockedByPeer ? 'Cannot call blocked contact' : 'Start Video Call'}
+                  disabled={isPeerBlockedByMe || amIBlockedByPeer}
+                  className={`p-2 sm:p-2.5 rounded-xl border transition-colors ${
+                    isPeerBlockedByMe || amIBlockedByPeer
+                      ? 'opacity-40 cursor-not-allowed bg-slate-950/70 text-slate-600 border-slate-800/50'
+                      : 'bg-slate-950/70 hover:bg-indigo-500/15 text-indigo-400 sm:text-slate-300 hover:text-indigo-400 border border-slate-800/80 cursor-pointer'
+                  }`}
+                >
+                  <Video className="w-4 h-4" />
+                </button>
+              </>
+            )}
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               title="Search in Conversation"
@@ -1138,7 +1160,7 @@ export const ChatWindow: React.FC = () => {
 
         {/* Messages Stream */}
         <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-          {/* WhatsApp-style Iconic End-to-End Encryption Security Notice */}
+          {/* Iconic End-to-End Encryption Security Notice */}
           <div className="flex justify-center my-2 select-none">
             <div className="max-w-md mx-auto px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center shadow-sm">
               <div className="flex items-center justify-center gap-1.5 text-[11px] font-medium text-amber-700 dark:text-amber-300">
@@ -1148,7 +1170,7 @@ export const ChatWindow: React.FC = () => {
             </div>
           </div>
 
-          {/* WhatsApp-style Official Verified Support Chat Card (Not a channel) */}
+          {/* Official Verified Support Chat Card (Not a channel) */}
           {(activeChat.id === 'chat_chattime_support' || activeChat.name === 'ChatTime Support') && (
             <div className="flex justify-center my-2 select-none">
               <div className="max-w-md w-full mx-auto p-3.5 rounded-2xl bg-gradient-to-r from-red-500/10 via-slate-900 to-slate-900 border border-red-500/30 text-left shadow-lg space-y-1.5">
@@ -1487,7 +1509,7 @@ export const ChatWindow: React.FC = () => {
                                       </span>
                                     )}
 
-                                    {/* Playback Speed Pill Button (WhatsApp style: 1x, 1.5x, 2x) */}
+                                    {/* Playback Speed Pill Button (1x, 1.5x, 2x) */}
                                     <button
                                       type="button"
                                       onClick={(e) => {
@@ -1978,25 +2000,20 @@ export const ChatWindow: React.FC = () => {
           )}
 
           {isPeerBlockedByMe && peerUser ? (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 w-full animate-in fade-in duration-150">
-              <div className="flex items-center gap-2.5 text-xs text-rose-300 min-w-0">
-                <Lock className="w-4 h-4 text-rose-400 shrink-0" />
-                <span className="leading-snug">
-                  You blocked this contact. Tap to unblock.
-                </span>
-              </div>
+            <div className="w-full flex items-center justify-center py-1 animate-in fade-in duration-150">
               <button
                 type="button"
                 onClick={() => toggleGhostUser(peerUser.id)}
-                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shrink-0 transition-colors shadow-sm active:scale-95 cursor-pointer"
+                className="w-full max-w-sm py-3 px-6 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-rose-900/40 active:scale-98 transition-all cursor-pointer"
               >
-                Unblock Contact
+                <Ban className="w-4 h-4" />
+                <span>Unblock User</span>
               </button>
             </div>
           ) : amIBlockedByPeer && peerUser ? (
-            <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 w-full text-center animate-in fade-in duration-150">
+            <div className="w-full py-3 px-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-center animate-in fade-in duration-150">
               <span className="text-xs text-slate-400 font-medium">
-                You cannot send messages or place calls to this user. This contact has blocked you.
+                You cannot send messages to this user.
               </span>
             </div>
           ) : isRecording ? (
@@ -2008,8 +2025,8 @@ export const ChatWindow: React.FC = () => {
                 </span>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                {/* Voice Modifier Dropdown Trigger */}
-                {platformFeatures.voiceEffectsEnabled && (
+                {/* Voice Modifier Dropdown Trigger (Hidden for Support Chat) */}
+                {!isSupportChat && platformFeatures.voiceEffectsEnabled && (
                   <div className="relative">
                     <button
                       type="button"
@@ -2449,6 +2466,12 @@ export const ChatWindow: React.FC = () => {
 
       {/* Conversation Media & Information Side Drawer */}
       <MediaDrawer />
+
+      {/* Official Support Tickets Modal */}
+      <SupportTicketsModal
+        isOpen={isSupportTicketsOpen}
+        onClose={() => setIsSupportTicketsOpen(false)}
+      />
     </div>
   );
 };

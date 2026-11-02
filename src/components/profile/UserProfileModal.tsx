@@ -20,6 +20,7 @@ import {
   Save,
   AtSign,
   Mail,
+  Ban,
 } from 'lucide-react';
 import { useChatTime } from '../../context/ChatTimeContext';
 import { formatLastSeen } from '../../utils/formatters';
@@ -47,6 +48,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
     startCall,
     toggleContact,
     toggleFollowUser,
+    toggleGhostUser,
+    isUserGhosted,
     setVerificationBadgeByAdmin,
     setActiveTab,
     logoutUser,
@@ -393,8 +396,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
       });
       setIsEditingSelf(false);
       addToast(t('profileUpdated', 'Profile Updated'), t('profileSavedSuccess', 'Your profile details have been saved.'), 'success');
-    } catch {
-      addToast(t('error', 'Error'), t('profileUpdateFailed', 'Could not update profile.'), 'error');
+    } catch (err: any) {
+      addToast(t('error', 'Error'), err?.message || t('profileUpdateFailed', 'Could not update profile.'), 'error');
     } finally {
       setEditSaving(false);
     }
@@ -459,15 +462,27 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
               <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
               <span>{t('goBack', 'Go Back')}</span>
             </button>
-            <div className="flex items-center gap-1.5 min-w-0">
-              <ShieldCheck className="w-4 h-4 text-teal-500 shrink-0" />
-              <span className={`text-xs sm:text-sm font-bold tracking-wide truncate ${headingClass}`}>
-                {targetUser.id === 'user_chattime_support' || targetUser.username === 'support'
-                  ? 'Official Support Account'
-                  : isSelf
-                  ? t('myProfile', 'Your Profile')
-                  : t('contactInfo', 'Contact Info')}
-              </span>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <img
+                src={targetUser.avatar || '/icon.svg'}
+                alt={targetUser.name || 'User'}
+                className="w-8 h-8 rounded-full object-cover bg-slate-800 border border-slate-700 shrink-0"
+              />
+              <div className="min-w-0">
+                <div className="flex items-center gap-1 min-w-0">
+                  <span className={`text-xs sm:text-sm font-bold tracking-wide truncate ${headingClass}`}>
+                    {targetUser.id === 'user_chattime_support' || targetUser.username === 'support'
+                      ? 'ChatTime Support'
+                      : isSelf
+                      ? (currentUser.name || t('myProfile', 'Your Profile'))
+                      : (targetUser.name || t('contactInfo', 'Contact Info'))}
+                  </span>
+                  <VerifiedBadge user={targetUser} size="xs" />
+                </div>
+                <div className="text-[10px] text-teal-400 font-mono truncate">
+                  @{targetUser.username || 'user'}
+                </div>
+              </div>
             </div>
           </div>
           <button
@@ -504,7 +519,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
           {/* Left Column */}
           <div className={`md:col-span-5 flex flex-col items-center text-center p-5 sm:p-6 rounded-2xl border space-y-4 ${cardBgClass}`}>
             {targetUser.id === 'user_chattime_support' || targetUser.username === 'support' ? (
-              /* Official WhatsApp Support Profile */
+              /* Official ChatTime Support Profile */
               <div className="w-full flex flex-col items-center text-center space-y-4">
                 <div className="relative">
                   <img
@@ -703,6 +718,20 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
                         </>
                       )}
                     </button>
+
+                    {/* Telegram-Style Block / Unblock User */}
+                    <button
+                      type="button"
+                      onClick={() => toggleGhostUser(targetUser.id)}
+                      className={`w-full py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+                        isUserGhosted(targetUser.id)
+                          ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
+                          : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border-rose-500/20'
+                      }`}
+                    >
+                      <Ban className="w-4 h-4 text-rose-400" />
+                      <span>{isUserGhosted(targetUser.id) ? 'Unblock User' : 'Block User'}</span>
+                    </button>
                   </div>
                 )}
               </>
@@ -838,37 +867,29 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
               </div>
             )}
 
-            {/* Phone Number Card */}
-            <div className={`p-5 rounded-2xl border space-y-3 ${cardBgClass}`}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5" /> {t('phoneNumber', 'Phone & ChatTime Number')}
-                </span>
-                {canSeeFullNumber ? (
+            {/* Phone Number Card (Omitted when hidden by user) */}
+            {canSeeFullNumber && displayedNumber && (
+              <div className={`p-5 rounded-2xl border space-y-3 ${cardBgClass}`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5" /> {t('phoneNumber', 'Phone & ChatTime Number')}
+                  </span>
                   <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                     {t('verifiedNumber', 'Verified Number')}
                   </span>
-                ) : (
-                  <span className="px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-[10px] font-bold text-amber-600 dark:text-amber-300 flex items-center gap-1">
-                    <Lock className="w-3 h-3" /> {t('protectedPrivacy', 'Protected by Privacy Settings')}
-                  </span>
-                )}
-              </div>
-
-              <div className={`flex items-center justify-between p-3.5 rounded-xl border ${innerCardBgClass}`}>
-                <div>
-                  <div className={`text-lg font-mono font-bold tracking-wide ${headingClass}`}>
-                    {canSeeFullNumber ? (displayedNumber || t('notAvailable', 'Not available')) : t('numberHidden', 'Hidden for privacy')}
-                  </div>
-                  <div className={`text-[11px] mt-0.5 ${textMutedClass}`}>
-                    {canSeeFullNumber
-                      ? isAdminViewer && !isSelf && targetUser.phonePrivate
-                        ? t('visibleAdmin', 'Visible to you as Platform Administrator')
-                        : `${t('visibility', 'Visibility')}: ${numberVis}`
-                      : t('hiddenInPrivacy', 'This user has hidden their phone number')}
-                  </div>
                 </div>
-                {canSeeFullNumber && (
+
+                <div className={`flex items-center justify-between p-3.5 rounded-xl border ${innerCardBgClass}`}>
+                  <div>
+                    <div className={`text-lg font-mono font-bold tracking-wide ${headingClass}`}>
+                      {displayedNumber}
+                    </div>
+                    <div className={`text-[11px] mt-0.5 ${textMutedClass}`}>
+                      {isAdminViewer && !isSelf && targetUser.phonePrivate
+                        ? t('visibleAdmin', 'Visible to you as Platform Administrator')
+                        : `${t('visibility', 'Visibility')}: ${numberVis}`}
+                    </div>
+                  </div>
                   <button
                     onClick={handleCopyNumber}
                     className={`p-2.5 rounded-xl transition-colors cursor-pointer border ${
@@ -884,11 +905,11 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ onOpenRegist
                       <Copy className="w-4 h-4" />
                     )}
                   </button>
-                )}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* WhatsApp-Style End-to-End Encryption Notice Card */}
+            {/* End-to-End Encryption Notice Card */}
             <div className={`p-4 rounded-2xl border flex items-start gap-3 ${cardBgClass}`}>
               <div className="p-2 rounded-xl bg-teal-500/15 text-teal-400 shrink-0 mt-0.5">
                 <Lock className="w-4 h-4" />

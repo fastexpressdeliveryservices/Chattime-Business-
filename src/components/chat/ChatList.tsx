@@ -122,10 +122,15 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
     if (!q || q.length < 2) return [];
     const digits = q.replace(/[^0-9]/g, '');
     const cleanUser = q.replace(/^@/, '');
+    const isViewerAdmin = currentUser.role === 'admin' || currentUser.role === 'super_admin';
 
     const allUsers = Object.values(users) as User[];
     return allUsers.filter((u) => {
       if (!u) return false;
+      // Exclude admin accounts from regular customers search
+      const isAdmin = u.role === 'admin' || u.role === 'super_admin';
+      if (isAdmin && !isViewerAdmin) return false;
+
       const uUser = (u.username || '').toLowerCase();
       const uName = (u.name || '').toLowerCase();
       const uEmail = (u.email || '').toLowerCase();
@@ -137,11 +142,11 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
       if (digits.length >= 2 && (uChatDigits.includes(digits) || uPhoneDigits.includes(digits) || digits.includes(uChatDigits) || digits.includes(uPhoneDigits))) return true;
       return false;
     });
-  }, [searchQuery, users]);
+  }, [searchQuery, users, currentUser.role]);
 
   return (
     <div className="w-full md:w-80 lg:w-96 min-h-0 bg-slate-900 border-r border-slate-800/80 flex flex-col h-full shrink-0">
-      {/* WhatsApp-Style Subtle Connecting Banner when offline / waiting for network */}
+      {/* Subtle Connecting Banner when offline / waiting for network */}
       {!wsConnected && (
         <div className="px-3 py-1.5 bg-amber-500/10 border-b border-amber-500/20 text-amber-300 text-[11px] font-semibold flex items-center justify-center gap-2 shrink-0 select-none">
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
@@ -319,11 +324,7 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
               peerUser &&
               !peerUser.phonePrivate &&
               (numberVis === 'everyone' || (numberVis === 'contacts' && isContact));
-            const peerPhone = peerUser
-              ? canSeePhone
-                ? rawPhone
-                : maskPhoneNumber(rawPhone)
-              : null;
+            const peerPhone = peerUser && canSeePhone ? rawPhone : null;
 
             const isTyping = chat.typingUsers && chat.typingUsers.length > 0;
             const lastMsg = chat.lastMessage;
@@ -499,6 +500,19 @@ export const ChatList: React.FC<ChatListProps> = ({ onOpenNewGroupModal }) => {
             );
           })
         )}
+      </div>
+
+      {/* Floating Action Button for New Chat & Contacts */}
+      <div className="absolute right-4 bottom-20 md:bottom-5 z-20">
+        <button
+          type="button"
+          onClick={() => setActiveTab('contacts')}
+          className="w-14 h-14 rounded-2xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold flex items-center justify-center shadow-xl shadow-teal-500/30 transition-all hover:scale-105 active:scale-95 cursor-pointer group"
+          title={t('newChat', 'New Chat / Contacts')}
+          aria-label="Start new chat"
+        >
+          <MessageSquarePlus className="w-6 h-6 stroke-[2.2] group-hover:rotate-6 transition-transform" />
+        </button>
       </div>
     </div>
   );

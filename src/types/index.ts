@@ -22,7 +22,7 @@ export type AccentColor = 'teal' | 'indigo' | 'sky' | 'emerald' | 'violet' | 'ro
 export type RingtoneStyle = 'harmonic' | 'pulse' | 'marimba' | 'executive' | 'classic';
 
 export type AppBackgroundStyle =
-  | 'whatsapp'  // Clear iconic WhatsApp background with subtle doodle texture
+  | 'whatsapp'  // Classic ChatTime background with subtle doodle texture
   | 'glow'      // Dynamic ambient luminous aura reflecting accent color
   | 'sunset'    // Radiant fiery sunset horizon
   | 'aurora'    // Ethereal northern lights flowing atmosphere
@@ -541,4 +541,44 @@ export interface CountryInfo {
   iso: string;
   flag: string;
   placeholder: string;
+}
+
+export type TicketStatus = 'open' | 'pending' | 'resolved' | 'closed';
+export type TicketCategory =
+  | 'account_security'
+  | 'messaging_media'
+  | 'calls_audio'
+  | 'voice_ai'
+  | 'billing_subscription'
+  | 'general_support';
+
+export interface SupportTicketMessage {
+  id: string;
+  ticketId: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar: string;
+  senderRole: 'user' | 'support' | 'admin';
+  content: string;
+  attachments?: string[];
+  timestamp: number;
+}
+
+export interface SupportTicket {
+  id: string; // Reference number e.g. "CT-82910"
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  userPhone?: string;
+  userEmail?: string;
+  category: TicketCategory;
+  subject: string;
+  description: string;
+  status: TicketStatus;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  createdAt: number;
+  updatedAt: number;
+  messages: SupportTicketMessage[];
+  assignedAdminId?: string;
+  assignedAdminName?: string;
 }

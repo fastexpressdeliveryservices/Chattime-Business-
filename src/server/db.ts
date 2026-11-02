@@ -22,6 +22,10 @@ import type {
   AdminPermission,
   VoiceSubscription,
   VoiceAiPlatformConfig,
+  SupportTicket,
+  SupportTicketMessage,
+  TicketStatus,
+  TicketCategory,
 } from '../types/index.ts';
 import {
   INITIAL_USERS,
@@ -105,6 +109,7 @@ export interface ChatTimeDatabase {
   };
   voiceAdminConfig?: VoiceAiPlatformConfig;
   maintenanceMode?: boolean;
+  tickets?: SupportTicket[];
   welcomeSettings?: {
     enabled: boolean;
     senderId: string;
@@ -184,6 +189,7 @@ class DatabaseManager {
             voiceUsageStats: parsed.voiceUsageStats || { totalTTSCalls: 0, totalTTSChars: 0, activeSubscriptions: 0, estimatedCostUsd: 0 },
             voiceAdminConfig: parsed.voiceAdminConfig || { ...DEFAULT_VOICE_AI_CONFIG },
             maintenanceMode: Boolean(parsed.maintenanceMode),
+            tickets: Array.isArray(parsed.tickets) ? parsed.tickets : [],
             welcomeSettings: parsed.welcomeSettings || { ...DEFAULT_WELCOME_SETTINGS },
           };
           this.migrateLegacyPinHashes(loaded);
@@ -216,6 +222,7 @@ class DatabaseManager {
       voiceUsageStats: { totalTTSCalls: 0, totalTTSChars: 0, activeSubscriptions: 0, estimatedCostUsd: 0 },
       voiceAdminConfig: { ...DEFAULT_VOICE_AI_CONFIG },
       maintenanceMode: false,
+      tickets: [],
       welcomeSettings: { ...DEFAULT_WELCOME_SETTINGS },
     };
 
@@ -643,13 +650,30 @@ class DatabaseManager {
     this.persist(this.db);
   }
 
-  searchUsers(query: string): User[] {
+  getUserByName(name: string): User | undefined {
+    const clean = (name || '').trim().toLowerCase();
+    if (!clean) return undefined;
+    return this.db.users.find((u) => (u.name || '').trim().toLowerCase() === clean);
+  }
+
+  searchUsers(query: string, viewerRole?: string): User[] {
     const clean = query.trim().toLowerCase();
     if (!clean) return [];
     const digitsOnly = clean.replace(/[^0-9]/g, '');
     const cleanUser = clean.replace(/^@/, '').trim();
+    const isStaffViewer =
+      viewerRole === 'admin' ||
+      viewerRole === 'super_admin' ||
+      viewerRole === 'moderator' ||
+      viewerRole === 'support';
 
     return this.db.users.filter((u) => {
+      // Exclude platform admin accounts from regular customers search
+      const isAdminAccount = u.role === 'admin' || u.role === 'super_admin';
+      if (isAdminAccount && !isStaffViewer) {
+        return false;
+      }
+
       const uId = (u.id || '').toLowerCase();
       const uUser = (u.username || '').toLowerCase();
       const uName = (u.name || '').toLowerCase();
@@ -2078,6 +2102,62 @@ class DatabaseManager {
     };
     this.save();
     return this.db.voiceAdminConfig;
+  }
+
+  // --- Support Tickets ---
+  getTickets(userId?: string): SupportTicket[] {
+    const list = Array.isArray(this.db.tickets) ? this.db.tickets : [];
+    if (!userId) return [...list].sort((a, b) => b.updatedAt - a.updatedAt);
+    return list
+      .filter((t) => t.userId === userId)
+      .sort((a, b) => b.updatedAt - a.updatedAt);
+  }
+
+  getTicketById(ticketId: string): SupportTicket | undefined {
+    const list = Array.isArray(this.db.tickets) ? this.db.tickets : [];
+    return list.find((t) => t.id === ticketId);
+  }
+
+  createTicket(ticket: SupportTicket): SupportTicket {
+    if (!Array.isArray(this.db.tickets)) this.db.tickets = [];
+    this.db.tickets.unshift(ticket);
+    this.save();
+    return ticket;
+  }
+
+  addTicketMessage(ticketId: string, message: SupportTicketMessage): SupportTicketMessage | null {
+    if (!Array.isArray(this.db.tickets)) this.db.tickets = [];
+    const ticket = this.db.tickets.find((t) => t.id === ticketId);
+    if (!ticket) return null;
+    if (!Array.isArray(ticket.messages)) ticket.messages = [];
+    ticket.messages.push(message);
+    ticket.updatedAt = Date.now();
+    if (message.senderRole === 'support' || message.senderRole === 'admin') {
+      ticket.status = 'pending';
+    } else {
+      if (ticket.status === 'resolved' || ticket.status === 'closed') {
+        ticket.status = 'open';
+      }
+    }
+    this.save();
+    return message;
+  }
+
+  updateTicketStatus(
+    ticketId: string,
+    status: TicketStatus,
+    assignedAdminId?: string,
+    assignedAdminName?: string
+  ): SupportTicket | null {
+    if (!Array.isArray(this.db.tickets)) this.db.tickets = [];
+    const ticket = this.db.tickets.find((t) => t.id === ticketId);
+    if (!ticket) return null;
+    ticket.status = status;
+    ticket.updatedAt = Date.now();
+    if (assignedAdminId) ticket.assignedAdminId = assignedAdminId;
+    if (assignedAdminName) ticket.assignedAdminName = assignedAdminName;
+    this.save();
+    return ticket;
   }
 
   // --- Admin Stats ---

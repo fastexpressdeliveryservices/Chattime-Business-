@@ -27,6 +27,7 @@ import {
   Mail,
   Star,
   Bookmark,
+  Ban,
 } from 'lucide-react';
 import { useChatTime } from '../../context/ChatTimeContext';
 import { maskPhoneNumber } from '../../utils/numberGenerator';
@@ -94,11 +95,7 @@ export const MediaDrawer: React.FC = () => {
       (!peerUser.phonePrivate &&
         (numberVis === 'everyone' || (numberVis === 'contacts' && isContact))));
   const rawPhone = peerUser?.phoneNumber || peerUser?.chatTimeNumber || '';
-  const peerPhone = peerUser
-    ? canSeePhone
-      ? rawPhone
-      : maskPhoneNumber(rawPhone)
-    : null;
+  const peerPhone = peerUser && canSeePhone ? rawPhone : null;
 
   const isGroupAdmin =
     chat.type === 'group' &&
@@ -165,7 +162,7 @@ export const MediaDrawer: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-5 space-y-6">
         {/* Identity Summary */}
         {chat.id === 'chat_chattime_support' || peerUser?.id === 'user_chattime_support' || chat.participants.includes('user_chattime_support') || chat.name === 'ChatTime Support' ? (
-          /* Official WhatsApp Support Account Style Profile */
+          /* Official ChatTime Support Account Profile */
           <div className="flex flex-col items-center text-center space-y-3.5">
             <div className="relative">
               <img
@@ -291,11 +288,6 @@ export const MediaDrawer: React.FC = () => {
               <div className="mt-2 flex items-center gap-1.5 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl">
                 <Phone className="w-3.5 h-3.5 text-teal-400" />
                 <span className="text-xs font-mono font-semibold text-slate-200">{peerPhone}</span>
-                {!canSeePhone && (
-                  <span className="text-[10px] bg-amber-500/15 text-amber-300 px-1.5 py-0.5 rounded ml-1">
-                    Private
-                  </span>
-                )}
               </div>
             ) : (
               <p className="text-xs text-slate-400 mt-1">
@@ -590,19 +582,19 @@ export const MediaDrawer: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => toggleGhostUser(peerUser.id)}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition-colors ${
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
                     isUserGhosted(peerUser.id)
                       ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
                       : 'bg-slate-950 text-slate-300 hover:text-rose-400 hover:bg-rose-500/10 border-slate-800'
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
-                    <Ghost className="w-4 h-4 text-rose-400" />
-                    {isUserGhosted(peerUser.id) ? 'Unghost Contact' : 'Ghost (Block) Contact'}
+                    <Ban className="w-4 h-4 text-rose-400" />
+                    {isUserGhosted(peerUser.id) ? 'Unblock User' : 'Block User'}
                   </span>
                   {isUserGhosted(peerUser.id) && (
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-bold">
-                      Ghosted
+                      Blocked
                     </span>
                   )}
                 </button>

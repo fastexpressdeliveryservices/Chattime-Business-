@@ -32,7 +32,7 @@ import { formatTime } from '../../utils/formatters';
 
 const STORY_GRADIENTS = [
   'linear-gradient(135deg, #0d9488, #0f172a)', // Teal Slate
-  'linear-gradient(135deg, #059669, #022c22)', // WhatsApp Emerald
+  'linear-gradient(135deg, #059669, #022c22)', // Deep Emerald
   'linear-gradient(135deg, #4f46e5, #1e1b4b)', // Indigo Deep
   'linear-gradient(135deg, #7c3aed, #2e1065)', // Royal Purple
   'linear-gradient(135deg, #e11d48, #4c0519)', // Crimson Rose
@@ -85,6 +85,78 @@ export const StatusView: React.FC = () => {
   const [selectedViewers, setSelectedViewers] = useState<string[]>(
     currentUser.privacySettings?.selectedStatusViewers || []
   );
+
+  // Voice Status Recording State
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [voiceDuration, setVoiceDuration] = useState(0);
+  const [isPlayingVoicePreview, setIsPlayingVoicePreview] = useState(false);
+  const voiceRecorderRef = React.useRef<MediaRecorder | null>(null);
+  const voiceChunksRef = React.useRef<Blob[]>([]);
+  const voiceTimerRef = React.useRef<number | null>(null);
+  const voiceAudioPreviewRef = React.useRef<HTMLAudioElement | null>(null);
+
+  const startVoiceStatusRecording = async () => {
+    setIsRecordingVoice(true);
+    setVoiceDuration(0);
+    voiceChunksRef.current = [];
+    setMediaDataUrl(undefined);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      voiceRecorderRef.current = recorder;
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) voiceChunksRef.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        const audioBlob = new Blob(voiceChunksRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === 'string') {
+            setMediaDataUrl(reader.result);
+          }
+        };
+        reader.readAsDataURL(audioBlob);
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      recorder.start(200);
+      if (voiceTimerRef.current) clearInterval(voiceTimerRef.current);
+      voiceTimerRef.current = window.setInterval(() => {
+        setVoiceDuration((prev) => prev + 1);
+      }, 1000);
+    } catch (err) {
+      console.warn('[VoiceStatus] Error starting mic:', err);
+      setIsRecordingVoice(false);
+      addToast('Microphone Error', 'Could not access microphone to record voice status.', 'error');
+    }
+  };
+
+  const stopVoiceStatusRecording = () => {
+    if (voiceTimerRef.current) {
+      clearInterval(voiceTimerRef.current);
+      voiceTimerRef.current = null;
+    }
+    if (voiceRecorderRef.current && voiceRecorderRef.current.state !== 'inactive') {
+      voiceRecorderRef.current.stop();
+    }
+    setIsRecordingVoice(false);
+  };
+
+  const togglePlayVoicePreview = () => {
+    if (!mediaDataUrl) return;
+    if (isPlayingVoicePreview) {
+      voiceAudioPreviewRef.current?.pause();
+      setIsPlayingVoicePreview(false);
+    } else {
+      if (!voiceAudioPreviewRef.current) {
+        voiceAudioPreviewRef.current = new Audio(mediaDataUrl);
+        voiceAudioPreviewRef.current.onended = () => setIsPlayingVoicePreview(false);
+      } else {
+        voiceAudioPreviewRef.current.src = mediaDataUrl;
+      }
+      voiceAudioPreviewRef.current.play().catch(() => {});
+      setIsPlayingVoicePreview(true);
+    }
+  };
 
   const handleCycleBackground = () => {
     const currentIdx = STORY_GRADIENTS.indexOf(selectedBg);
@@ -370,7 +442,7 @@ export const StatusView: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 max-w-4xl mx-auto w-full">
         {viewMode === 'active' ? (
           <>
-            {/* Horizontal Story Rings Bar (Instagram / WhatsApp style quick strip) */}
+            {/* Horizontal Story Rings Bar */}
             <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1 px-1">
               {/* My Story Ring */}
               <button
@@ -554,7 +626,7 @@ export const StatusView: React.FC = () => {
               )}
             </div>
 
-            {/* WhatsApp End-to-End Encryption Status Notice */}
+            {/* End-to-End Encryption Status Notice */}
             <div className="flex items-center justify-center gap-2 py-2 px-3 rounded-2xl bg-slate-900/40 border border-slate-800/80 text-center">
               <Lock className="w-3.5 h-3.5 text-teal-400 shrink-0" />
               <span className="text-[11px] text-slate-400">
@@ -634,95 +706,6 @@ export const StatusView: React.FC = () => {
                     );
                   })}
                 </div>
-              )}
-            </div>
-
-            {/* Saved Contacts Live Status Board */}
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Contacts Live Status ({myAddedContacts.length})
-                </h3>
-                <span className="text-[11px] text-slate-500">Only contacts saved in your phonebook</span>
-              </div>
-
-              {myAddedContacts.length === 0 ? (
-                <div className="p-6 bg-slate-900/50 border border-slate-800/80 rounded-2xl text-center space-y-2">
-                  <p className="text-xs font-semibold text-slate-300">
-                    No contact status updates yet
-                  </p>
-                  <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
-                    Status updates only appear from people you have added as a contact. Add a contact by their ChatTime number to see their stories and status!
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('contacts')}
-                    className="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs inline-flex items-center gap-1.5 transition-colors"
-                  >
-                    <UserPlus className="w-3.5 h-3.5" />
-                    <span>Add New Contact</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {myAddedContacts.map((u) => {
-                    const userActiveStories = contactStories.filter((s) => s.userId === u.id);
-                    return (
-                      <div
-                        key={u.id}
-                        onClick={() => {
-                          if (userActiveStories.length > 0) {
-                            openViewerWithList(userActiveStories, 0);
-                          } else {
-                            setInspectedUserId(u.id);
-                          }
-                        }}
-                        className="p-3.5 bg-slate-900/70 border border-slate-800/90 hover:border-teal-500/40 rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-3"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="relative shrink-0">
-                            <img
-                              src={u.avatar}
-                              alt={u.name}
-                              className={`w-11 h-11 rounded-xl object-cover bg-slate-950 ${
-                                userActiveStories.length > 0 ? 'ring-2 ring-teal-400' : 'border border-slate-800'
-                              }`}
-                            />
-                            <span
-                              className={`w-2.5 h-2.5 rounded-full border-2 border-slate-900 absolute -bottom-0.5 -right-0.5 ${
-                                u.isOnline ? 'bg-emerald-500' : 'bg-slate-500'
-                              }`}
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-slate-100 truncate">{u.name}</span>
-                              {u.statusFeeling && (
-                                <span className="px-1.5 py-0.5 rounded-md bg-teal-500/10 border border-teal-500/20 text-[10px] text-teal-300 font-medium truncate">
-                                  {u.statusFeeling}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                              {u.bio || `@${u.username}`}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            startDirectChat(u.id);
-                          }}
-                          className="p-2 rounded-xl bg-slate-950 hover:bg-teal-500 hover:text-slate-950 text-teal-400 border border-slate-800 transition-colors shrink-0"
-                        title={`Message ${u.name}`}
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
               )}
             </div>
           </>
@@ -824,7 +807,7 @@ export const StatusView: React.FC = () => {
         )}
       </div>
 
-      {/* WhatsApp-Style Floating Action Buttons for Status (Type, Video & Camera) */}
+      {/* Floating Action Buttons for Status (Type, Video & Camera) */}
       {viewMode === 'active' && (
         <div className="fixed bottom-20 md:bottom-8 right-5 sm:right-8 flex flex-col items-center gap-3 z-30 pointer-events-auto">
           {/* Text status button (Pencil / Typography) */}
@@ -898,6 +881,25 @@ export const StatusView: React.FC = () => {
                       loop={false}
                       className="w-full h-full object-cover absolute inset-0"
                     />
+                  ) : currentActiveStory.type === 'voice' ||
+                    currentActiveStory.mediaUrl.startsWith('data:audio') ||
+                    /\.(mp3|wav|ogg|m4a|aac)$/i.test(currentActiveStory.mediaUrl) ? (
+                    <div className="flex flex-col items-center justify-center p-6 space-y-6 z-10 w-full max-w-xs">
+                      <div className="w-24 h-24 rounded-full bg-teal-500/20 border-2 border-teal-400 flex items-center justify-center text-teal-300 shadow-2xl shadow-teal-500/20 animate-pulse">
+                        <Mic className="w-10 h-10" />
+                      </div>
+                      <div className="w-full bg-black/60 backdrop-blur-md rounded-2xl p-4 border border-white/15 space-y-3 text-center">
+                        <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-teal-300 uppercase tracking-wider">
+                          <span>Voice Status Update</span>
+                        </div>
+                        <audio
+                          src={currentActiveStory.mediaUrl}
+                          autoPlay
+                          controls
+                          className="w-full h-10"
+                        />
+                      </div>
+                    </div>
                   ) : (
                     <img
                       src={currentActiveStory.mediaUrl}
@@ -1421,23 +1423,101 @@ export const StatusView: React.FC = () => {
             )}
 
             {createType === 'voice' && (
-              <div>
-                <label className="text-xs text-slate-300 block mb-1">
-                  Voice status caption or title
-                </label>
-                <textarea
-                  value={textContent}
-                  onChange={(e) => setTextContent(e.target.value)}
-                  placeholder="Add voice status description..."
-                  rows={2}
-                  className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-teal-500/50 resize-none"
-                />
+              <div className="space-y-3.5">
+                {/* Audio Recording & Preview Card */}
+                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col items-center justify-center text-center space-y-3">
+                  {isRecordingVoice ? (
+                    <div className="flex flex-col items-center space-y-2">
+                      <div className="w-16 h-16 rounded-full bg-rose-500/20 border-2 border-rose-500 flex items-center justify-center text-rose-400 animate-pulse">
+                        <Mic className="w-8 h-8 animate-bounce" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+                        <span className="text-sm font-mono font-bold text-rose-400">
+                          {Math.floor(voiceDuration / 60)}:{String(voiceDuration % 60).padStart(2, '0')}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400">Recording voice status... Speak into your mic</p>
+                      <button
+                        type="button"
+                        onClick={stopVoiceStatusRecording}
+                        className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-lg transition-transform active:scale-95 cursor-pointer mt-1"
+                      >
+                        Stop Recording
+                      </button>
+                    </div>
+                  ) : mediaDataUrl ? (
+                    <div className="w-full flex flex-col items-center space-y-3">
+                      <div className="flex items-center justify-between w-full p-3 rounded-xl bg-slate-900 border border-slate-800">
+                        <button
+                          type="button"
+                          onClick={togglePlayVoicePreview}
+                          className="w-10 h-10 rounded-full bg-teal-500 hover:bg-teal-400 text-slate-950 flex items-center justify-center font-bold shadow transition-transform active:scale-95 cursor-pointer"
+                        >
+                          {isPlayingVoicePreview ? (
+                            <span className="text-xs">❚❚</span>
+                          ) : (
+                            <span className="text-xs ml-0.5">▶</span>
+                          )}
+                        </button>
+                        <div className="flex-1 px-3 text-left min-w-0">
+                          <span className="text-xs font-bold text-white block">Voice Status Preview</span>
+                          <span className="text-[10px] text-teal-400 font-mono">
+                            {voiceDuration > 0 ? `${voiceDuration}s voice update` : 'Audio Recorded'}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (voiceAudioPreviewRef.current) voiceAudioPreviewRef.current.pause();
+                            setIsPlayingVoicePreview(false);
+                            setMediaDataUrl(undefined);
+                            setVoiceDuration(0);
+                          }}
+                          className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-400 text-xs font-bold transition-colors cursor-pointer"
+                        >
+                          Re-record
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-teal-400 flex items-center gap-1 font-medium">
+                        <Check className="w-3.5 h-3.5 text-teal-400" />
+                        <span>Ready to share! Listen above before publishing.</span>
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center space-y-2 py-2">
+                      <button
+                        type="button"
+                        onClick={startVoiceStatusRecording}
+                        className="w-16 h-16 rounded-full bg-teal-500 hover:bg-teal-400 text-slate-950 flex items-center justify-center shadow-xl shadow-teal-500/20 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                        title="Start Recording"
+                      >
+                        <Mic className="w-7 h-7 stroke-[2.2]" />
+                      </button>
+                      <span className="text-xs font-bold text-white">Tap to Record Voice Status</span>
+                      <span className="text-[10px] text-slate-400">Share voice notes up to 60 seconds with contacts</span>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-xs text-slate-300 block mb-1">
+                    Voice status caption or title (optional)
+                  </label>
+                  <textarea
+                    value={textContent}
+                    onChange={(e) => setTextContent(e.target.value)}
+                    placeholder="Add a caption for your voice note..."
+                    rows={2}
+                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-teal-500/50 resize-none"
+                  />
+                </div>
               </div>
             )}
 
             {createType === 'text' && (
               <div className="space-y-3">
-                {/* Live WhatsApp-style Canvas Editor */}
+                {/* Live Canvas Editor */}
                 <div
                   style={{ background: selectedBg }}
                   onClick={handleCycleBackground}
@@ -1472,7 +1552,7 @@ export const StatusView: React.FC = () => {
                   />
 
                   <div className="text-[10px] text-white/70 bg-black/30 px-2 py-0.5 rounded-full z-10">
-                    WhatsApp Business Live Preview
+                    ChatTime Business Live Preview
                   </div>
                 </div>
 

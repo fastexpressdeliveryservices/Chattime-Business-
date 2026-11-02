@@ -1161,7 +1161,7 @@ export const AuthPage: React.FC = () => {
             <h2 className="text-sm font-bold text-white font-display uppercase tracking-wider">
               {signupStep === 1 && t('verifyNumber', 'Verify Phone & Email')}
               {signupStep === 2 && t('verifyCode', 'Enter Verification Code')}
-              {signupStep === 3 && t('profileInfo', 'WhatsApp Business Profile')}
+              {signupStep === 3 && t('profileInfo', 'ChatTime Business Profile')}
             </h2>
             <div className="flex items-center justify-center gap-1.5 mt-1">
               <span

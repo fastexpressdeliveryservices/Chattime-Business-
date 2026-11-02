@@ -61,7 +61,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
             ? 'flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold shadow-md shadow-emerald-500/25 active:scale-95 transition-all whitespace-nowrap'
             : 'flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold shadow-lg shadow-emerald-500/25 active:scale-95 transition-all whitespace-nowrap'
         }
-        title="Install ChatTime like WhatsApp (Base APK / Home Screen App)"
+        title="Install ChatTime (Standalone App)"
       >
         <Download className="w-3.5 h-3.5 stroke-[2.5]" />
         <span>Install App</span>
@@ -100,7 +100,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
                   Install ChatTime on Your Phone
                 </h3>
                 <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                  Install ChatTime as a standalone app (WhatsApp type). Works with full-screen view, camera & microphone for real calls, 24-hour status stories, and offline caching.
+                  Install ChatTime as a standalone app. Works with full-screen view, camera & microphone for real calls, 24-hour status stories, and offline caching.
                 </p>
               </div>
 

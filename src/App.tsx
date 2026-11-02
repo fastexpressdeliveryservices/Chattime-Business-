@@ -132,7 +132,7 @@ const ChatTimeMain: React.FC = () => {
         {/* Ambient Top Glow */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-80 h-80 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Center: WhatsApp-style Centered Brand Logo */}
+        {/* Center: Centered Brand Logo */}
         <div className="flex-1 flex flex-col items-center justify-center gap-5 z-10">
           <div className="animate-pulse duration-1000">
             <BrandLogo size="xl" showText={false} />
@@ -144,7 +144,7 @@ const ChatTimeMain: React.FC = () => {
           </div>
         </div>
 
-        {/* Bottom WhatsApp-style Footer */}
+        {/* Bottom Brand Footer */}
         <div className="flex flex-col items-center gap-1 z-10 text-center">
           <span className="text-[11px] text-slate-500 tracking-wider">from</span>
           <span className="text-[13px] font-extrabold text-slate-200 tracking-[0.2em] uppercase font-display">

@@ -98,7 +98,7 @@ export const SettingsView: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
-  // Help Centre state (WhatsApp styled)
+  // Help Centre state
   const [helpSearch, setHelpSearch] = useState('');
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
   const [contactSubject, setContactSubject] = useState('Account & Login');
@@ -956,8 +956,8 @@ export const SettingsView: React.FC = () => {
                   [
                     {
                       id: 'whatsapp',
-                      label: 'WhatsApp Clear',
-                      desc: 'Classic clean WhatsApp background with subtle doodle wallpaper and high contrast.',
+                      label: 'ChatTime Classic',
+                      desc: 'Classic clean ChatTime background with subtle doodle wallpaper and high contrast.',
                     },
                     {
                       id: 'glow',
@@ -1655,7 +1655,7 @@ export const SettingsView: React.FC = () => {
           </div>
         )}
 
-        {/* 6. HELP & SUPPORT (WhatsApp Style) */}
+        {/* 6. HELP & SUPPORT */}
         {activeSection === 'help' && (
           <div className="space-y-6 animate-in fade-in duration-200">
             <div>
@@ -1668,7 +1668,7 @@ export const SettingsView: React.FC = () => {
               </p>
             </div>
 
-            {/* WhatsApp-Style Official Support Account & Concierge */}
+            {/* Official Support Account & Concierge */}
             <div className="p-5 bg-gradient-to-br from-rose-950/30 via-slate-900 to-slate-900 border border-rose-500/40 rounded-3xl space-y-4 shadow-xl">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3.5">
@@ -1689,7 +1689,7 @@ export const SettingsView: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-xs text-slate-300 mt-0.5">
-                      Direct WhatsApp-style 24/7 technical care, account security & inquiries.
+                      Direct 24/7 technical care, account security & inquiries.
                     </p>
                   </div>
                 </div>

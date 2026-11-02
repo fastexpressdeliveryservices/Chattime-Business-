@@ -4219,9 +4219,10 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         .catch(() => {})
         .then(async () => {
           const response = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updates),
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(updates),
           });
           const data = await response.json().catch(() => ({}));
           if (!response.ok) throw new Error(data.error || 'Could not save account changes.');
@@ -4231,8 +4232,9 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           }));
           addToast('Profile Saved', 'Your account changes are stored.', 'success');
         })
-        .catch(() => {
-          addToast('Save Failed', 'Your changes could not reach the server. Please try again.', 'error');
+        .catch((err: any) => {
+          addToast('Save Failed', err?.message || 'Your changes could not reach the server. Please try again.', 'error');
+          throw err;
         });
     },
     [currentUser, addToast]
@@ -4330,15 +4332,15 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (isAlreadyGhosted) {
         soundEffects.playNotification();
         addToast(
-          'Contact Unghosted',
-          `${targetName} has been unghosted. You can now chat and call normally.`,
+          'User Unblocked',
+          `${targetName} has been unblocked. You can now exchange messages and calls.`,
           'success'
         );
       } else {
         soundEffects.playNotification();
         addToast(
-          '👻 Contact Ghosted (Blocked)',
-          `${targetName} is now ghosted. They cannot message, call, or see your status.`,
+          'User Blocked',
+          `${targetName} has been blocked. They cannot message, call, or see your online presence.`,
           'info'
         );
       }
@@ -4556,6 +4558,7 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const response = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/verification`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ isVerified: nextVerified, adminId: currentUser.id }),
         });
         const updated: User = await response.json();
@@ -4580,6 +4583,7 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const response = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/verification`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             isVerified,
             badgeType: badgeType === 'none' ? 'blue' : badgeType,
