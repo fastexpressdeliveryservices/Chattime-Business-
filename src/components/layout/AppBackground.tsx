@@ -38,8 +38,8 @@ export const AppBackground: React.FC<AppBackgroundProps> = ({
       aria-hidden="true"
       className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none transition-colors duration-500"
     >
-      {/* 0. CLEAR WHATSAPP ICONIC BACKGROUND */}
-      {style === 'whatsapp' && (
+      {/* 0. SIGNATURE DOODLE BACKGROUND */}
+      {(style === 'doodle' || (style as string) === 'classic') && (
         <div className="absolute inset-0">
           <div
             className="absolute inset-0 transition-colors duration-300"

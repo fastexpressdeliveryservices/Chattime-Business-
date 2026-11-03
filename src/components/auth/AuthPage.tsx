@@ -58,13 +58,13 @@ export const AuthPage: React.FC = () => {
     t,
   } = useChatTime();
 
-  // Screen modes: 'welcome' (WhatsApp Business landing) -> 'signup' -> 'login'
+  // Screen modes: 'welcome' (ChatTime Business landing) -> 'signup' -> 'login'
   const [screen, setScreen] = useState<'welcome' | 'signup' | 'login'>('welcome');
 
-  // WhatsApp Signup Flow:
+  // ChatTime Signup Flow:
   // Step 1: Phone & Email Input
   // Step 2: Verification Code (Sent directly to email)
-  // Step 3: WhatsApp Business Profile Setup (Name, Avatar, Category, Bio, PIN)
+  // Step 3: ChatTime Business Profile Setup (Name, Avatar, Category, Bio, PIN)
   const [signupStep, setSignupStep] = useState<1 | 2 | 3>(1);
 
   // Step 1 State: Country, Phone, Email
@@ -82,7 +82,7 @@ export const AuthPage: React.FC = () => {
   const [canResend, setCanResend] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
 
-  // Step 3 State: WhatsApp Business Profile Setup
+  // Step 3 State: ChatTime Business Profile Setup
   const [isBusiness, setIsBusiness] = useState(true);
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
@@ -314,7 +314,7 @@ export const AuthPage: React.FC = () => {
     }
   };
 
-  // Step 3: Complete WhatsApp Business Profile Setup
+  // Step 3: Complete ChatTime Business Profile Setup
   const handleCompleteRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -848,7 +848,7 @@ export const AuthPage: React.FC = () => {
   );
 
   // =========================================================================
-  // VIEW 1: WHATSAPP BUSINESS WELCOME SCREEN
+  // VIEW 1: CHATTIME BUSINESS WELCOME SCREEN
   // "welcome to chat time before creat then agree and continue"
   // =========================================================================
   if (screen === 'welcome') {
@@ -1133,7 +1133,7 @@ export const AuthPage: React.FC = () => {
   }
 
   // =========================================================================
-  // VIEW 3: MULTI-STEP WHATSAPP BUSINESS SIGNUP FLOW
+  // VIEW 3: MULTI-STEP CHATTIME BUSINESS SIGNUP FLOW
   // =========================================================================
   return (
     <div className="min-h-[100dvh] w-full flex flex-col items-center justify-start sm:justify-center bg-slate-950 text-slate-100 pt-[calc(env(safe-area-inset-top,0px)+1rem)] pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)] px-4 sm:px-6 select-none relative overflow-y-auto">
@@ -1456,7 +1456,7 @@ export const AuthPage: React.FC = () => {
         )}
 
         {/* ------------------------------------------------------------- */}
-        {/* STEP 3: WHATSAPP BUSINESS PROFILE SETUP */}
+        {/* STEP 3: CHATTIME BUSINESS PROFILE SETUP */}
         {/* ------------------------------------------------------------- */}
         {signupStep === 3 && (
           <form onSubmit={handleCompleteRegistration} className="space-y-5">

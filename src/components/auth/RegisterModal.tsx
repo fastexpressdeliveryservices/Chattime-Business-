@@ -50,10 +50,10 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose })
   const { registerNewAccount, loginAccount, sendPhoneOtp, verifyPhoneOtp, addToast, platformFeatures } =
     useChatTime();
   const [mode, setMode] = useState<'register' | 'login'>('register');
-  // 3-step WhatsApp Business registration flow:
+  // 3-step ChatTime Business registration flow:
   // Step 1: Phone & Email
   // Step 2: Enter Verification Code generated on email onto the number
-  // Step 3: WhatsApp Business Profile Setup
+  // Step 3: ChatTime Business Profile Setup
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
   // Step 1: Country, Phone & Email (No autofill - browse A to Z)
@@ -295,7 +295,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose })
     }
   };
 
-  // Step 3: Complete WhatsApp Business Profile
+  // Step 3: Complete ChatTime Business Profile
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -690,7 +690,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose })
                 </form>
               )}
 
-              {/* STEP 3: WHATSAPP BUSINESS PROFILE SETUP */}
+              {/* STEP 3: CHATTIME BUSINESS PROFILE SETUP */}
               {step === 3 && (
                 <form onSubmit={handleRegister} className="space-y-4">
                   {/* Avatar Picker */}

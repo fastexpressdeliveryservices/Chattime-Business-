@@ -22,7 +22,7 @@ export type AccentColor = 'teal' | 'indigo' | 'sky' | 'emerald' | 'violet' | 'ro
 export type RingtoneStyle = 'harmonic' | 'pulse' | 'marimba' | 'executive' | 'classic';
 
 export type AppBackgroundStyle =
-  | 'whatsapp'  // Classic ChatTime background with subtle doodle texture
+  | 'doodle'    // Signature ChatTime background with subtle doodle texture
   | 'glow'      // Dynamic ambient luminous aura reflecting accent color
   | 'sunset'    // Radiant fiery sunset horizon
   | 'aurora'    // Ethereal northern lights flowing atmosphere
@@ -237,6 +237,7 @@ export interface User {
     pinEnabled: boolean;
     pinCode?: string;
     biometricSupported: boolean;
+    biometricsEnabled?: boolean;
     activeSessions: {
       id: string;
       device: string;

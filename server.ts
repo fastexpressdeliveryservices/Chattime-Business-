@@ -1406,7 +1406,7 @@ function handleCallSignaling(
         return;
       }
 
-      // Check if either party has blocked the other (WhatsApp behavior)
+      // Check if either party has blocked the other (Privacy & block enforcement)
       if (currentUserId && targetUserId) {
         const callerUser = dbManager.getUserById(currentUserId);
         const targetUser = dbManager.getUserById(targetUserId);
@@ -1895,7 +1895,7 @@ app.post('/api/auth/verify-otp', (req, res) => {
   res.json({ success: true, phone: result.phone });
 });
 
-// Register Permanent Account (Personal or WhatsApp Business)
+// Register Permanent Account (Personal or ChatTime Business)
 app.post('/api/auth/register', (req, res) => {
   if (!dbManager.getPlatformFeatures().allowRegistration) {
     return res.status(503).json({ error: 'New account registration is temporarily disabled.' });
@@ -2497,7 +2497,7 @@ app.delete('/api/chats/:id/messages', (req, res) => {
   res.json({ success: cleared });
 });
 
-// Official ChatTime WhatsApp-Style Customer Support AI Auto-Responder
+// Official ChatTime Customer Support AI Auto-Responder
 async function handleSupportAutoReply(targetChatId: string, userMessage: any) {
   if (!userMessage || userMessage.senderId === 'user_chattime_support') return;
   const chat = dbManager.getChatById(targetChatId);
@@ -2665,7 +2665,7 @@ app.post('/api/chats/:id/messages', (req, res) => {
         const isBlockedByRecipient = Boolean(
           recipient && (recipient.blockedUsers || recipient.ghostedUsers || []).includes(newMsg.senderId)
         );
-        // WhatsApp behavior: When sender is blocked, recipient never receives the message, and ticks remain 1 grey tick ('sent')
+        // Privacy block behavior: When sender is blocked, recipient never receives the message, and ticks remain 1 grey tick ('sent')
         if (isBlockedByRecipient) {
           return;
         }

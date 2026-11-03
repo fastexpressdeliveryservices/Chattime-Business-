@@ -25,6 +25,9 @@ import {
   UserPlus,
   Ghost,
   Palette,
+  ChevronDown,
+  ChevronUp,
+  Edit3,
 } from 'lucide-react';
 import { useChatTime } from '../../context/ChatTimeContext';
 import { StatusStory, User } from '../../types';
@@ -381,6 +384,16 @@ export const StatusView: React.FC = () => {
     });
   }, [contactStories, currentUser.id, currentUser.contacts, users]);
 
+  const recentGroups = React.useMemo(() => {
+    return groupedUserStories.filter((g) => !g.allViewed);
+  }, [groupedUserStories]);
+
+  const viewedGroups = React.useMemo(() => {
+    return groupedUserStories.filter((g) => g.allViewed);
+  }, [groupedUserStories]);
+
+  const [isViewedSectionOpen, setIsViewedSectionOpen] = useState(true);
+
   return (
     <div className="flex-1 h-full flex flex-col bg-slate-950 overflow-hidden select-none">
       {/* Top Header */}
@@ -441,274 +454,237 @@ export const StatusView: React.FC = () => {
       {/* Main Content Container */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 max-w-4xl mx-auto w-full">
         {viewMode === 'active' ? (
-          <>
-            {/* Horizontal Story Rings Bar */}
-            <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1 px-1">
-              {/* My Story Ring */}
-              <button
+          <div className="space-y-6">
+            {/* My Status Item */}
+            <div className="p-4 sm:p-4.5 bg-slate-900 border border-slate-800/90 rounded-3xl flex items-center justify-between gap-3 shadow-md hover:border-slate-700 transition-all">
+              <div
                 onClick={() =>
                   myStories.length > 0
                     ? openViewerWithList(myStories, 0)
                     : setIsCreateModalOpen(true)
                 }
-                className="flex flex-col items-center gap-1.5 shrink-0 group"
+                className="flex items-center gap-3.5 min-w-0 cursor-pointer flex-1 group"
               >
-                <div
-                  className={`relative p-0.5 rounded-2xl ${
-                    myStories.length > 0
-                      ? 'bg-gradient-to-tr from-teal-400 via-emerald-400 to-indigo-500 shadow-lg shadow-teal-500/20'
-                      : 'border-2 border-dashed border-slate-700'
-                  }`}
-                >
-                  <img
-                    src={currentUser.avatar}
-                    alt={currentUser.name}
-                    className="w-14 h-14 rounded-[14px] object-cover bg-slate-950"
-                    referrerPolicy="no-referrer"
-                  />
-                  <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-teal-500 text-slate-950 flex items-center justify-center shadow">
-                    <Plus className="w-3 h-3 stroke-[3]" />
-                  </span>
-                </div>
-                <span className="text-[11px] font-semibold text-slate-200 truncate max-w-[72px]">
-                  My Status
-                </span>
-              </button>
-
-              {/* Other Users' Story Rings */}
-              {groupedUserStories.map((group) => (
-                <button
-                  key={group.userId}
-                  onClick={() => openViewerWithList(group.stories, 0)}
-                  className="flex flex-col items-center gap-1.5 shrink-0 group"
-                >
+                <div className="relative shrink-0">
                   <div
-                    className={`relative p-0.5 rounded-2xl transition-transform group-hover:scale-105 ${
-                      group.allViewed
-                        ? 'border-2 border-slate-700'
-                        : 'bg-gradient-to-tr from-teal-400 via-amber-400 to-rose-500 shadow-lg shadow-teal-500/20'
+                    className={`p-0.5 rounded-2xl transition-all ${
+                      myStories.length > 0
+                        ? 'bg-gradient-to-tr from-teal-400 via-emerald-400 to-indigo-500 shadow-lg shadow-teal-500/20 group-hover:scale-105'
+                        : 'border-2 border-dashed border-slate-700'
                     }`}
                   >
                     <img
-                      src={group.userAvatar}
-                      alt={group.userName}
-                      className="w-14 h-14 rounded-[14px] object-cover bg-slate-950"
-                      referrerPolicy="no-referrer"
-                    />
-                    {group.stories.length > 1 && (
-                      <span className="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-teal-500 text-slate-950 text-[9px] font-extrabold shadow">
-                        {group.stories.length}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[11px] font-medium text-slate-300 group-hover:text-teal-300 truncate max-w-[76px]">
-                    {group.userName.split(' ')[0]}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* My Status Card */}
-            <div className="p-4 sm:p-5 bg-slate-900 border border-slate-800 rounded-3xl space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3.5">
-                  <div className="relative">
-                    <img
                       src={currentUser.avatar}
                       alt={currentUser.name}
-                      className="w-14 h-14 rounded-2xl object-cover border-2 border-teal-400 p-0.5 bg-slate-950"
+                      className="w-13 h-13 rounded-[14px] object-cover bg-slate-950"
                       referrerPolicy="no-referrer"
                     />
-                    <button
-                      onClick={() => setIsCreateModalOpen(true)}
-                      className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-teal-500 text-slate-950 flex items-center justify-center shadow-lg"
-                    >
+                  </div>
+                  {myStories.length === 0 ? (
+                    <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-teal-500 text-slate-950 flex items-center justify-center shadow-md">
                       <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                    </button>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-bold text-slate-100 font-display">My Status</h4>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/20 capitalize">
-                        Audience: {currentUser.privacySettings?.statusVisibility || 'everyone'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      {myStories.length > 0
-                        ? `${myStories.length} active status update(s)`
-                        : 'Tap + to share a photo, text, or voice story for 24 hours'}
-                    </p>
-                  </div>
+                    </span>
+                  ) : (
+                    <span className="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-teal-500 text-slate-950 text-[9px] font-extrabold shadow">
+                      {myStories.length}
+                    </span>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {myStories.length > 0 && (
-                    <button
-                      onClick={() => openViewerWithList(myStories, 0)}
-                      className="px-3.5 py-2 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-xs text-teal-300 font-bold transition-colors"
-                    >
-                      Play My Statuses
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setIsManageUpdatesOpen(true)}
-                    className="p-2 sm:px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-teal-400 border border-slate-700 transition-colors flex items-center gap-1.5"
-                    title="Manage & Delete My Updates"
-                  >
-                    <Settings className="w-4 h-4 text-teal-400 hover:rotate-90 transition-transform duration-300" />
-                    <span className="text-xs font-semibold hidden sm:inline">Delete / Manage Updates</span>
-                  </button>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-slate-100 group-hover:text-teal-300 transition-colors">
+                      My status
+                    </h4>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/20 capitalize">
+                      {currentUser.privacySettings?.statusVisibility || 'contacts'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5 truncate">
+                    {myStories.length > 0
+                      ? `${formatTime(myStories[myStories.length - 1].timestamp)} · ${myStories.reduce((acc, s) => acc + s.viewers.length, 0)} views`
+                      : 'Tap to add status update'}
+                  </p>
                 </div>
               </div>
 
-              {/* List of My Active Statuses with Archive / Delete actions */}
-              {myStories.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-3 border-t border-slate-800/80">
-                  {myStories.map((st, idx) => {
-                    const hoursLeft = Math.max(
-                      1,
-                      Math.ceil((st.expiresAt - Date.now()) / (1000 * 60 * 60))
+              {/* Quick Actions on My Status */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCreateType('text');
+                    setIsCreateModalOpen(true);
+                  }}
+                  className="p-2 sm:px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700/80 transition-all active:scale-95 cursor-pointer shadow-sm"
+                  title="Create Text Status"
+                >
+                  <Type className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCreateType('image');
+                    setIsCreateModalOpen(true);
+                  }}
+                  className="p-2 sm:px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700/80 transition-all active:scale-95 cursor-pointer shadow-sm"
+                  title="Create Photo Status"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsManageUpdatesOpen(true)}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700/80 transition-all active:scale-95 cursor-pointer"
+                  title="Manage & Delete My Updates"
+                >
+                  <Settings className="w-4 h-4 text-teal-400 hover:rotate-90 transition-transform duration-300" />
+                </button>
+              </div>
+            </div>
+
+            {/* Recent Updates Section */}
+            {recentGroups.length > 0 && (
+              <div className="space-y-2.5">
+                <div className="px-1 flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Recent updates ({recentGroups.length})
+                  </h3>
+                </div>
+
+                <div className="bg-slate-900 border border-slate-800/90 rounded-3xl divide-y divide-slate-800/60 overflow-hidden shadow-sm">
+                  {recentGroups.map((group) => {
+                    const firstUnviewedIdx = group.stories.findIndex(
+                      (s) => !s.viewers.some((v) => v.userId === currentUser.id)
                     );
+                    const openIdx = firstUnviewedIdx >= 0 ? firstUnviewedIdx : 0;
                     return (
                       <div
-                        key={st.id}
-                        className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-center justify-between gap-2"
+                        key={group.userId}
+                        onClick={() => openViewerWithList(group.stories, openIdx)}
+                        className="p-3.5 flex items-center justify-between gap-3 hover:bg-slate-800/40 cursor-pointer transition-colors group"
                       >
-                        <div
-                          onClick={() => openViewerWithList(myStories, idx)}
-                          className="flex items-center gap-2.5 min-w-0 cursor-pointer flex-1"
-                        >
-                          <div
-                            style={{ background: st.background || STORY_GRADIENTS[0] }}
-                            className="w-10 h-10 rounded-xl shrink-0 overflow-hidden flex items-center justify-center border border-slate-700"
-                          >
-                            {st.mediaUrl ? (
+                        <div className="flex items-center gap-3.5 min-w-0">
+                          <div className="relative shrink-0">
+                            <div className="p-0.5 rounded-2xl bg-gradient-to-tr from-teal-400 via-emerald-400 to-indigo-500 shadow-md group-hover:scale-105 transition-transform">
                               <img
-                                src={st.mediaUrl}
-                                alt=""
-                                className="w-full h-full object-cover"
+                                src={group.userAvatar}
+                                alt={group.userName}
+                                className="w-12 h-12 rounded-[14px] object-cover bg-slate-950"
+                                referrerPolicy="no-referrer"
                               />
-                            ) : (
-                              <Type className="w-4 h-4 text-white" />
+                            </div>
+                            {group.stories.length > 1 && (
+                              <span className="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-teal-500 text-slate-950 text-[9px] font-extrabold shadow">
+                                {group.stories.length}
+                              </span>
                             )}
                           </div>
+
                           <div className="min-w-0">
-                            <p className="text-xs font-semibold text-slate-200 truncate">
-                              {st.content}
-                            </p>
-                            <p className="text-[10px] font-mono text-slate-400">
-                              {st.viewers.length} views · expires in {hoursLeft}h
+                            <h4 className="text-sm font-semibold text-slate-100 truncate group-hover:text-teal-300 transition-colors">
+                              {group.userName}
+                            </h4>
+                            <p className="text-xs text-slate-400 mt-0.5 truncate flex items-center gap-1 font-mono">
+                              <Clock className="w-3 h-3 text-teal-400" />
+                              <span>{formatTime(group.latestStory.timestamp)}</span>
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            onClick={() => archiveStatusStory(st.id)}
-                            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-teal-300"
-                            title="Move to Status History Now"
-                          >
-                            <Archive className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => deleteStatusStory(st.id)}
-                            className="p-1.5 rounded-lg bg-slate-900 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400"
-                            title="Delete Status"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        <span className="px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-[10px] font-bold uppercase tracking-wider shrink-0">
+                          New
+                        </span>
                       </div>
                     );
                   })}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* Viewed Updates Section */}
+            {viewedGroups.length > 0 && (
+              <div className="space-y-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsViewedSectionOpen(!isViewedSectionOpen)}
+                  className="w-full px-1 flex items-center justify-between text-left cursor-pointer group"
+                >
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-slate-300 transition-colors">
+                    Viewed updates ({viewedGroups.length})
+                  </h3>
+                  {isViewedSectionOpen ? (
+                    <ChevronUp className="w-4 h-4 text-slate-400" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                  )}
+                </button>
+
+                {isViewedSectionOpen && (
+                  <div className="bg-slate-900 border border-slate-800/90 rounded-3xl divide-y divide-slate-800/60 overflow-hidden shadow-sm animate-in fade-in duration-150">
+                    {viewedGroups.map((group) => (
+                      <div
+                        key={group.userId}
+                        onClick={() => openViewerWithList(group.stories, 0)}
+                        className="p-3.5 flex items-center justify-between gap-3 hover:bg-slate-800/40 cursor-pointer transition-colors group opacity-85 hover:opacity-100"
+                      >
+                        <div className="flex items-center gap-3.5 min-w-0">
+                          <div className="relative shrink-0">
+                            <div className="p-0.5 rounded-2xl border-2 border-slate-700">
+                              <img
+                                src={group.userAvatar}
+                                alt={group.userName}
+                                className="w-12 h-12 rounded-[14px] object-cover bg-slate-950"
+                                referrerPolicy="no-referrer"
+                              />
+                            </div>
+                            {group.stories.length > 1 && (
+                              <span className="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-slate-700 text-slate-300 text-[9px] font-bold">
+                                {group.stories.length}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="min-w-0">
+                            <h4 className="text-sm font-semibold text-slate-200 truncate group-hover:text-teal-300 transition-colors">
+                              {group.userName}
+                            </h4>
+                            <p className="text-xs text-slate-400 mt-0.5 truncate flex items-center gap-1 font-mono">
+                              <Clock className="w-3 h-3 text-slate-500" />
+                              <span>{formatTime(group.latestStory.timestamp)}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className="text-[11px] text-slate-500 font-medium">
+                          Viewed
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Empty State when no contacts have active status updates */}
+            {recentGroups.length === 0 && viewedGroups.length === 0 && (
+              <div className="p-10 rounded-3xl bg-slate-900/40 border border-slate-800/80 text-center space-y-2">
+                <Sparkles className="w-8 h-8 text-teal-400/60 mx-auto" />
+                <p className="text-sm font-semibold text-slate-300">No recent updates</p>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  When your contacts share status updates, they will appear here.
+                </p>
+              </div>
+            )}
 
             {/* End-to-End Encryption Status Notice */}
-            <div className="flex items-center justify-center gap-2 py-2 px-3 rounded-2xl bg-slate-900/40 border border-slate-800/80 text-center">
+            <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-slate-900/40 border border-slate-800/80 text-center">
               <Lock className="w-3.5 h-3.5 text-teal-400 shrink-0" />
               <span className="text-[11px] text-slate-400">
                 Your status updates are <strong className="text-slate-200">end-to-end encrypted</strong> and visible only to your contacts.
               </span>
             </div>
-
-            {/* Recent Contact Updates */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Recent Updates ({contactStories.length})
-              </h3>
-
-              {contactStories.length === 0 ? (
-                <div className="p-10 rounded-3xl bg-slate-900/40 border border-slate-800/80 text-center space-y-2">
-                  <Sparkles className="w-8 h-8 text-teal-400/60 mx-auto" />
-                  <p className="text-sm font-semibold text-slate-300">No active updates from contacts yet</p>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    When registered users share a 24-hour status update, it will appear here in real time.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {contactStories.map((story, idx) => {
-                    const hasViewed = story.viewers.some((v) => v.userId === currentUser.id);
-                    const author = users[story.userId];
-                    const isSaved = (currentUser.contacts || []).includes(story.userId);
-                    const authorNum = story.userNumber || author?.phoneNumber || author?.chatTimeNumber;
-                    const storyDisplayName = isSaved ? (author?.name || story.userName) : (authorNum || story.userName);
-
-                    return (
-                      <div
-                        key={story.id}
-                        onClick={() => openViewerWithList(contactStories, idx)}
-                        className="p-3.5 bg-slate-900 border border-slate-800 rounded-2xl cursor-pointer hover:border-teal-500/40 hover:bg-slate-800/40 transition-all flex items-center gap-3 relative group"
-                      >
-                        <div className="relative shrink-0">
-                          <div
-                            className={`p-0.5 rounded-2xl ${
-                              hasViewed
-                                ? 'border border-slate-700'
-                                : 'bg-gradient-to-tr from-teal-400 to-indigo-500 shadow-md'
-                            }`}
-                          >
-                            <img
-                              src={story.userAvatar}
-                              alt={storyDisplayName}
-                              className="w-12 h-12 rounded-xl object-cover bg-slate-950"
-                              referrerPolicy="no-referrer"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-1">
-                            <h4 className="text-sm font-semibold text-slate-100 truncate group-hover:text-teal-300 transition-colors">
-                              {storyDisplayName}
-                            </h4>
-                            {!hasViewed && (
-                              <span className="px-1.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-[9px] font-bold uppercase">
-                                New
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-slate-400 truncate mt-0.5">{story.content}</p>
-                          <div className="flex items-center justify-between gap-1.5 text-[11px] text-slate-500 font-mono mt-1">
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-teal-400" />
-                              {formatTime(story.timestamp)}
-                            </span>
-                            <span className="flex items-center gap-1 text-slate-400">
-                              <Eye className="w-3 h-3" /> {story.viewers.length}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </>
+          </div>
         ) : (
           /* Status History Archive View */
           <div className="space-y-4">

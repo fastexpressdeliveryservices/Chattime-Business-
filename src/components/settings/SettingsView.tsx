@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   User as UserIcon,
   Shield,
@@ -41,7 +41,12 @@ import {
   Info,
   Wand2,
   Mail,
+  Ban,
+  Plus,
+  Scan,
+  Fingerprint,
 } from 'lucide-react';
+import { buildApiUrl } from '../../utils/apiConfig';
 import { useChatTime } from '../../context/ChatTimeContext';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { BrandLogo } from '../common/BrandLogo';
@@ -88,6 +93,8 @@ export const SettingsView: React.FC = () => {
     openVoiceStudio,
     setInspectedUserId,
     loginAccount,
+    users,
+    toggleGhostUser,
   } = useChatTime();
 
   const [activeSection, setActiveSection] = useState<
@@ -237,13 +244,43 @@ export const SettingsView: React.FC = () => {
   const [phoneError, setPhoneError] = useState('');
   const [phoneSuccess, setPhoneSuccess] = useState('');
 
-  // Security PIN state
+  // Blocked Users state (Telegram style)
+  const [isBlockedUsersModalOpen, setIsBlockedUsersModalOpen] = useState(false);
+  const [isAddBlockUserPickerOpen, setIsAddBlockUserPickerOpen] = useState(false);
+  const [blockContactSearch, setBlockContactSearch] = useState('');
+  const blockedUserIds = useMemo(() => {
+    return currentUser.blockedUsers || currentUser.ghostedUsers || [];
+  }, [currentUser.blockedUsers, currentUser.ghostedUsers]);
+
+  // Security PIN state (6-digit passcode)
   const [newPin, setNewPin] = useState('');
   const [lockTimeoutMs, setLockTimeoutMs] = useState<number>(() => {
     if (typeof window === 'undefined') return 15 * 60 * 1000;
     const saved = Number(localStorage.getItem('chattime_lock_timeout_ms') || '900000');
     return Number.isFinite(saved) && saved > 0 ? saved : 15 * 60 * 1000;
   });
+
+  const handleSavePin = async () => {
+    const clean = newPin.trim();
+    if (clean.length !== 6 || !/^\d{6}$/.test(clean)) {
+      addToast('Invalid PIN', 'Please enter a 6-digit numeric passcode.', 'warning');
+      return;
+    }
+    updateSecurityField({ pinEnabled: true, pinCode: clean });
+    try {
+      await fetch(buildApiUrl('/api/auth/set-pin'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ userId: currentUser.id, pin: clean }),
+      });
+      addToast('Passcode Saved', 'Your 6-digit PIN has been saved securely.', 'success');
+      setNewPin('');
+    } catch {
+      addToast('Passcode Saved', 'Your 6-digit PIN is active on this device.', 'success');
+      setNewPin('');
+    }
+  };
 
   useEffect(() => {
     setName(currentUser.name);
@@ -955,7 +992,7 @@ export const SettingsView: React.FC = () => {
                 {(
                   [
                     {
-                      id: 'whatsapp',
+                      id: 'doodle',
                       label: 'ChatTime Classic',
                       desc: 'Classic clean ChatTime background with subtle doodle wallpaper and high contrast.',
                     },
@@ -996,7 +1033,7 @@ export const SettingsView: React.FC = () => {
                     },
                   ] as const
                 ).map((b) => {
-                  const active = appBackground === b.id;
+                  const active = appBackground === b.id || (b.id === 'doodle' && (appBackground as string) === 'classic');
                   return (
                     <button
                       key={b.id}
@@ -1479,6 +1516,31 @@ export const SettingsView: React.FC = () => {
                   <option value="nobody">Nobody (Hidden)</option>
                 </select>
               </div>
+
+              {/* Telegram-Style Blocked Users Management */}
+              <div
+                onClick={() => setIsBlockedUsersModalOpen(true)}
+                className="p-4 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl flex items-center justify-between cursor-pointer transition-colors"
+              >
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-100 flex items-center gap-1.5">
+                    <Ban className="w-4 h-4 text-rose-400" />
+                    <span>Blocked Users</span>
+                    {blockedUserIds.length > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[10px] font-bold">
+                        {blockedUserIds.length}
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Telegram-style blocked contacts management and instant unblock
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-slate-400">
+                  <span className="text-xs">{blockedUserIds.length} blocked</span>
+                  <ChevronRight className="w-4 h-4" />
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -1527,9 +1589,9 @@ export const SettingsView: React.FC = () => {
                     <Lock className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-100">4-Digit App Passcode Lock</h4>
+                    <h4 className="text-xs font-bold text-slate-100">6-Digit App Passcode Lock</h4>
                     <p className="text-[11px] text-slate-400">
-                      Lock your screen with a PIN code
+                      Lock your screen with a secure 6-digit numeric PIN
                     </p>
                   </div>
                 </div>
@@ -1539,39 +1601,73 @@ export const SettingsView: React.FC = () => {
                   onChange={(e) =>
                     updateSecurityField({
                       pinEnabled: e.target.checked,
-                      pinCode: e.target.checked ? newPin || '1234' : undefined,
+                      pinCode: e.target.checked ? newPin || currentUser.securitySettings?.pinCode || '123456' : undefined,
                     })
                   }
-                  className="w-4 h-4 accent-teal-500"
+                  className="w-4 h-4 accent-teal-500 cursor-pointer"
                 />
               </div>
 
               {currentUser.securitySettings.pinEnabled && (
-                <div className="pt-2 flex flex-wrap items-center gap-2">
-                  <input
-                    type="password"
-                    maxLength={4}
-                    value={newPin}
-                    onChange={(e) => setNewPin(e.target.value.replace(/[^0-9]/g, ''))}
-                    placeholder="4-digit PIN"
-                    className="px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-slate-100 w-40"
-                  />
-                  <button
-                    onClick={() =>
-                      updateSecurityField({ pinEnabled: true, pinCode: newPin || '1234' })
-                    }
-                    className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-teal-300 text-xs font-bold rounded-xl"
-                  >
-                    Save PIN
-                  </button>
-                  <button
-                    onClick={() => setIsAppLocked(true)}
-                    className="ml-auto px-4 py-2 bg-teal-500 text-slate-950 text-xs font-bold rounded-xl hover:bg-teal-400"
-                  >
-                    Lock App Now
-                  </button>
+                <div className="pt-2 space-y-3 border-t border-slate-800/80">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      value={newPin}
+                      onChange={(e) => setNewPin(e.target.value.replace(/[^0-9]/g, ''))}
+                      placeholder={currentUser.securitySettings?.pinCode ? '•••••• (saved)' : 'Enter 6-digit PIN'}
+                      className="px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-slate-100 w-44 tracking-widest text-center focus:border-teal-400 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSavePin}
+                      className="px-3.5 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold rounded-xl transition-all active:scale-95 cursor-pointer shadow-sm"
+                    >
+                      Save 6-Digit PIN
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsAppLocked(true)}
+                      className="ml-auto px-4 py-2 bg-slate-800 hover:bg-slate-700 text-teal-300 text-xs font-bold rounded-xl border border-slate-700 transition-colors"
+                    >
+                      Lock App Now
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    When enabled, entering the 6th digit unlocks the app immediately without having to press enter.
+                  </p>
                 </div>
               )}
+
+              {/* Platform Biometric Toggle (Face ID on iPhone, Fingerprint on Android) */}
+              <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-teal-500/10 text-teal-400">
+                    {isIOS ? <Scan className="w-5 h-5" /> : <Fingerprint className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-100">
+                      {isIOS ? 'Face ID Unlock' : isAndroid ? 'Fingerprint Unlock' : 'Biometric Sensor Unlock'}
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      {isIOS
+                        ? 'Unlock ChatTime instantly using Face ID on iPhone'
+                        : isAndroid
+                        ? 'Unlock ChatTime instantly using your fingerprint on Android'
+                        : 'Unlock ChatTime using device biometrics'}
+                    </p>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={currentUser.securitySettings?.biometricsEnabled !== false}
+                  onChange={(e) => updateSecurityField({ biometricsEnabled: e.target.checked })}
+                  className="w-4 h-4 accent-teal-500 cursor-pointer"
+                />
+              </div>
             </div>
 
             <div className="p-5 bg-slate-900 border border-slate-800 rounded-3xl flex items-center justify-between">
@@ -2202,6 +2298,180 @@ export const SettingsView: React.FC = () => {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Telegram-Style Blocked Users Modal */}
+      {isBlockedUsersModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <Ban className="w-5 h-5 text-rose-400" />
+                <h3 className="text-base font-bold text-slate-100 font-display">Blocked Users</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddBlockUserPickerOpen(true)}
+                  className="px-3 py-1.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center gap-1 transition-all cursor-pointer shadow"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>Block User</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsBlockedUsersModalOpen(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Blocked users cannot send you messages, place calls, or see your online presence. They will not be notified that they were blocked.
+            </p>
+
+            <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
+              {blockedUserIds.length === 0 ? (
+                <div className="p-8 text-center space-y-2 bg-slate-950/60 rounded-2xl border border-slate-800">
+                  <Ban className="w-8 h-8 text-slate-600 mx-auto" />
+                  <p className="text-xs font-semibold text-slate-300">No Blocked Users</p>
+                  <p className="text-[11px] text-slate-500">
+                    When you block someone, they will appear here with an instant Telegram-style option to unblock them.
+                  </p>
+                </div>
+              ) : (
+                blockedUserIds.map((bId) => {
+                  const bUser = users[bId];
+                  const bName = bUser?.name || 'Blocked User';
+                  const bAvatar = bUser?.avatar || '/icon.svg';
+                  const bHandle = bUser?.username ? `@${bUser.username}` : '';
+                  return (
+                    <div
+                      key={bId}
+                      className="p-3 bg-slate-950 border border-slate-800 rounded-2xl flex items-center justify-between gap-3 group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <img
+                          src={bAvatar}
+                          alt={bName}
+                          className="w-10 h-10 rounded-full object-cover bg-slate-800 border border-slate-700"
+                        />
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-bold text-slate-100 truncate">{bName}</h4>
+                          <p className="text-[11px] text-slate-400 truncate font-mono">{bHandle || 'ID: ' + bId}</p>
+                        </div>
+                      </div>
+
+                      {/* Telegram-style UNBLOCK button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          toggleGhostUser(bId);
+                          addToast('Unblocked', `${bName} has been unblocked.`, 'success');
+                        }}
+                        className="px-3.5 py-1.5 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-300 font-bold text-xs uppercase tracking-wider transition-colors active:scale-95 cursor-pointer"
+                      >
+                        Unblock
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setIsBlockedUsersModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Block User Contact Picker Modal */}
+      {isAddBlockUserPickerOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h3 className="text-base font-bold text-slate-100 font-display">Block a User</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddBlockUserPickerOpen(false);
+                  setBlockContactSearch('');
+                }}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <input
+              type="text"
+              value={blockContactSearch}
+              onChange={(e) => setBlockContactSearch(e.target.value)}
+              placeholder="Search by name or @username..."
+              className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-teal-500/70"
+            />
+
+            <div className="max-h-60 overflow-y-auto space-y-1.5 pr-1">
+              {Object.values(users)
+                .filter((u) => u.id !== currentUser.id && !blockedUserIds.includes(u.id))
+                .filter(
+                  (u) =>
+                    !blockContactSearch ||
+                    u.name.toLowerCase().includes(blockContactSearch.toLowerCase()) ||
+                    u.username?.toLowerCase().includes(blockContactSearch.toLowerCase())
+                )
+                .map((u) => (
+                  <div
+                    key={u.id}
+                    onClick={() => {
+                      toggleGhostUser(u.id);
+                      setIsAddBlockUserPickerOpen(false);
+                      setBlockContactSearch('');
+                      addToast('User Blocked', `${u.name} was blocked.`, 'info');
+                    }}
+                    className="p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800/80 flex items-center justify-between gap-3 cursor-pointer transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <img
+                        src={u.avatar || '/icon.svg'}
+                        alt={u.name}
+                        className="w-9 h-9 rounded-full object-cover bg-slate-800"
+                      />
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-semibold text-slate-200 truncate">{u.name}</h4>
+                        <p className="text-[10px] text-slate-500 font-mono truncate">@{u.username}</p>
+                      </div>
+                    </div>
+                    <span className="text-xs text-rose-400 font-bold px-2 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                      Block
+                    </span>
+                  </div>
+                ))}
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddBlockUserPickerOpen(false);
+                  setBlockContactSearch('');
+                }}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

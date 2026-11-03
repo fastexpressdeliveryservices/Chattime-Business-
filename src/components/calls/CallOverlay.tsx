@@ -147,7 +147,7 @@ export const CallOverlay: React.FC = () => {
   const [availableDevices, setAvailableDevices] = useState<AudioDeviceInfo[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string>('default');
 
-  // WhatsApp-Style Camera Enhancements & Filters
+  // Camera Enhancements & Real-Time Beauty Filters
   const [selectedFilter, setSelectedFilter] = useState<string>('beauty');
   const [beautySmoothLevel, setBeautySmoothLevel] = useState<number>(40);
   const [isFiltersOpen, setIsFiltersOpen] = useState<boolean>(false);
@@ -540,7 +540,7 @@ export const CallOverlay: React.FC = () => {
           )}
         </div>
 
-        {/* WhatsApp-Style Bottom Answer / Decline Action Dock */}
+        {/* Bottom Answer / Decline Action Dock */}
         <div className="flex items-center justify-around w-full max-w-sm mx-auto z-10 pt-4">
           {/* Decline Button */}
           <div className="flex flex-col items-center gap-2">
@@ -680,7 +680,7 @@ export const CallOverlay: React.FC = () => {
       {remoteAudioTag}
 
       <div className="relative w-full h-full flex flex-col justify-between overflow-hidden">
-        {/* Top Header Bar - WhatsApp Fullscreen Floating Header */}
+        {/* Top Header Bar - Fullscreen Floating Header */}
         <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between pt-[max(env(safe-area-inset-top,0px),0.75rem)] px-3 sm:px-6 pb-4 bg-gradient-to-b from-black/90 via-black/50 to-transparent">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
@@ -896,7 +896,7 @@ export const CallOverlay: React.FC = () => {
                     className="w-full h-full object-cover pointer-events-none"
                   />
                 ) : isVideoOff ? (
-                  /* When local video is paused / off: show user profile avatar like WhatsApp */
+                  /* When local video is paused / off: show user profile avatar */
                   <div className="flex flex-col items-center justify-center gap-1.5 p-2 text-center w-full h-full bg-slate-950/95">
                     <div
                       className="relative w-14 h-14 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-teal-400 p-0.5 shadow-lg"
@@ -960,7 +960,7 @@ export const CallOverlay: React.FC = () => {
                 </div>
               </div>
 
-              {/* WhatsApp-Style Live Camera Filters & Beauty Dock */}
+              {/* Live Camera Filters & Beauty Dock */}
               {isFiltersOpen && (
                 <div
                   className="absolute bottom-4 sm:bottom-20 left-3 right-3 sm:left-auto sm:right-52 z-30 max-w-lg bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-3xl p-4 shadow-2xl space-y-3.5 animate-in slide-in-from-bottom duration-200"
@@ -1107,7 +1107,7 @@ export const CallOverlay: React.FC = () => {
           )}
         </div>
 
-        {/* Bottom Call Controls Dock - WhatsApp Circular Floating Bar */}
+        {/* Bottom Call Controls Dock - Circular Floating Bar */}
         <div className="pb-[max(env(safe-area-inset-bottom,0px),1.25rem)] pt-4 px-4 bg-gradient-to-t from-black/95 via-black/75 to-transparent flex items-center justify-center gap-3 sm:gap-5 z-30 flex-wrap">
           {/* Microphone Mute */}
           <button
@@ -1211,7 +1211,7 @@ export const CallOverlay: React.FC = () => {
             </>
           )}
 
-          {/* WhatsApp-Style Prominent Red End Call Button */}
+          {/* Prominent Red End Call Button */}
           <button
             onClick={endActiveCall}
             className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-2xl shadow-rose-600/40 active:scale-90 transition-transform cursor-pointer shrink-0"

@@ -444,8 +444,12 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return saved || 'emerald';
   });
   const [appBackground, setAppBackgroundState] = useState<AppBackgroundStyle>(() => {
-    const saved = localStorage.getItem('chattime_bg_style') as AppBackgroundStyle | null;
-    return saved || 'whatsapp';
+    let saved = localStorage.getItem('chattime_bg_style') as AppBackgroundStyle | null;
+    if (saved && (saved as string).startsWith('w')) {
+      saved = 'doodle';
+      try { localStorage.setItem('chattime_bg_style', 'doodle'); } catch {}
+    }
+    return saved || 'doodle';
   });
   const [wallpaper, setWallpaperState] = useState<WallpaperPattern>(() => {
     const saved = localStorage.getItem('chattime_wallpaper') as WallpaperPattern | null;

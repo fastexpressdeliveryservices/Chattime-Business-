@@ -66,6 +66,7 @@ export const MediaDrawer: React.FC = () => {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [reportReason, setReportReason] = useState('Spam or unwanted contact');
   const [reportDetails, setReportDetails] = useState('');
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
 
   if (!isInfoDrawerOpen || !activeChatId) return null;
 
@@ -289,11 +290,11 @@ export const MediaDrawer: React.FC = () => {
                 <Phone className="w-3.5 h-3.5 text-teal-400" />
                 <span className="text-xs font-mono font-semibold text-slate-200">{peerPhone}</span>
               </div>
-            ) : (
+            ) : chat.type === 'group' ? (
               <p className="text-xs text-slate-400 mt-1">
                 {chat.participants.length} members
               </p>
-            )}
+            ) : null}
 
             {/* Quick Chat Actions: Favorite & Important */}
             <div className="grid grid-cols-2 gap-2 w-full pt-3">
@@ -581,7 +582,14 @@ export const MediaDrawer: React.FC = () => {
               {chat.type === 'direct' && peerUser && (
                 <button
                   type="button"
-                  onClick={() => toggleGhostUser(peerUser.id)}
+                  onClick={() => {
+                    if (isUserGhosted(peerUser.id)) {
+                      toggleGhostUser(peerUser.id);
+                      addToast('User Unblocked', `${peerUser.name} has been unblocked.`, 'success');
+                    } else {
+                      setIsBlockModalOpen(true);
+                    }
+                  }}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
                     isUserGhosted(peerUser.id)
                       ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30'
@@ -592,10 +600,12 @@ export const MediaDrawer: React.FC = () => {
                     <Ban className="w-4 h-4 text-rose-400" />
                     {isUserGhosted(peerUser.id) ? 'Unblock User' : 'Block User'}
                   </span>
-                  {isUserGhosted(peerUser.id) && (
+                  {isUserGhosted(peerUser.id) ? (
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-bold">
                       Blocked
                     </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-500">Telegram style</span>
                   )}
                 </button>
               )}
@@ -760,6 +770,47 @@ export const MediaDrawer: React.FC = () => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Telegram-Style Block Confirmation Dialog */}
+      {isBlockModalOpen && peerUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
+            <div className="w-14 h-14 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 mx-auto flex items-center justify-center">
+              <Ban className="w-7 h-7" />
+            </div>
+
+            <div>
+              <h3 className="text-base font-bold text-white font-display">
+                Block {peerUser.name}?
+              </h3>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                Blocked users will not be able to send you messages, place calls, or see your online status.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsBlockModalOpen(false)}
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  toggleGhostUser(peerUser.id);
+                  setIsBlockModalOpen(false);
+                  addToast('User Blocked', `${peerUser.name} has been blocked.`, 'info');
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+              >
+                Block
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </aside>
