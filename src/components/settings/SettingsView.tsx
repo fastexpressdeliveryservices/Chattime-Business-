@@ -266,15 +266,25 @@ export const SettingsView: React.FC = () => {
       addToast('Invalid PIN', 'Please enter a 6-digit numeric passcode.', 'warning');
       return;
     }
+    try {
+      localStorage.setItem('chattime_lock_pin', clean);
+      if (currentUser?.id) {
+        localStorage.setItem(`chattime_lock_pin_${currentUser.id}`, clean);
+      }
+    } catch {}
     updateSecurityField({ pinEnabled: true, pinCode: clean });
     try {
-      await fetch(buildApiUrl('/api/auth/set-pin'), {
+      const res = await fetch(buildApiUrl('/api/auth/set-pin'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ userId: currentUser.id, pin: clean }),
       });
-      addToast('Passcode Saved', 'Your 6-digit PIN has been saved securely.', 'success');
+      if (res.ok) {
+        addToast('Passcode Saved', 'Your 6-digit PIN has been saved securely.', 'success');
+      } else {
+        addToast('Passcode Saved', 'Your 6-digit PIN is active on this device.', 'success');
+      }
       setNewPin('');
     } catch {
       addToast('Passcode Saved', 'Your 6-digit PIN is active on this device.', 'success');

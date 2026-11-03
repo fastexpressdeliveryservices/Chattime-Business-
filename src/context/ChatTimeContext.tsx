@@ -191,6 +191,8 @@ interface ChatTimeContextType {
   ) => Promise<{ success: boolean; error?: string }>;
   registerNewAccount: (params: RegisterAccountParams) => Promise<{ user?: User; error?: string }>;
   loginAccount: (identifier: string, pin?: string) => Promise<{ user?: User; error?: string }>;
+  loginSendCode: (identifier: string) => Promise<{ success: boolean; emailPrefix?: string; error?: string }>;
+  loginVerifyCode: (identifier: string, code: string) => Promise<{ user?: User; error?: string }>;
 
   // Messaging Actions
   sendMessage: (
@@ -2314,10 +2316,12 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (!res.ok) {
           return { success: false, error: data.error || 'Could not send verification code.' };
         }
+        const atIdx = email ? email.indexOf('@') : -1;
+        const emailPrefix = email ? (atIdx !== -1 ? email.substring(0, atIdx) : email) : '';
         addToast(
           'Verification Code Sent',
-          email
-            ? `From ChatTime <code@chattimeapp.name.ng>: Code for ${phone} sent to ${email}`
+          emailPrefix
+            ? `Verification code sent to ${emailPrefix}`
             : `ChatTime verification code for ${phone} generated.`,
           'info'
         );
@@ -2325,9 +2329,8 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           success: true,
           code: data.verificationCode,
           email: data.email,
-          sender: data.sender || 'ChatTime <code@chattimeapp.name.ng>',
-          domain: data.domain || 'chattimeapp.name.ng',
-          emailPreview: data.emailPreview,
+          emailPrefix: data.emailPrefix || emailPrefix,
+          sender: 'ChatTime Security',
         };
       } catch {
         return { success: false, error: 'Network error sending verification code.' };
@@ -2394,6 +2397,9 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setUsers((prev) => ({ ...prev, [newUser.id]: newUser }));
         sessionStorage.setItem('chattime_active_user_id', newUser.id);
         localStorage.setItem('chattime_active_user_id', newUser.id);
+        if (params.pin) {
+          localStorage.setItem('chattime_lock_pin', params.pin);
+        }
         setActiveUserId(newUser.id);
         setActiveChatIdState(null);
         await fetchBootstrap(newUser.id);
@@ -2430,6 +2436,9 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setUsers((prev) => ({ ...prev, [loggedInUser.id]: loggedInUser }));
         sessionStorage.setItem('chattime_active_user_id', loggedInUser.id);
         localStorage.setItem('chattime_active_user_id', loggedInUser.id);
+        if (pin && pin.length >= 4) {
+          localStorage.setItem('chattime_lock_pin', pin);
+        }
         setActiveUserId(loggedInUser.id);
         setActiveChatIdState(null);
         await fetchBootstrap(loggedInUser.id);
@@ -2442,6 +2451,70 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return { user: loggedInUser };
       } catch {
         return { error: 'Could not reach authentication server' };
+      }
+    },
+    [addToast, fetchBootstrap]
+  );
+
+  // Send login verification code directly to user's email without showing domain
+  const loginSendCode = useCallback(
+    async (identifier: string): Promise<{ success: boolean; emailPrefix?: string; error?: string }> => {
+      try {
+        const res = await fetch(buildApiUrl('/api/auth/login-send-code'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ identifier }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          return { success: false, error: data.error || 'Failed to send login code.' };
+        }
+        addToast(
+          'Code Dispatched',
+          data.emailPrefix
+            ? `Verification code sent to ${data.emailPrefix}`
+            : 'Login verification code sent to your registered email.',
+          'info'
+        );
+        return { success: true, emailPrefix: data.emailPrefix };
+      } catch {
+        return { success: false, error: 'Network error connecting to login server.' };
+      }
+    },
+    [addToast]
+  );
+
+  // Verify login code and sign in immediately
+  const loginVerifyCode = useCallback(
+    async (identifier: string, code: string): Promise<{ user?: User; error?: string }> => {
+      try {
+        const res = await fetch(buildApiUrl('/api/auth/login-verify-code'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ identifier, code }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          return { error: data.error || 'Invalid or expired verification code.' };
+        }
+        const loggedInUser: User = data;
+        setUsers((prev) => ({ ...prev, [loggedInUser.id]: loggedInUser }));
+        sessionStorage.setItem('chattime_active_user_id', loggedInUser.id);
+        localStorage.setItem('chattime_active_user_id', loggedInUser.id);
+        setActiveUserId(loggedInUser.id);
+        setActiveChatIdState(null);
+        await fetchBootstrap(loggedInUser.id);
+        soundEffects.playNotification();
+        addToast(
+          'Signed In',
+          `Welcome back, ${loggedInUser.name} (${loggedInUser.chatTimeNumber})`,
+          'success'
+        );
+        return { user: loggedInUser };
+      } catch {
+        return { error: 'Could not connect to authentication server.' };
       }
     },
     [addToast, fetchBootstrap]
@@ -4157,9 +4230,25 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     (updates: Partial<User>) => {
       if (!currentUser.id) return;
       const userId = currentUser.id;
+      if (updates.securitySettings?.pinCode) {
+        try {
+          localStorage.setItem('chattime_lock_pin', updates.securitySettings.pinCode);
+        } catch {}
+      }
       setUsers((prev) => {
         const existing = prev[userId] || currentUser;
-        const updated = { ...existing, ...updates };
+        const updated = {
+          ...existing,
+          ...updates,
+          ...(updates.securitySettings
+            ? {
+                securitySettings: {
+                  ...existing.securitySettings,
+                  ...updates.securitySettings,
+                },
+              }
+            : {}),
+        };
         return {
           ...prev,
           [userId]: updated,
@@ -4967,6 +5056,8 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         verifyPhoneOtp,
         registerNewAccount,
         loginAccount,
+        loginSendCode,
+        loginVerifyCode,
         sendMessage,
         editMessage,
         deleteMessage,

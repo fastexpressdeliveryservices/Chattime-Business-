@@ -48,6 +48,8 @@ export const AuthPage: React.FC = () => {
   const {
     registerNewAccount,
     loginAccount,
+    loginSendCode,
+    loginVerifyCode,
     sendPhoneOtp,
     verifyPhoneOtp,
     addToast,
@@ -93,9 +95,17 @@ export const AuthPage: React.FC = () => {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [isInitializing, setIsInitializing] = useState(false);
 
-  // Login State
+  // Login State: Support Passcode PIN & Direct Email Code (domain hidden)
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPin, setLoginPin] = useState('');
+  const [loginMethod, setLoginMethod] = useState<'pin' | 'code'>('pin');
+  const [loginCodeSent, setLoginCodeSent] = useState(false);
+  const [loginEmailPrefix, setLoginEmailPrefix] = useState('');
+  const [loginOtpCode, setLoginOtpCode] = useState(['', '', '', '', '', '']);
+  const [loginOtpTimer, setLoginOtpTimer] = useState(60);
+  const [loginCanResend, setLoginCanResend] = useState(false);
+  const [isVerifyingLoginOtp, setIsVerifyingLoginOtp] = useState(false);
+  const loginOtpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Error & Loading
   const [errorMsg, setErrorMsg] = useState('');
@@ -158,6 +168,21 @@ export const AuthPage: React.FC = () => {
     };
   }, [signupStep, otpTimer]);
 
+  // Login OTP Countdown timer
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (screen === 'login' && loginCodeSent && loginOtpTimer > 0) {
+      interval = setInterval(() => {
+        setLoginOtpTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (loginOtpTimer === 0) {
+      setLoginCanResend(true);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [screen, loginCodeSent, loginOtpTimer]);
+
   const handleRegenerateNumber = () => {
     if (!selectedCountry) {
       setErrorMsg('Please select your country first.');
@@ -215,7 +240,8 @@ export const AuthPage: React.FC = () => {
       setCanResend(false);
       setSignupStep(2);
       setOtpCode(['', '', '', '', '', '']);
-      addToast('Code Dispatched', `Verification code sent directly to ${email}.`, 'success');
+      const emailPrefix = email.split('@')[0];
+      addToast('Code Dispatched', `Verification code sent to ${emailPrefix}.`, 'success');
 
       // Pre-fill username from email prefix if empty
       if (!username) {
@@ -308,7 +334,8 @@ export const AuthPage: React.FC = () => {
     if (res.success) {
       setOtpTimer(60);
       setCanResend(false);
-      addToast('New Code Sent', `A fresh 6-digit code was sent directly to ${email}`, 'success');
+      const emailPrefix = email.split('@')[0];
+      addToast('New Code Sent', `A fresh 6-digit code was sent to ${emailPrefix}`, 'success');
     } else {
       setErrorMsg(res.error || 'Failed to resend code');
     }
@@ -370,7 +397,7 @@ export const AuthPage: React.FC = () => {
     }
   };
 
-  // Login handler
+  // Login handler with PIN
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -386,6 +413,103 @@ export const AuthPage: React.FC = () => {
 
     if (res.error) {
       setErrorMsg(res.error);
+    }
+  };
+
+  // Login handler: Send 6-digit code to email without showing domain
+  const handleSendLoginCode = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setErrorMsg('');
+
+    if (!loginIdentifier.trim()) {
+      setErrorMsg('Please enter your phone number, username, or email.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    const res = await loginSendCode(loginIdentifier.trim());
+    setIsSubmitting(false);
+
+    if (!res.success) {
+      setErrorMsg(res.error || 'Failed to send login code.');
+      return;
+    }
+
+    setLoginMethod('code');
+    setLoginCodeSent(true);
+    setLoginEmailPrefix(res.emailPrefix || '');
+    setLoginOtpCode(['', '', '', '', '', '']);
+    setLoginOtpTimer(60);
+    setLoginCanResend(false);
+  };
+
+  const handleVerifyLoginOtp = async (codeStr: string) => {
+    setErrorMsg('');
+    setIsVerifyingLoginOtp(true);
+    const res = await loginVerifyCode(loginIdentifier.trim(), codeStr);
+    setIsVerifyingLoginOtp(false);
+
+    if (res.error) {
+      setErrorMsg(res.error);
+    }
+  };
+
+  const handleLoginOtpDigitChange = (index: number, val: string) => {
+    const clean = val.replace(/\D/g, '');
+    const newOtp = [...loginOtpCode];
+
+    if (!clean) {
+      newOtp[index] = '';
+      setLoginOtpCode(newOtp);
+      return;
+    }
+
+    if (clean.length > 1) {
+      const chars = clean.slice(0, 6).split('');
+      chars.forEach((c, idx) => {
+        newOtp[idx] = c;
+      });
+      setLoginOtpCode(newOtp);
+      const nextIdx = Math.min(chars.length, 5);
+      loginOtpInputRefs.current[nextIdx]?.focus();
+      if (chars.length === 6) {
+        handleVerifyLoginOtp(chars.join(''));
+      }
+      return;
+    }
+
+    newOtp[index] = clean;
+    setLoginOtpCode(newOtp);
+
+    if (index < 5 && clean) {
+      loginOtpInputRefs.current[index + 1]?.focus();
+    }
+
+    const fullCode = newOtp.join('');
+    if (fullCode.length === 6 && !newOtp.includes('')) {
+      handleVerifyLoginOtp(fullCode);
+    }
+  };
+
+  const handleLoginOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !loginOtpCode[index] && index > 0) {
+      loginOtpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleResendLoginCode = async () => {
+    if (!loginCanResend) return;
+    setErrorMsg('');
+    setIsSubmitting(true);
+    const res = await loginSendCode(loginIdentifier.trim());
+    setIsSubmitting(false);
+
+    if (res.success) {
+      setLoginOtpTimer(60);
+      setLoginCanResend(false);
+      setLoginOtpCode(['', '', '', '', '', '']);
+    } else {
+      setErrorMsg(res.error || 'Failed to resend code');
     }
   };
 
@@ -1046,48 +1170,205 @@ export const AuthPage: React.FC = () => {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                {t('loginIdentifier', 'Phone Number, Username, or Email')}
-              </label>
-              <input
-                type="text"
-                required
-                value={loginIdentifier}
-                onChange={(e) => setLoginIdentifier(e.target.value)}
-                placeholder={t('loginIdentifierPlaceholder', 'e.g. +1 415-892-3011, @username, or 0814')}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <KeyRound className="w-3.5 h-3.5 text-teal-400" />
-                  {t('securityPin', 'Security PIN / Passcode')}
-                </span>
-                <span className="text-[10px] text-slate-500">{t('leaveBlankIfNoPin', 'Leave blank if no PIN')}</span>
-              </label>
-              <input
-                type="password"
-                maxLength={4}
-                value={loginPin}
-                onChange={(e) => setLoginPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                placeholder="4-digit PIN"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-mono tracking-widest text-white placeholder-slate-600 focus:outline-none focus:border-teal-500 transition-colors"
-              />
-            </div>
-
+          {/* Login Mode Toggle: Passcode PIN vs One-Time Email Code */}
+          <div className="grid grid-cols-2 gap-2 p-1 bg-slate-950/80 rounded-2xl border border-slate-800">
             <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3.5 rounded-2xl bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-slate-950 font-bold text-sm transition-all shadow-lg shadow-teal-500/20 flex items-center justify-center gap-2 active:scale-95 cursor-pointer mt-2"
+              type="button"
+              onClick={() => {
+                setLoginMethod('pin');
+                setErrorMsg('');
+              }}
+              className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                loginMethod === 'pin'
+                  ? 'bg-teal-500 text-slate-950 shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
             >
-              <LogIn className="w-4 h-4" />
-              <span>{isSubmitting ? t('signingIn', 'Signing In...') : t('continueToChatTime', 'Continue to ChatTime')}</span>
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>Passcode PIN</span>
             </button>
-          </form>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginMethod('code');
+                setErrorMsg('');
+              }}
+              className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                loginMethod === 'code'
+                  ? 'bg-teal-500 text-slate-950 shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>One-Time Code</span>
+            </button>
+          </div>
+
+          {loginMethod === 'pin' ? (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  {t('loginIdentifier', 'Phone Number, Username, or Email')}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={loginIdentifier}
+                  onChange={(e) => setLoginIdentifier(e.target.value)}
+                  placeholder={t('loginIdentifierPlaceholder', 'e.g. +1 415-892-3011, @username, or 0814')}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <KeyRound className="w-3.5 h-3.5 text-teal-400" />
+                    {t('securityPin', 'Security PIN / Passcode')}
+                  </span>
+                  <span className="text-[10px] text-slate-500">{t('leaveBlankIfNoPin', 'Leave blank if no PIN')}</span>
+                </label>
+                <input
+                  type="password"
+                  maxLength={6}
+                  value={loginPin}
+                  onChange={(e) => setLoginPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="4 to 6-digit PIN"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-mono tracking-widest text-white placeholder-slate-600 focus:outline-none focus:border-teal-500 transition-colors"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3.5 rounded-2xl bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-slate-950 font-bold text-sm transition-all shadow-lg shadow-teal-500/20 flex items-center justify-center gap-2 active:scale-95 cursor-pointer mt-2"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>{isSubmitting ? t('signingIn', 'Signing In...') : t('continueToChatTime', 'Continue to ChatTime')}</span>
+              </button>
+
+              <div className="text-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginMethod('code');
+                    if (loginIdentifier.trim()) {
+                      handleSendLoginCode();
+                    }
+                  }}
+                  className="text-[11px] text-teal-400 hover:underline cursor-pointer font-medium"
+                >
+                  Forgot passcode? Sign in with a code sent to your email
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  {t('loginIdentifier', 'Phone Number, Username, or Email')}
+                </label>
+                <input
+                  type="text"
+                  required
+                  disabled={loginCodeSent}
+                  value={loginIdentifier}
+                  onChange={(e) => setLoginIdentifier(e.target.value)}
+                  placeholder="e.g. +1 415-892-3011, @username, or registered address"
+                  className="w-full bg-slate-950 border border-slate-800 disabled:opacity-60 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors font-mono"
+                />
+              </div>
+
+              {!loginCodeSent ? (
+                <div className="space-y-3">
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    A secure 6-digit one-time code will be dispatched to your registered email to log you in without requiring your PIN.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={isSubmitting || !loginIdentifier.trim()}
+                    onClick={() => handleSendLoginCode()}
+                    className="w-full py-3.5 rounded-2xl bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-slate-950 font-bold text-sm transition-all shadow-lg shadow-teal-500/20 flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span>{isSubmitting ? 'Sending Code...' : 'Send Verification Code to Login'}</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Verification Notice: Domain completely hidden! */}
+                  <div className="p-3.5 rounded-2xl bg-teal-500/10 border border-teal-500/30 space-y-1">
+                    <div className="text-xs font-bold text-teal-300 flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Code Sent to Registered Address</span>
+                    </div>
+                    <div className="text-[11px] text-slate-300">
+                      We sent a 6-digit code to{' '}
+                      <strong className="text-white font-mono">{loginEmailPrefix}</strong> (domain hidden for privacy). Enter it below:
+                    </div>
+                  </div>
+
+                  {/* 6 Digit Inputs */}
+                  <div className="space-y-1.5">
+                    <label className="block text-center text-xs font-semibold text-slate-400">
+                      Enter 6-digit login code
+                    </label>
+                    <div className="flex items-center justify-center gap-2">
+                      {loginOtpCode.map((digit, index) => (
+                        <input
+                          key={index}
+                          ref={(el) => {
+                            loginOtpInputRefs.current[index] = el;
+                          }}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handleLoginOtpDigitChange(index, e.target.value)}
+                          onKeyDown={(e) => handleLoginOtpKeyDown(index, e)}
+                          className="w-10 h-12 text-center text-lg font-bold font-mono text-white bg-slate-950 border border-slate-800 focus:border-teal-400 rounded-xl outline-none"
+                          autoFocus={index === 0}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLoginCodeSent(false);
+                        setLoginOtpCode(['', '', '', '', '', '']);
+                      }}
+                      className="text-slate-400 hover:text-white underline text-[11px] cursor-pointer"
+                    >
+                      Change account
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResendLoginCode}
+                      disabled={!loginCanResend || isSubmitting}
+                      className={`text-[11px] font-semibold cursor-pointer ${
+                        loginCanResend ? 'text-teal-400 hover:underline' : 'text-slate-500'
+                      }`}
+                    >
+                      {loginCanResend ? 'Resend Code' : `Resend in ${loginOtpTimer}s`}
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={isVerifyingLoginOtp || loginOtpCode.join('').length !== 6}
+                    onClick={() => handleVerifyLoginOtp(loginOtpCode.join(''))}
+                    className="w-full py-3.5 rounded-2xl bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-slate-950 font-bold text-sm transition-all shadow-lg shadow-teal-500/20 flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>{isVerifyingLoginOtp ? 'Verifying Code...' : 'Verify Code & Sign In'}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="pt-2 text-center text-xs text-slate-400 border-t border-slate-800/80 space-y-2">
             <div>

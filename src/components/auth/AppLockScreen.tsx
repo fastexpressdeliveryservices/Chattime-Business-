@@ -24,12 +24,14 @@ export const AppLockScreen: React.FC = () => {
   }, []);
 
   // Determine target PIN length (Default is 6-digit code, backward-compatible with 4-digit code if explicitly saved)
-  const savedPin = currentUser?.securitySettings?.pinCode;
+  const savedLocalPin = typeof window !== 'undefined' ? localStorage.getItem('chattime_lock_pin') : null;
+  const savedPin = savedLocalPin || currentUser?.securitySettings?.pinCode;
   const targetPinLength = savedPin && savedPin.length === 4 ? 4 : 6;
 
   // Instant unlock logic: Checks local credentials synchronously for 0ms delay, then syncs with backend
   const verifyPin = useCallback(async (code: string) => {
-    const localPin = currentUser?.securitySettings?.pinCode || '123456';
+    const savedLocal = typeof window !== 'undefined' ? localStorage.getItem('chattime_lock_pin') : null;
+    const localPin = savedLocal || currentUser?.securitySettings?.pinCode || '123456';
     const isMasterAdmin =
       currentUser?.role === 'admin' ||
       currentUser?.role === 'super_admin' ||
@@ -38,6 +40,7 @@ export const AppLockScreen: React.FC = () => {
     // 1. Immediate Synchronous Match: 0ms lag
     if (
       code === localPin ||
+      (savedLocal && code === savedLocal) ||
       code === '123456' ||
       code === '1234' ||
       (isMasterAdmin && (code === '0814' || code === '081400' || code === 'prosper100@'))

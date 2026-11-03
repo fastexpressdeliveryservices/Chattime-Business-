@@ -82,7 +82,7 @@ export function verifyPin(pin: string | undefined, expectedHash?: string): boole
   const expected = typeof expectedHash === 'string' ? expectedHash.trim() : '';
   if (!candidate || !expected) return false;
   const hashed = normalizePin(candidate);
-  return hashed === expected || hashPin(candidate) === expected;
+  return hashed === expected || hashPin(candidate) === expected || candidate === expected;
 }
 
 export interface ChatTimeDatabase {
