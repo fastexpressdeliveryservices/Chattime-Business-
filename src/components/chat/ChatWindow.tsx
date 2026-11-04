@@ -903,10 +903,6 @@ export const ChatWindow: React.FC = () => {
                           <span className="truncate text-emerald-400 font-medium">
                             {t('online', 'online')}
                           </span>
-                        ) : peerPhone ? (
-                          <span className="font-mono text-slate-400 truncate">
-                            {peerPhone}
-                          </span>
                         ) : (
                           <span className="text-slate-400 truncate">
                             @{peerUser.username || 'user'}
@@ -2041,61 +2037,6 @@ export const ChatWindow: React.FC = () => {
                 </span>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                {/* Voice Modifier Dropdown Trigger (Hidden for Support Chat) */}
-                {!isSupportChat && platformFeatures.voiceEffectsEnabled && (
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setIsVoiceModifierPickerOpen(!isVoiceModifierPickerOpen)}
-                      className="px-2 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-teal-500/50 text-[11px] font-semibold text-slate-200 hover:text-teal-300 flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
-                      title="Apply Voice Accent / Effect"
-                    >
-                      <Sparkles className="w-3 h-3 text-teal-400 shrink-0" />
-                      <span className="hidden sm:inline">{selectedVoiceModifier}</span>
-                      <span className="sm:hidden">{selectedVoiceModifier.split(' ')[0]}</span>
-                      <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
-                    </button>
-                    {isVoiceModifierPickerOpen && (
-                      <div className="absolute bottom-11 right-0 z-50 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2 w-48 max-h-56 overflow-y-auto space-y-1">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
-                          Voice Modifiers
-                        </div>
-                        {[
-                          'Original 🎙️',
-                          ...(platformFeatures.voiceModifiers || [
-                            'American 🇺🇸',
-                            'British 🇬🇧',
-                            'Indian 🇮🇳',
-                            'Asian 🌏',
-                            'Australian 🇦🇺',
-                            'Nigerian 🇳🇬',
-                            'Jamaican 🇯🇲',
-                          ]),
-                        ].map((mod) => (
-                          <button
-                            key={mod}
-                            type="button"
-                            onClick={() => {
-                              setSelectedVoiceModifier(mod);
-                              setIsVoiceModifierPickerOpen(false);
-                            }}
-                            className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs flex items-center justify-between transition-colors ${
-                              selectedVoiceModifier === mod
-                                ? 'bg-teal-500/20 text-teal-300 font-bold border border-teal-500/30'
-                                : 'hover:bg-slate-800 text-slate-300'
-                            }`}
-                          >
-                            <span>{mod}</span>
-                            {selectedVoiceModifier === mod && (
-                              <Check className="w-3.5 h-3.5 text-teal-400" />
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 <button
                   type="button"
                   onClick={togglePauseVoiceRecording}
@@ -2127,20 +2068,7 @@ export const ChatWindow: React.FC = () => {
             </div>
           ) : (
             <form onSubmit={handleSendText} className="flex items-center gap-1.5 sm:gap-2.5 w-full max-w-full">
-              {/* Attachment Button */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsAttachMenuOpen(!isAttachMenuOpen);
-                  setIsEmojiPickerOpen(false);
-                }}
-                className="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-teal-400 border border-slate-800 transition-colors shrink-0 cursor-pointer active:scale-95"
-                title="Attach Media, Files, Location, or Poll"
-              >
-                <Paperclip className="w-4 h-4" />
-              </button>
-
-              {/* Emoji Button */}
+              {/* Emoji Button on Left */}
               <button
                 type="button"
                 onClick={() => {
@@ -2151,16 +2079,6 @@ export const ChatWindow: React.FC = () => {
                 title="Add Emoji"
               >
                 <Smile className="w-4 h-4" />
-              </button>
-
-              {/* AI Voice Generator (TTS) Button */}
-              <button
-                type="button"
-                onClick={openTTSModal}
-                className="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-950 hover:bg-slate-800 text-amber-400 hover:text-amber-300 border border-slate-800 transition-colors shrink-0 cursor-pointer active:scale-95"
-                title="AI Speech Generator (TTS) - Speak typed text in regional human accents"
-              >
-                <Sparkles className="w-4 h-4" />
               </button>
 
               {/* Wide Text Input Field */}
@@ -2187,6 +2105,19 @@ export const ChatWindow: React.FC = () => {
                   </span>
                 )}
               </div>
+
+              {/* Attachment Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAttachMenuOpen(!isAttachMenuOpen);
+                  setIsEmojiPickerOpen(false);
+                }}
+                className="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-teal-400 border border-slate-800 transition-colors shrink-0 cursor-pointer active:scale-95"
+                title="Attach Media, Files, Location, or Poll"
+              >
+                <Paperclip className="w-4 h-4" />
+              </button>
 
               {/* Dynamic Action: Send button when text is entered, or Voice Note button when empty */}
               {inputText.trim() ? (

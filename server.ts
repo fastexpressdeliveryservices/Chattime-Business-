@@ -1035,24 +1035,12 @@ app.post('/api/voice/synthesize-tts', async (req, res) => {
     try {
       const response = await geminiAi.models.generateContent({
         model: 'gemini-3.8-flash-lite-tts',
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              {
-                text: text.trim(),
-                speechMetadata: {
-                  style: styleDesc,
-                },
-              },
-            ],
-          },
-        ],
+        contents: text.trim(),
         config: {
           responseModalities: ['AUDIO'],
           speechConfig: {
             voiceConfig: {
-              prebuiltVoiceConfig: { voiceName },
+              prebuiltVoiceConfig: { voiceName: isFem ? 'Kore' : 'Puck' },
             },
           },
         },

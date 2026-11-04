@@ -1,6 +1,18 @@
 @import "tailwindcss";
 
 @theme {
+  --color-slate-50: var(--color-slate-50, #f8fafc);
+  --color-slate-100: var(--color-slate-100, #f1f5f9);
+  --color-slate-200: var(--color-slate-200, #e2e8f0);
+  --color-slate-300: var(--color-slate-300, #cbd5e1);
+  --color-slate-400: var(--color-slate-400, #94a3b8);
+  --color-slate-500: var(--color-slate-500, #64748b);
+  --color-slate-600: var(--color-slate-600, #475569);
+  --color-slate-700: var(--color-slate-700, #334155);
+  --color-slate-800: var(--color-slate-800, #1e293b);
+  --color-slate-900: var(--color-slate-900, #0f172a);
+  --color-slate-950: var(--color-slate-950, #020617);
+
   --color-teal-100: var(--accent-100, #ccfbf1);
   --color-teal-200: var(--accent-200, #99f6e4);
   --color-teal-300: var(--accent-300, #5eead4);
@@ -14,6 +26,18 @@
 }
 
 :root {
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  --color-slate-950: #020617;
+
   --accent-100: #d1fae5;
   --accent-200: #a7f3d0;
   --accent-300: #6ee7b7;
@@ -173,6 +197,50 @@ html[data-theme="light"] body {
 html[data-mode="light"] .text-white,
 html[data-theme="light"] .text-white {
   color: #0f172a;
+}
+
+/* Ensure all text writings are crisp and fully visible in light mode */
+html[data-mode="light"] .text-slate-100,
+html[data-theme="light"] .text-slate-100,
+html[data-mode="light"] .text-slate-200,
+html[data-theme="light"] .text-slate-200 {
+  color: #0f172a !important;
+}
+
+html[data-mode="light"] .text-slate-300,
+html[data-theme="light"] .text-slate-300 {
+  color: #1e293b !important;
+}
+
+html[data-mode="light"] .text-slate-400,
+html[data-theme="light"] .text-slate-400 {
+  color: #334155 !important;
+}
+
+html[data-mode="light"] .text-slate-500,
+html[data-theme="light"] .text-slate-500 {
+  color: #475569 !important;
+}
+
+/* High-contrast text clarity in dark modes */
+html:not([data-mode="light"]) .text-slate-100,
+html:not([data-theme="light"]) .text-slate-100 {
+  color: #f8fafc;
+}
+
+html:not([data-mode="light"]) .text-slate-200,
+html:not([data-theme="light"]) .text-slate-200 {
+  color: #f1f5f9;
+}
+
+html:not([data-mode="light"]) .text-slate-300,
+html:not([data-theme="light"]) .text-slate-300 {
+  color: #cbd5e1;
+}
+
+html:not([data-mode="light"]) .text-slate-400,
+html:not([data-theme="light"]) .text-slate-400 {
+  color: #94a3b8;
 }
 
 /* Retain white text on solid colored buttons/badges */

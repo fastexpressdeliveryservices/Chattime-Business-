@@ -192,7 +192,12 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ onOpenRegister: _onOpenReg
                         )}
                       </div>
                       <div className="text-[11px] text-teal-400 font-mono truncate">
-                        @{u.username} • {u.chatTimeNumber || u.phoneNumber}
+                        @{u.username}
+                        {searchQuery.trim().length >= 7 &&
+                          ((u.chatTimeNumber || '').replace(/[^0-9]/g, '') === searchQuery.replace(/[^0-9]/g, '') ||
+                           (u.phoneNumber || '').replace(/[^0-9]/g, '') === searchQuery.replace(/[^0-9]/g, '')) && (
+                            <span className="text-slate-400 font-normal"> • {u.chatTimeNumber || u.phoneNumber}</span>
+                          )}
                       </div>
                     </div>
                   </div>

@@ -344,15 +344,12 @@ export const StatusView: React.FC = () => {
 
   const activeAuthor = currentActiveStory ? users[currentActiveStory.userId] : null;
   const isActiveSaved = currentActiveStory ? (currentUser.contacts || []).includes(currentActiveStory.userId) : false;
-  const activeAuthorNum = currentActiveStory
-    ? currentActiveStory.userNumber || activeAuthor?.phoneNumber || activeAuthor?.chatTimeNumber
-    : '';
   const activeStoryDisplayName = currentActiveStory
     ? currentActiveStory.userId === currentUser.id
       ? 'My Status'
       : isActiveSaved
       ? (activeAuthor?.name || currentActiveStory.userName)
-      : (activeAuthorNum || currentActiveStory.userName)
+      : (activeAuthor?.name || currentActiveStory.userName || (activeAuthor?.username ? `@${activeAuthor.username}` : 'ChatTime User'))
     : '';
 
   const otherUsers = (Object.values(users) as User[]).filter((u) => u.id !== currentUser.id);
@@ -360,7 +357,7 @@ export const StatusView: React.FC = () => {
     .map((cId) => users[cId])
     .filter((u): u is User => Boolean(u && u.id && !isGhosted(u.id)));
 
-  // Group contact stories by user so each user has a story ring (displaying saved contact name or available phone number)
+  // Group contact stories by user so each user has a story ring (displaying saved contact name or profile name)
   const groupedUserStories = React.useMemo(() => {
     const map = new Map<string, StatusStory[]>();
     contactStories.forEach((st) => {
@@ -371,8 +368,9 @@ export const StatusView: React.FC = () => {
     return Array.from(map.entries()).map(([userId, userStories]) => {
       const uAuthor = users[userId];
       const isSaved = (currentUser.contacts || []).includes(userId);
-      const uNum = userStories[0].userNumber || uAuthor?.phoneNumber || uAuthor?.chatTimeNumber;
-      const uName = isSaved ? (uAuthor?.name || userStories[0].userName) : (uNum || userStories[0].userName);
+      const uName = isSaved
+        ? (uAuthor?.name || userStories[0].userName)
+        : (uAuthor?.name || userStories[0].userName || (uAuthor?.username ? `@${uAuthor.username}` : 'User'));
       return {
         userId,
         userName: uName,

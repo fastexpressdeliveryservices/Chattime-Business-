@@ -546,7 +546,12 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
                               </p>
 
                               <p className="text-[11px] font-mono text-slate-400 truncate mt-0.5">
-                                @{person.username} • {showPhone}
+                                @{person.username}
+                                {searchQuery.trim().length >= 7 &&
+                                  ((person.chatTimeNumber || '').replace(/[^0-9]/g, '') === searchQuery.replace(/[^0-9]/g, '') ||
+                                   (person.phoneNumber || '').replace(/[^0-9]/g, '') === searchQuery.replace(/[^0-9]/g, '')) && (
+                                    <span> • {showPhone}</span>
+                                  )}
                               </p>
                             </div>
                           </div>
@@ -888,7 +893,10 @@ export const ContactsView: React.FC<ContactsViewProps> = ({ onOpenNewGroupModal 
                         <Check className="w-3.5 h-3.5 text-teal-400" />
                       </div>
                       <div className="text-[11px] text-teal-300 font-mono truncate">
-                        @{lookupMatch.username} • {lookupMatch.phoneNumber || lookupMatch.chatTimeNumber}
+                        @{lookupMatch.username}
+                        {contactIdentifierInput.trim().length >= 7 && (
+                          <span className="text-slate-400 font-normal"> • {lookupMatch.phoneNumber || lookupMatch.chatTimeNumber}</span>
+                        )}
                       </div>
                     </div>
                   </div>

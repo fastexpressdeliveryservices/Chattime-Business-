@@ -598,7 +598,12 @@ export const CallsView: React.FC = () => {
                             )}
                           </div>
                           <div className="text-[10px] text-teal-400 font-mono truncate">
-                            {u.chatTimeNumber || u.phoneNumber}
+                            @{u.username}
+                            {dialNumber.trim().length >= 7 &&
+                              ((u.chatTimeNumber || '').replace(/[^0-9]/g, '') === dialNumber.replace(/[^0-9]/g, '') ||
+                               (u.phoneNumber || '').replace(/[^0-9]/g, '') === dialNumber.replace(/[^0-9]/g, '')) && (
+                                <span className="text-slate-400 font-normal"> • {u.chatTimeNumber || u.phoneNumber}</span>
+                              )}
                           </div>
                         </div>
                       </div>
