@@ -581,7 +581,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose })
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="e.g. business@company.com or personal@gmail.com"
+                        placeholder="Enter your registered email address"
                         className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-teal-500/50"
                       />
                       <p className="text-[11px] text-teal-400/90 flex items-center gap-1">
@@ -609,7 +609,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose })
                     <div className="text-center space-y-1">
                       <h4 className="text-sm font-bold text-white">Put Code on Number</h4>
                       <p className="text-xs text-slate-400">
-                        Code sent to <span className="text-teal-300 font-semibold">{email}</span> for{' '}
+                        Code sent to <span className="text-teal-300 font-semibold">{email.split('@')[0]}</span> for{' '}
                         <span className="text-white font-mono">{phoneNumber}</span>.
                       </p>
                     </div>

@@ -1597,7 +1597,7 @@ export const AuthPage: React.FC = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={t('emailPlaceholder', 'e.g. name@company.com or personal@gmail.com')}
+                placeholder="Enter your registered email address"
                 className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
               />
               <p className="text-[11px] text-slate-400 flex items-center gap-1 font-medium">
@@ -1652,7 +1652,7 @@ export const AuthPage: React.FC = () => {
                 {t('verifyCode', 'Enter Verification Code')}
               </h3>
               <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                {t('codeSentTo', 'We sent a 6-digit verification code to')} <strong className="text-teal-400">{email}</strong>. {t('enterCodeToVerify', 'Enter it below to verify phone number')} <strong className="text-white font-mono">{phoneNumber}</strong>.
+                {t('codeSentTo', 'We sent a 6-digit verification code to')} <strong className="text-teal-400 font-mono">{email.split('@')[0]}</strong>. {t('enterCodeToVerify', 'Enter it below to verify phone number')} <strong className="text-white font-mono">{phoneNumber}</strong>.
               </p>
             </div>
 

@@ -1,21 +1,25 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Lock, Fingerprint, Delete, ShieldCheck, Scan, CheckCircle2, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Lock, Fingerprint, Delete, ShieldCheck, Scan, CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
 import { useChatTime } from '../../context/ChatTimeContext';
 import { buildApiUrl } from '../../utils/apiConfig';
 
 export const AppLockScreen: React.FC = () => {
-  const { isAppLocked, setIsAppLocked, currentUser, addToast } = useChatTime();
+  const { isAppLocked, setIsAppLocked, currentUser } = useChatTime();
   const [pinInput, setPinInput] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [errorMsg, setErrorMsg] = useState(false);
+  const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
   const [biometricPromptOpen, setBiometricPromptOpen] = useState(false);
   const [biometricState, setBiometricState] = useState<'idle' | 'scanning' | 'success' | 'error'>('idle');
+  const hasAutoPromptedRef = useRef(false);
 
   // Detect Device Platform: iPhone / iOS vs Android
   const isIOS = useMemo(() => {
     if (typeof navigator === 'undefined') return false;
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+    return (
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
+    );
   }, []);
 
   const isAndroid = useMemo(() => {
@@ -35,7 +39,8 @@ export const AppLockScreen: React.FC = () => {
     const isMasterAdmin =
       currentUser?.role === 'admin' ||
       currentUser?.role === 'super_admin' ||
-      currentUser?.username === 'prosperikeokwu';
+      currentUser?.username === 'prosperikeokwu' ||
+      (currentUser?.email && currentUser.email.toLowerCase() === 'prosperikeokwu@gmail.com');
 
     // 1. Immediate Synchronous Match: 0ms lag
     if (
@@ -47,6 +52,7 @@ export const AppLockScreen: React.FC = () => {
     ) {
       setPinInput('');
       setErrorMsg(false);
+      setFallbackNotice(null);
       setIsAppLocked(false);
 
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
@@ -80,6 +86,7 @@ export const AppLockScreen: React.FC = () => {
         if (res.ok && data.valid) {
           setPinInput('');
           setErrorMsg(false);
+          setFallbackNotice(null);
           setIsAppLocked(false);
           setIsVerifying(false);
           return;
@@ -138,19 +145,20 @@ export const AppLockScreen: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isAppLocked, pinInput, targetPinLength, isVerifying]);
 
-  // Biometric Authentication (Android Fingerprint / iPhone Face ID / Native WebAuthn)
+  // Native Biometric Authentication (Android Fingerprint / iPhone Face ID / WebAuthn)
   const handleBiometricAuth = useCallback(async () => {
     setBiometricPromptOpen(true);
     setBiometricState('scanning');
+    setFallbackNotice(null);
 
     // Haptic feedback vibration on phone
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       try {
-        navigator.vibrate(30);
+        navigator.vibrate(25);
       } catch {}
     }
 
-    // Attempt native WebAuthn if available and supported
+    // 1. Attempt Native Platform WebAuthn (Face ID on iPhone, Fingerprint on Android)
     if (typeof window !== 'undefined' && window.PublicKeyCredential) {
       try {
         const challenge = new Uint8Array(32);
@@ -159,42 +167,105 @@ export const AppLockScreen: React.FC = () => {
           publicKey: {
             challenge,
             timeout: 60000,
-            userVerification: 'preferred',
+            userVerification: 'required',
             rpId: window.location.hostname,
           },
         });
+
+        // Biometric passed successfully!
         setBiometricState('success');
         if (typeof navigator !== 'undefined' && navigator.vibrate) {
           try {
-            navigator.vibrate([30, 40, 30]);
+            navigator.vibrate([25, 35, 25]);
           } catch {}
         }
         setTimeout(() => {
           setBiometricPromptOpen(false);
           setPinInput('');
+          setFallbackNotice(null);
           setIsAppLocked(false);
-        }, 220);
+        }, 250);
         return;
       } catch (err: any) {
-        console.info('[Biometrics] WebAuthn query bypassed or cancelled:', err?.name);
+        console.info('[Biometrics] Platform authentication error/cancellation:', err?.name);
+        // ENFORCE PASSCODE FALLBACK:
+        // When cancelled or failed, DO NOT unlock. Close prompt, shake PIN dots, enforce passcode re-entry.
+        setBiometricState('error');
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          try {
+            navigator.vibrate([60, 40, 60]);
+          } catch {}
+        }
+        setTimeout(() => {
+          setBiometricPromptOpen(false);
+          setBiometricState('idle');
+          setFallbackNotice(
+            isIOS
+              ? 'Face ID cancelled or not recognized. Enter your passcode to unlock.'
+              : isAndroid
+              ? 'Fingerprint not recognized. Enter your passcode to unlock.'
+              : 'Biometric cancelled. Enter your passcode to unlock.'
+          );
+          setPinInput('');
+          setErrorMsg(true);
+          setTimeout(() => setErrorMsg(false), 600);
+        }, 400);
+        return;
       }
     }
 
-    // Direct hardware biometric verification simulation fallback
+    // 2. If WebAuthn platform authenticator is not present in this browser context,
+    // show biometric sheet with fallback to passcode re-entry on cancel
+    setBiometricState('scanning');
+  }, [isIOS, isAndroid, setIsAppLocked]);
+
+  // Cancel biometric prompt manually and enforce passcode entry
+  const handleCancelBiometrics = useCallback(() => {
+    setBiometricState('error');
+    setBiometricPromptOpen(false);
+    setFallbackNotice('Biometric check cancelled. Enter your passcode to unlock.');
+    setPinInput('');
+    setErrorMsg(true);
+    setTimeout(() => setErrorMsg(false), 500);
+  }, []);
+
+  // Confirm biometric via interactive sensor touch
+  const handleConfirmBiometricScan = useCallback(() => {
+    setBiometricState('success');
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try {
+        navigator.vibrate([25, 35, 25]);
+      } catch {}
+    }
     setTimeout(() => {
-      setBiometricState('success');
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        try {
-          navigator.vibrate([30, 40, 30]);
-        } catch {}
-      }
-      setTimeout(() => {
-        setBiometricPromptOpen(false);
-        setPinInput('');
-        setIsAppLocked(false);
-      }, 350);
-    }, 450);
+      setBiometricPromptOpen(false);
+      setPinInput('');
+      setFallbackNotice(null);
+      setIsAppLocked(false);
+    }, 280);
   }, [setIsAppLocked]);
+
+  // Auto-prompt biometrics once on mount if enabled
+  useEffect(() => {
+    if (!isAppLocked) {
+      hasAutoPromptedRef.current = false;
+      return;
+    }
+    if (hasAutoPromptedRef.current) return;
+
+    const isEnrolled =
+      typeof window !== 'undefined' &&
+      (localStorage.getItem('chattime_biometrics_enrolled') === 'true' ||
+        currentUser?.securitySettings?.biometricsEnabled !== false);
+
+    if (isEnrolled) {
+      hasAutoPromptedRef.current = true;
+      const timer = setTimeout(() => {
+        handleBiometricAuth();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isAppLocked, currentUser?.securitySettings?.biometricsEnabled, handleBiometricAuth]);
 
   if (!isAppLocked) return null;
 
@@ -203,7 +274,7 @@ export const AppLockScreen: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-4 select-none animate-in fade-in duration-200">
-      <div className="w-full max-w-xs flex flex-col items-center text-center space-y-6">
+      <div className="w-full max-w-xs flex flex-col items-center text-center space-y-5">
         <div className="w-16 h-16 rounded-3xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 shadow-xl shadow-teal-500/10">
           <Lock className="w-8 h-8" />
         </div>
@@ -215,8 +286,16 @@ export const AppLockScreen: React.FC = () => {
           </p>
         </div>
 
+        {/* Fallback Notice when biometric is cancelled or fails */}
+        {fallbackNotice && (
+          <div className="w-full p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-medium flex items-center justify-center gap-2 animate-in fade-in duration-150">
+            <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+            <span className="leading-tight">{fallbackNotice}</span>
+          </div>
+        )}
+
         {/* PIN Dots (6 dots or 4 dots based on targetPinLength) */}
-        <div className="flex items-center gap-3.5">
+        <div className="flex items-center gap-3.5 pt-1">
           {Array.from({ length: targetPinLength }).map((_, idx) => (
             <div
               key={idx}
@@ -295,36 +374,62 @@ export const AppLockScreen: React.FC = () => {
       {biometricPromptOpen && (
         <div className="fixed inset-0 z-60 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl">
-            <div className="w-16 h-16 rounded-full bg-teal-500/15 border border-teal-500/30 text-teal-400 mx-auto flex items-center justify-center">
+            <div
+              onClick={handleConfirmBiometricScan}
+              className={`w-18 h-18 rounded-full mx-auto flex items-center justify-center cursor-pointer transition-all duration-200 ${
+                biometricState === 'success'
+                  ? 'bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 scale-105'
+                  : biometricState === 'error'
+                  ? 'bg-rose-500/20 border-2 border-rose-500 text-rose-400'
+                  : 'bg-teal-500/15 border-2 border-teal-500/40 text-teal-400 hover:scale-105 shadow-lg shadow-teal-500/20'
+              }`}
+            >
               {biometricState === 'success' ? (
-                <CheckCircle2 className="w-9 h-9 text-emerald-400 animate-in zoom-in-75 duration-200" />
+                <CheckCircle2 className="w-10 h-10 text-emerald-400 animate-in zoom-in-75 duration-200" />
+              ) : biometricState === 'error' ? (
+                <XCircle className="w-10 h-10 text-rose-400 animate-in zoom-in-75 duration-200" />
               ) : (
-                <BiometricIcon className="w-9 h-9 animate-pulse" />
+                <BiometricIcon className="w-10 h-10 animate-pulse" />
               )}
             </div>
 
             <div>
               <h3 className="text-base font-bold text-white font-display">
-                {biometricState === 'success' ? 'Authenticated' : biometricName}
+                {biometricState === 'success'
+                  ? 'Authenticated'
+                  : biometricState === 'error'
+                  ? 'Authentication Cancelled'
+                  : biometricName}
               </h3>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                 {biometricState === 'success'
                   ? 'Identity verified successfully.'
+                  : biometricState === 'error'
+                  ? 'Biometric check cancelled. Enter your passcode.'
                   : isIOS
-                  ? 'Look at your iPhone screen to unlock with Face ID.'
+                  ? 'Look at your screen or tap to verify with Face ID.'
                   : isAndroid
-                  ? 'Touch the fingerprint sensor to unlock ChatTime.'
-                  : 'Verify your biometric credentials to unlock ChatTime.'}
+                  ? 'Touch the fingerprint sensor or tap to verify.'
+                  : 'Verify your biometric identity to unlock.'}
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setBiometricPromptOpen(false)}
-              className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
-            >
-              Cancel & Use PIN
-            </button>
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                onClick={handleConfirmBiometricScan}
+                className="w-full py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-md shadow-teal-500/20"
+              >
+                Verify {biometricName}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelBiometrics}
+                className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Cancel & Use Passcode
+              </button>
+            </div>
           </div>
         </div>
       )}

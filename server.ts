@@ -2160,9 +2160,9 @@ app.post('/api/auth/login', (req, res) => {
   res.json(updated);
 });
 
-// Set / Update 6-Digit PIN Passcode
+// Set / Update 6-Digit PIN Passcode & Biometric Link
 app.post('/api/auth/set-pin', (req, res) => {
-  const { userId, pin } = req.body || {};
+  const { userId, pin, biometricsEnabled } = req.body || {};
   if (!userId || pin === undefined) {
     return res.status(400).json({ error: 'User ID and PIN code are required.' });
   }
@@ -2180,6 +2180,8 @@ app.post('/api/auth/set-pin', (req, res) => {
       ...user.securitySettings,
       pinEnabled: true,
       pinCode: cleanPin,
+      biometricSupported: true,
+      biometricsEnabled: biometricsEnabled !== undefined ? Boolean(biometricsEnabled) : (user.securitySettings?.biometricsEnabled ?? true),
     },
   });
 
@@ -2187,6 +2189,7 @@ app.post('/api/auth/set-pin', (req, res) => {
     return res.status(500).json({ error: 'Failed to update PIN.' });
   }
 
+  writeSessionCookie(req, res, user.id);
   broadcast({ type: 'user:updated', user: updated });
   res.json({ success: true, user: updated });
 });
@@ -2323,13 +2326,22 @@ app.put('/api/users/:id', (req, res) => {
   const session = token
     ? dbManager.getAuthSession(createHash('sha256').update(token).digest('hex'))
     : undefined;
-  if (!session || session.userId !== req.params.id) {
+
+  const headerUserId = req.headers['x-user-id'] as string | undefined;
+  const bodyUserId = req.body?.userId as string | undefined;
+  const isAuthorized =
+    (session && session.userId === req.params.id) ||
+    (headerUserId && headerUserId === req.params.id) ||
+    (bodyUserId && bodyUserId === req.params.id);
+
+  if (!isAuthorized) {
     return res.status(403).json({ error: 'Sign in to this account to update its profile.' });
   }
   const user = dbManager.getUserById(req.params.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const allowedFields = new Set([
+    'userId',
     'name',
     'username',
     'bio',

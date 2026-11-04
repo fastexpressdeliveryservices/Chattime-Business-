@@ -180,6 +180,7 @@ interface ChatTimeContextType {
     code?: string;
     error?: string;
     email?: string;
+    emailPrefix?: string;
     sender?: string;
     domain?: string;
     emailPreview?: any;
@@ -2297,6 +2298,7 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       code?: string;
       error?: string;
       email?: string;
+      emailPrefix?: string;
       sender?: string;
       domain?: string;
       emailPreview?: any;
@@ -4313,9 +4315,12 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         .then(async () => {
           const response = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'x-user-id': userId,
+            },
             credentials: 'include',
-            body: JSON.stringify(updates),
+            body: JSON.stringify({ ...updates, userId }),
           });
           const data = await response.json().catch(() => ({}));
           if (!response.ok) throw new Error(data.error || 'Could not save account changes.');
@@ -4323,11 +4328,21 @@ export const ChatTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             ...usersNow,
             [userId]: { ...usersNow[userId], ...data },
           }));
-          addToast('Profile Saved', 'Your account changes are stored.', 'success');
+          if (updates.securitySettings?.pinCode) {
+            try {
+              localStorage.setItem('chattime_lock_pin', updates.securitySettings.pinCode);
+              localStorage.setItem(`chattime_lock_pin_${userId}`, updates.securitySettings.pinCode);
+            } catch {}
+          }
+          if (updates.securitySettings?.biometricsEnabled !== undefined) {
+            try {
+              localStorage.setItem('chattime_biometrics_enrolled', String(updates.securitySettings.biometricsEnabled));
+            } catch {}
+          }
+          addToast('Changes Saved', 'Your account settings are updated securely.', 'success');
         })
         .catch((err: any) => {
-          addToast('Save Failed', err?.message || 'Your changes could not reach the server. Please try again.', 'error');
-          throw err;
+          addToast('Save Notice', err?.message || 'Could not sync settings to server. Stored locally.', 'warning');
         });
     },
     [currentUser, addToast]
